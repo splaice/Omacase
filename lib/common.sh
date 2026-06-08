@@ -26,10 +26,29 @@ confirm() { # confirm "Question?" -> 0 if yes
 ensure_brew_env() {
   if [ -x /opt/homebrew/bin/brew ]; then eval "$(/opt/homebrew/bin/brew shellenv)"
   elif [ -x /usr/local/bin/brew ]; then eval "$(/usr/local/bin/brew shellenv)"
+  elif is_dryrun; then warn "Homebrew not found (dry run — continuing)."
   else abort "Homebrew not found — run boot.sh first."; fi
 }
 
 have() { command -v "$1" >/dev/null 2>&1; }
+
+# --- dry run -----------------------------------------------------------------
+# Set MACARCHY_DRYRUN=1 to print mutating commands instead of running them.
+# Wrap every side-effecting command (brew, chezmoi, ln, defaults, services…)
+# in `run`. Read-only inspection commands don't need it.
+is_dryrun() { [ -n "${MACARCHY_DRYRUN:-}" ]; }
+
+run() {
+  if is_dryrun; then
+    printf '\033[2m[dry-run]\033[0m %s\n' "$*"
+  else
+    "$@"
+  fi
+}
+
+dryrun_banner() {
+  is_dryrun && printf '\033[1;33m▒▒ DRY RUN — no changes will be made ▒▒\033[0m\n'
+}
 
 # --- idempotency -------------------------------------------------------------
 # once <key> <command...> : run command only the first time, record a marker.

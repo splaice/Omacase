@@ -4,15 +4,16 @@
 
 macarchy_install() {
   ensure_brew_env
+  dryrun_banner
 
   step "1/5  Packages & apps (brew bundle)"
-  brew bundle --file="$MACARCHY_ROOT/Brewfile" || warn "Some brew items failed; re-run later."
+  run brew bundle --file="$MACARCHY_ROOT/Brewfile" || warn "Some brew items failed; re-run later."
 
   step "2/5  Dotfiles (chezmoi)"
   _apply_dotfiles
 
   step "3/5  macOS defaults"
-  bash "$MACARCHY_ROOT/macos/defaults.sh"
+  bash "$MACARCHY_ROOT/macos/defaults.sh"   # honors MACARCHY_DRYRUN itself
 
   step "4/5  Theme"
   source "$MACARCHY_ROOT/lib/theme.sh"
@@ -29,6 +30,10 @@ macarchy_install() {
 }
 
 _apply_dotfiles() {
+  if is_dryrun; then
+    run chezmoi init --apply --source "$MACARCHY_ROOT/home"
+    return
+  fi
   have chezmoi || { warn "chezmoi missing (brew step may have failed) — skipping dotfiles."; return; }
   # Point chezmoi at this repo's source dir; apply without clobbering silently.
   chezmoi init --apply --source "$MACARCHY_ROOT/home" || warn "chezmoi apply had conflicts; run \`chezmoi diff\`."

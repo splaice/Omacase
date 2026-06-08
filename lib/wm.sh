@@ -15,19 +15,19 @@ macarchy_wm() {
     yabai)     _wm_use_yabai ;;
     *) abort "Unknown wm profile '$profile' (aerospace|yabai)" ;;
   esac
-  echo "$profile" > "$MACARCHY_STATE/wm"
+  is_dryrun || echo "$profile" > "$MACARCHY_STATE/wm"
 }
 
 _wm_stop_all() {
   for svc in yabai skhd aerospace; do
-    brew services stop "$svc" 2>/dev/null || true
+    run brew services stop "$svc" 2>/dev/null || true
   done
-  pgrep -x AeroSpace >/dev/null && osascript -e 'quit app "AeroSpace"' 2>/dev/null || true
+  pgrep -x AeroSpace >/dev/null && run osascript -e 'quit app "AeroSpace"' 2>/dev/null || true
 }
 
 _wm_start_shared() {
-  brew services start borders 2>/dev/null || warn "borders not installed?"
-  brew services start sketchybar 2>/dev/null || warn "sketchybar not installed?"
+  run brew services start borders 2>/dev/null || warn "borders not installed?"
+  run brew services start sketchybar 2>/dev/null || warn "sketchybar not installed?"
 }
 
 _wm_use_aerospace() {
@@ -35,7 +35,7 @@ _wm_use_aerospace() {
   _wm_stop_all
   # AeroSpace runs as a regular app from /Applications, started at login via
   # its own config (start-at-login = true). Just launch it now.
-  open -a AeroSpace 2>/dev/null || warn "AeroSpace not installed — check Brewfile/brew bundle."
+  run open -a AeroSpace 2>/dev/null || warn "AeroSpace not installed — check Brewfile/brew bundle."
   _wm_start_shared
   success "AeroSpace active. Alt+hjkl focus, Alt+Shift+hjkl move, Alt+[1-9] workspaces."
 }
@@ -44,8 +44,8 @@ _wm_use_yabai() {
   info "Profile: yabai (advanced — needs SIP partially disabled)"
   if ! _sip_ok_for_yabai; then _yabai_notes; fi
   _wm_stop_all
-  brew services start yabai 2>/dev/null || warn "yabai not installed — add to Brewfile."
-  brew services start skhd  2>/dev/null || warn "skhd not installed — add to Brewfile."
+  run brew services start yabai 2>/dev/null || warn "yabai not installed — add to Brewfile."
+  run brew services start skhd  2>/dev/null || warn "skhd not installed — add to Brewfile."
   _wm_start_shared
   success "yabai active (if SIP/scripting-addition are configured)."
 }

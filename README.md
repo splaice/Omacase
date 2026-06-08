@@ -31,6 +31,7 @@ macarchy doctor      # grant Accessibility to AeroSpace, SketchyBar, Karabiner, 
 
 ## Commands
 ```
+MACARCHY_DRYRUN=1 macarchy install   # print every change without touching the system
 macarchy install            # idempotent full setup (re-runnable)
 macarchy update             # pull + brew bundle + re-apply everything
 macarchy theme [name]       # apply a theme everywhere at once
