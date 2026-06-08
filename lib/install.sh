@@ -24,15 +24,30 @@ omacase_install() {
   source "$OMACASE_ROOT/lib/theme.sh"
   omacase_theme "$(cat "$OMACASE_STATE/theme" 2>/dev/null || echo catppuccin-mocha)"
 
-  step "6/6  Window manager + services"
+  step "6/7  Window manager + services"
   source "$OMACASE_ROOT/lib/wm.sh"
   omacase_wm "$(cat "$OMACASE_STATE/wm" 2>/dev/null || echo aerospace)"
+
+  step "7/7  Launch desktop apps (triggers their permission prompts)"
+  _launch_apps
 
   step "Done"
   success "omacase installed."
   warn "Next: run \`omacase doctor\` and grant Accessibility to AeroSpace, SketchyBar, Karabiner & Raycast."
   warn "macOS requires those grants by hand — no installer can click them for you."
   warn "Don't like the result? \`omacase restore\` rolls back to the pre-install snapshot."
+}
+
+# GUI helpers that must be running (and granted permissions) for the system to
+# work: Karabiner mints the Super key, Raycast is command access, AltTab/Ice are
+# QoL. open -a is a no-op if already running.
+_launch_apps() {
+  local app
+  for app in "Karabiner-Elements" "Raycast" "AltTab" "Ice"; do
+    [ -d "/Applications/$app.app" ] && run open -a "$app" || true
+  done
+  warn "Karabiner needs Input Monitoring + its driver extension enabled, and Raycast needs"
+  warn "its hotkey set — these are by-hand grants. \`omacase doctor\` lists them."
 }
 
 # Symlink every file under home/ into $HOME, translating chezmoi-style dot_

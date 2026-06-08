@@ -29,6 +29,19 @@ omacase_doctor() {
     fi
   fi
 
+  step "Desktop apps"
+  pgrep -x Raycast >/dev/null && success "Raycast running" || { warn "Raycast not running — \`open -a Raycast\`"; issues=$((issues + 1)); }
+  if pgrep -x Karabiner-Elements >/dev/null; then
+    if pgrep -x karabiner_grabber >/dev/null; then
+      success "Karabiner active (Super key live)"
+    else
+      warn "Karabiner running but driver/Input-Monitoring not granted — Super (right ⌘) won't work yet."
+      issues=$((issues + 1))
+    fi
+  else
+    warn "Karabiner-Elements not running — \`open -a Karabiner-Elements\`"; issues=$((issues + 1))
+  fi
+
   step "Permissions (macOS requires these by hand)"
   cat <<'EOF'
   These need a manual toggle in System Settings → Privacy & Security.
