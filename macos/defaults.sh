@@ -1,17 +1,17 @@
 #!/bin/bash
-# macarchy macOS defaults — the `defaults write` layer (the .config analog).
+# omacase macOS defaults — the `defaults write` layer (the .config analog).
 # Idempotent: each key is set to a fixed value, so re-running is a no-op.
 # Many changes need a relaunch of Dock/Finder/SystemUIServer (done at the end)
 # or a full logout to fully apply.
 set -euo pipefail
 
 info() { printf '\033[34m➜\033[0m %s\n' "$*"; }
-# Honor MACARCHY_DRYRUN when invoked by `macarchy install` (or standalone).
+# Honor OMACASE_DRYRUN when invoked by `omacase install` (or standalone).
 run() {
-  if [ -n "${MACARCHY_DRYRUN:-}" ]; then printf '\033[2m[dry-run]\033[0m %s\n' "$*"
+  if [ -n "${OMACASE_DRYRUN:-}" ]; then printf '\033[2m[dry-run]\033[0m %s\n' "$*"
   else "$@"; fi
 }
-[ -n "${MACARCHY_DRYRUN:-}" ] && printf '\033[1;33m▒▒ DRY RUN — macOS defaults ▒▒\033[0m\n'
+[ -n "${OMACASE_DRYRUN:-}" ] && printf '\033[1;33m▒▒ DRY RUN — macOS defaults ▒▒\033[0m\n'
 
 info "Keyboard: fast key repeat, disable press-and-hold (enables key-repeat in vim/etc.)"
 run defaults write -g ApplePressAndHoldEnabled -bool false

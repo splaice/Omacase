@@ -1,4 +1,4 @@
--- Bootstrap lazy.nvim, load LazyVim, then macarchy's own plugin specs.
+-- Bootstrap lazy.nvim, load LazyVim, then omacase's own plugin specs.
 local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
 if not (vim.uv or vim.loop).fs_stat(lazypath) then
   local repo = "https://github.com/folke/lazy.nvim.git"

@@ -2,13 +2,13 @@
   "global": { "show_in_menu_bar": false },
   "profiles": [
     {
-      "name": "macarchy",
+      "name": "omacase",
       "selected": true,
       "virtual_hid_keyboard": { "keyboard_type_v2": "ansi" },
       "complex_modifications": {
         "rules": [
           {
-            "description": "macarchy: Right ⌘ → Hyper (Super = ⌘⌃⌥⇧)",
+            "description": "omacase: Right ⌘ → Hyper (Super = ⌘⌃⌥⇧)",
             "manipulators": [
               {
                 "type": "basic",

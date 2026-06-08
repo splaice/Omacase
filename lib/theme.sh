@@ -1,11 +1,11 @@
 # shellcheck shell=bash
-# `macarchy theme [name]` — apply one theme to every app at once. A theme is a
+# `omacase theme [name]` — apply one theme to every app at once. A theme is a
 # directory under themes/<name>/ containing per-app fragments that get symlinked
 # or rendered into the live config locations.
 
-macarchy_theme() {
+omacase_theme() {
   local name="${1:-}"
-  local themes_dir="$MACARCHY_ROOT/themes"
+  local themes_dir="$OMACASE_ROOT/themes"
 
   if [ -z "$name" ]; then
     name="$(gum_choose "Pick a theme" $(_theme_list))" || return
@@ -24,12 +24,12 @@ macarchy_theme() {
   _link "$src/nvim.lua"   "$cfg/nvim/lua/theme.lua"
   _link "$src/starship"   "$cfg/starship/theme.toml"
 
-  is_dryrun || echo "$name" > "$MACARCHY_STATE/theme"
+  is_dryrun || echo "$name" > "$OMACASE_STATE/theme"
   _theme_reload
   success "Theme '$name' applied."
 }
 
-_theme_list() { ls -1 "$MACARCHY_ROOT/themes" 2>/dev/null; }
+_theme_list() { ls -1 "$OMACASE_ROOT/themes" 2>/dev/null; }
 
 _link() { # _link <src> <dest>  (only if src exists)
   [ -e "$1" ] || return 0

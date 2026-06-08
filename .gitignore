@@ -7,7 +7,7 @@
 *.swp
 *~
 
-# macarchy runtime state (lives in ~/.local/state/macarchy, not the repo, but
+# omacase runtime state (lives in ~/.local/state/omacase, not the repo, but
 # guard against accidental local copies)
 state/
 *.local

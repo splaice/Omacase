@@ -1,8 +1,8 @@
-# macarchy zsh — modern CLI defaults. Managed by chezmoi.
+# omacase zsh — modern CLI defaults. Managed by chezmoi.
 if [ -x /opt/homebrew/bin/brew ]; then eval "$(/opt/homebrew/bin/brew shellenv)"; fi
 
 export EDITOR=nvim
-export PATH="$HOME/.local/share/macarchy/bin:$PATH"   # the `macarchy` command
+export PATH="$HOME/.local/share/omacase/bin:$PATH"   # the `omacase` command
 
 # Modern replacements.
 alias ls='eza --group-directories-first --icons'
@@ -21,6 +21,6 @@ command -v mise     >/dev/null && eval "$(mise activate zsh)"
 command -v direnv   >/dev/null && eval "$(direnv hook zsh)"
 [ -f /opt/homebrew/opt/fzf/shell/key-bindings.zsh ] && source /opt/homebrew/opt/fzf/shell/key-bindings.zsh
 
-# Starship reads a macarchy-managed theme fragment if present.
+# Starship reads a omacase-managed theme fragment if present.
 export STARSHIP_CONFIG="$HOME/.config/starship/theme.toml"
 [ -f "$STARSHIP_CONFIG" ] || unset STARSHIP_CONFIG

@@ -1,0 +1,50 @@
+#!/bin/bash
+# omacase — single command to install, configure, theme, and manage an
+# opinionated tiling macOS. Subcommands live in lib/*.sh.
+set -euo pipefail
+
+# Resolve the repo root regardless of how we were invoked (symlink-safe).
+SOURCE="${BASH_SOURCE[0]}"
+while [ -h "$SOURCE" ]; do
+  DIR="$(cd -P "$(dirname "$SOURCE")" && pwd)"
+  SOURCE="$(readlink "$SOURCE")"
+  [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE"
+done
+export OMACASE_ROOT="$(cd -P "$(dirname "$SOURCE")/.." && pwd)"
+
+source "$OMACASE_ROOT/lib/common.sh"
+
+usage() {
+  cat <<'EOF'
+Omacase — opinionated tiling macOS, managed from one command
+
+usage: omacase <command> [args]
+
+  install            Full idempotent setup (re-runnable)
+  update             git pull + brew bundle + re-apply dotfiles & defaults
+  theme [name]       Apply a theme everywhere (no name = list/pick)
+  wm <aerospace|yabai>   Switch window-manager profile
+  doctor             Check permissions, SIP state, and missing grants
+  config             Open the config directory
+  menu               Interactive TUI (bind to a Raycast hotkey)
+  version            Print version
+  uninstall          Remove omacase-managed config (keeps your apps)
+
+Run `omacase doctor` after install to grant Accessibility permissions.
+EOF
+}
+
+cmd="${1:-menu}"; shift || true
+case "$cmd" in
+  install)        source "$OMACASE_ROOT/lib/install.sh";  omacase_install "$@" ;;
+  update)         source "$OMACASE_ROOT/lib/update.sh";   omacase_update  "$@" ;;
+  theme)          source "$OMACASE_ROOT/lib/theme.sh";    omacase_theme   "$@" ;;
+  wm)             source "$OMACASE_ROOT/lib/wm.sh";       omacase_wm      "$@" ;;
+  doctor)         source "$OMACASE_ROOT/lib/doctor.sh";   omacase_doctor  "$@" ;;
+  menu)           source "$OMACASE_ROOT/lib/menu.sh";     omacase_menu    "$@" ;;
+  config)         exec "${EDITOR:-open}" "$OMACASE_ROOT/home" ;;
+  version|-v|--version) cat "$OMACASE_ROOT/VERSION" ;;
+  uninstall)      source "$OMACASE_ROOT/lib/install.sh";  omacase_uninstall "$@" ;;
+  help|-h|--help) usage ;;
+  *) error "unknown command: $cmd"; echo; usage; exit 1 ;;
+esac

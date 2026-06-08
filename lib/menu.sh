@@ -1,10 +1,10 @@
 # shellcheck shell=bash
-# `macarchy menu` — the gum TUI, the omarchy-menu analog. Bind to a Raycast
-# hotkey (Raycast → Script Commands → run `macarchy menu`).
+# `omacase menu` — the gum TUI, the omarchy-menu analog. Bind to a Raycast
+# hotkey (Raycast → Script Commands → run `omacase menu`).
 
-macarchy_menu() {
+omacase_menu() {
   local choice
-  choice="$(gum_choose "macarchy" \
+  choice="$(gum_choose "Omacase" \
     "Update everything" \
     "Switch theme" \
     "Switch window manager" \
@@ -13,11 +13,11 @@ macarchy_menu() {
     "Quit")" || return
 
   case "$choice" in
-    "Update everything")     source "$MACARCHY_ROOT/lib/update.sh"; macarchy_update ;;
-    "Switch theme")          source "$MACARCHY_ROOT/lib/theme.sh";  macarchy_theme ;;
-    "Switch window manager") source "$MACARCHY_ROOT/lib/wm.sh";     macarchy_wm ;;
-    "Run doctor")            source "$MACARCHY_ROOT/lib/doctor.sh"; macarchy_doctor ;;
-    "Edit config")           exec "${EDITOR:-open}" "$MACARCHY_ROOT/home" ;;
+    "Update everything")     source "$OMACASE_ROOT/lib/update.sh"; omacase_update ;;
+    "Switch theme")          source "$OMACASE_ROOT/lib/theme.sh";  omacase_theme ;;
+    "Switch window manager") source "$OMACASE_ROOT/lib/wm.sh";     omacase_wm ;;
+    "Run doctor")            source "$OMACASE_ROOT/lib/doctor.sh"; omacase_doctor ;;
+    "Edit config")           exec "${EDITOR:-open}" "$OMACASE_ROOT/home" ;;
     "Quit"|"")               return ;;
   esac
 }

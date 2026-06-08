@@ -1,19 +1,19 @@
 #!/bin/bash
-# macarchy bootstrap — the curl|bash entry point.
+# omacase bootstrap — the curl|bash entry point.
 #
-#   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/splaice/macarchy/main/boot.sh)"
+#   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/splaice/omacase/main/boot.sh)"
 #
 # Installs the prerequisites (Xcode CLT, Homebrew), clones the payload to
-# ~/.local/share/macarchy, and hands off to `macarchy install`.
+# ~/.local/share/omacase, and hands off to `omacase install`.
 set -euo pipefail
 
-REPO="${MACARCHY_REPO:-https://github.com/splaice/macarchy.git}"
-PREFIX="${MACARCHY_PREFIX:-$HOME/.local/share/macarchy}"
+REPO="${OMACASE_REPO:-https://github.com/splaice/omacase.git}"
+PREFIX="${OMACASE_PREFIX:-$HOME/.local/share/omacase}"
 
 abort() { printf '\033[31m✗ %s\033[0m\n' "$*" >&2; exit 1; }
 info()  { printf '\033[34m➜ %s\033[0m\n' "$*"; }
 
-[ "$(uname -s)" = "Darwin" ] || abort "macarchy only runs on macOS."
+[ "$(uname -s)" = "Darwin" ] || abort "omacase only runs on macOS."
 
 # 1. Xcode Command Line Tools (provides git + compilers Homebrew needs).
 if ! xcode-select -p >/dev/null 2>&1; then
@@ -34,14 +34,14 @@ elif [ -x /usr/local/bin/brew ]; then eval "$(/usr/local/bin/brew shellenv)"; fi
 
 # 3. Clone or update the payload.
 if [ -d "$PREFIX/.git" ]; then
-  info "Updating existing macarchy payload at $PREFIX…"
+  info "Updating existing omacase payload at $PREFIX…"
   git -C "$PREFIX" pull --ff-only
 else
-  info "Cloning macarchy → $PREFIX…"
+  info "Cloning omacase → $PREFIX…"
   mkdir -p "$(dirname "$PREFIX")"
   git clone --depth 1 "$REPO" "$PREFIX"
 fi
 
 # 4. Hand off.
-info "Running macarchy install…"
-exec "$PREFIX/bin/macarchy" install
+info "Running omacase install…"
+exec "$PREFIX/bin/omacase" install

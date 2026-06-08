@@ -1,6 +1,6 @@
 #!/bin/bash
-# macarchy SketchyBar — minimal AeroSpace workspace strip + clock.
-# Theme colors come from ~/.config/sketchybar/theme.sh (set by `macarchy theme`).
+# omacase SketchyBar — minimal AeroSpace workspace strip + clock.
+# Theme colors come from ~/.config/sketchybar/theme.sh (set by `omacase theme`).
 source "$HOME/.config/sketchybar/theme.sh" 2>/dev/null || true
 : "${BAR_COLOR:=0xff1e1e2e}" "${LABEL_COLOR:=0xffcdd6f4}" "${ACCENT:=0xff89b4fa}"
 

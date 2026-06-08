@@ -1,25 +1,25 @@
 # shellcheck shell=bash
-# `macarchy doctor` — diagnose the things an installer can't fix automatically:
+# `omacase doctor` — diagnose the things an installer can't fix automatically:
 # TCC permission grants and SIP state. Deep-links to the right Settings pane.
 
-macarchy_doctor() {
+omacase_doctor() {
   ensure_brew_env
   local issues=0
 
   step "Tooling"
   for c in brew chezmoi sketchybar borders; do
-    if have "$c"; then success "$c installed"; else error "$c missing — run \`macarchy install\`"; ((issues++)); fi
+    if have "$c"; then success "$c installed"; else error "$c missing — run \`omacase install\`"; ((issues++)); fi
   done
 
   step "Window manager"
-  local wm; wm="$(cat "$MACARCHY_STATE/wm" 2>/dev/null || echo aerospace)"
+  local wm; wm="$(cat "$OMACASE_STATE/wm" 2>/dev/null || echo aerospace)"
   info "Active profile: $wm"
   if [ "$wm" = aerospace ]; then
-    pgrep -x AeroSpace >/dev/null && success "AeroSpace running" || { warn "AeroSpace not running — \`macarchy wm aerospace\`"; ((issues++)); }
+    pgrep -x AeroSpace >/dev/null && success "AeroSpace running" || { warn "AeroSpace not running — \`omacase wm aerospace\`"; ((issues++)); }
   else
     pgrep -x yabai >/dev/null && success "yabai running" || { warn "yabai not running"; ((issues++)); }
     if csrutil status 2>/dev/null | grep -qi enabled; then
-      error "SIP fully enabled — yabai scripting addition won't load. See \`macarchy wm yabai\`."; ((issues++))
+      error "SIP fully enabled — yabai scripting addition won't load. See \`omacase wm yabai\`."; ((issues++))
     fi
   fi
 

@@ -1,9 +1,9 @@
 # shellcheck shell=bash
 # Shared helpers: logging, idempotency guards, brew/PATH bootstrap, state dir.
-# Sourced by bin/macarchy and every lib/*.sh.
+# Sourced by bin/omacase and every lib/*.sh.
 
-MACARCHY_STATE="${MACARCHY_STATE:-$HOME/.local/state/macarchy}"
-mkdir -p "$MACARCHY_STATE"
+OMACASE_STATE="${OMACASE_STATE:-$HOME/.local/state/omacase}"
+mkdir -p "$OMACASE_STATE"
 
 # --- logging -----------------------------------------------------------------
 _c()      { printf '\033[%sm' "$1"; }
@@ -33,10 +33,10 @@ ensure_brew_env() {
 have() { command -v "$1" >/dev/null 2>&1; }
 
 # --- dry run -----------------------------------------------------------------
-# Set MACARCHY_DRYRUN=1 to print mutating commands instead of running them.
+# Set OMACASE_DRYRUN=1 to print mutating commands instead of running them.
 # Wrap every side-effecting command (brew, chezmoi, ln, defaults, services…)
 # in `run`. Read-only inspection commands don't need it.
-is_dryrun() { [ -n "${MACARCHY_DRYRUN:-}" ]; }
+is_dryrun() { [ -n "${OMACASE_DRYRUN:-}" ]; }
 
 run() {
   if is_dryrun; then
@@ -56,7 +56,7 @@ dryrun_banner() {
 # should instead be naturally idempotent (brew bundle, chezmoi apply).
 once() {
   local key="$1"; shift
-  local marker="$MACARCHY_STATE/once.$key"
+  local marker="$OMACASE_STATE/once.$key"
   if [ -f "$marker" ]; then return 0; fi
   "$@" && touch "$marker"
 }

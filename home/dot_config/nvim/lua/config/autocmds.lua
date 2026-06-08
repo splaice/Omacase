@@ -1,2 +1,2 @@
 -- Extra autocmds on top of LazyVim defaults.
--- Add macarchy-specific autocmds here.
+-- Add omacase-specific autocmds here.

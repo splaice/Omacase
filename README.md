@@ -1,18 +1,18 @@
-# macarchy
+# Omacase
 
 An opinionated, tiling macOS — installed, configured, themed, and managed from a
 single command. Omarchy's ethos (keyboard-first, one consistent theme everywhere,
 one-command reproducible) translated to where macOS actually wants to go.
 
 ```bash
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/splaice/macarchy/main/boot.sh)"
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/splaice/omacase/main/boot.sh)"
 ```
 
-This installs Xcode CLT + Homebrew, clones to `~/.local/share/macarchy`, and runs
-`macarchy install`. Then:
+This installs Xcode CLT + Homebrew, clones to `~/.local/share/omacase`, and runs
+`omacase install`. Then:
 
 ```bash
-macarchy doctor      # grant Accessibility to AeroSpace, SketchyBar, Karabiner, Raycast
+omacase doctor      # grant Accessibility to AeroSpace, SketchyBar, Karabiner, Raycast
 ```
 
 ## The stack
@@ -31,13 +31,13 @@ macarchy doctor      # grant Accessibility to AeroSpace, SketchyBar, Karabiner, 
 
 ## Commands
 ```
-MACARCHY_DRYRUN=1 macarchy install   # print every change without touching the system
-macarchy install            # idempotent full setup (re-runnable)
-macarchy update             # pull + brew bundle + re-apply everything
-macarchy theme [name]       # apply a theme everywhere at once
-macarchy wm aerospace|yabai # switch window-manager profile
-macarchy doctor             # check perms, SIP, missing grants
-macarchy menu               # gum TUI (bind to a Raycast hotkey)
+OMACASE_DRYRUN=1 omacase install   # print every change without touching the system
+omacase install            # idempotent full setup (re-runnable)
+omacase update             # pull + brew bundle + re-apply everything
+omacase theme [name]       # apply a theme everywhere at once
+omacase wm aerospace|yabai # switch window-manager profile
+omacase doctor             # check perms, SIP, missing grants
+omacase menu               # gum TUI (bind to a Raycast hotkey)
 ```
 
 ## Keybinds
@@ -53,7 +53,7 @@ Super (right ⌘) — global command access via Raycast (all left-hand, two-hand
 - `Super + E` — emoji & symbols / snippets
 
 > Raycast stores hotkeys in its own settings, not a dotfile — set these two in
-> Raycast prefs once. `macarchy doctor` reminds you.
+> Raycast prefs once. `omacase doctor` reminds you.
 
 Alt — AeroSpace tiling (Hyprland-style):
 - `Alt + h/j/k/l` — focus
@@ -63,16 +63,16 @@ Alt — AeroSpace tiling (Hyprland-style):
 
 ## The two honest limits
 1. **Permissions** (Accessibility/Input Monitoring) must be granted by hand — macOS
-   requires it. `macarchy doctor` links you straight there.
+   requires it. `omacase doctor` links you straight there.
 2. **yabai** needs SIP partially disabled (a manual Recovery step). The default
    **AeroSpace** profile needs none of that. Blur/window-animations are not possible
    on macOS regardless of WM — only borders.
 
 ## Managed by Claude
-`skills/macarchy/SKILL.md` teaches Claude to drive this CLI — so the same surface that
+`skills/omacase/SKILL.md` teaches Claude to drive this CLI — so the same surface that
 installs the system also lets an agent retheme, diagnose, and reconfigure it.
 
 > Status: **0.1.0 scaffold** — the CLI engine, AeroSpace/SketchyBar/Ghostty/borders
 > configs, Karabiner Super key, Neovim/LazyVim (theme-integrated), and both themes
-> are real. Raycast hotkeys are set by hand once (see `macarchy doctor`); btop/starship
+> are real. Raycast hotkeys are set by hand once (see `omacase doctor`); btop/starship
 > theme fragments and extra themes are still to come.

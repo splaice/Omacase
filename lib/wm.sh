@@ -1,12 +1,12 @@
 # shellcheck shell=bash
-# `macarchy wm <aerospace|yabai>` — choose the window-manager profile.
+# `omacase wm <aerospace|yabai>` — choose the window-manager profile.
 #
 #   aerospace (default): no SIP disable, stable, i3-style tiling.
 #   yabai (advanced):    real BSP dynamic tiling, but requires SIP partially
 #                        disabled (manual Recovery step — see _yabai_notes).
 # Both share SketchyBar + JankyBorders.
 
-macarchy_wm() {
+omacase_wm() {
   local profile="${1:-}"
   [ -n "$profile" ] || profile="$(gum_choose "Window manager profile" aerospace yabai)" || return
 
@@ -15,7 +15,7 @@ macarchy_wm() {
     yabai)     _wm_use_yabai ;;
     *) abort "Unknown wm profile '$profile' (aerospace|yabai)" ;;
   esac
-  is_dryrun || echo "$profile" > "$MACARCHY_STATE/wm"
+  is_dryrun || echo "$profile" > "$OMACASE_STATE/wm"
 }
 
 _wm_stop_all() {
@@ -62,7 +62,7 @@ _yabai_notes() {
     1. Apple menu → Restart, hold the power button to reach Recovery (Apple Silicon).
     2. Utilities → Terminal:  csrutil disable --with kext --with dtrace --with nvram
     3. Reboot, then:          sudo yabai --load-sa
-    4. Re-run:                macarchy wm yabai
+    4. Re-run:                omacase wm yabai
   Prefer not to? Stay on AeroSpace — it needs none of this.
 EOF
 }

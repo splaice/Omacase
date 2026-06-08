@@ -1,4 +1,4 @@
--- macarchy theme integration. `macarchy theme <name>` symlinks
+-- omacase theme integration. `omacase theme <name>` symlinks
 -- themes/<name>/nvim.lua → ~/.config/nvim/lua/theme.lua, which returns the
 -- colorscheme name. We read it here so the editor matches the rest of the system.
 local ok, colorscheme = pcall(require, "theme")

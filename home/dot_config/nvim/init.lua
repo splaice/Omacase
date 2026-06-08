@@ -1,2 +1,2 @@
--- macarchy Neovim — LazyVim base. Bootstraps lazy.nvim and loads plugins.
+-- omacase Neovim — LazyVim base. Bootstraps lazy.nvim and loads plugins.
 require("config.lazy")

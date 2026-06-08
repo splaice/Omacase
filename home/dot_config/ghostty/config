@@ -1,4 +1,4 @@
-# macarchy Ghostty config. Theme is swapped by `macarchy theme` via the
+# omacase Ghostty config. Theme is swapped by `omacase theme` via the
 # config-file include below (symlinked to themes/<name>/ghostty).
 font-family = "JetBrainsMono Nerd Font"
 font-size = 14
@@ -12,5 +12,5 @@ background-opacity = 0.97
 mouse-hide-while-typing = true
 copy-on-select = clipboard
 
-# Theme is managed by macarchy (symlink → ~/.config/ghostty/theme).
+# Theme is managed by omacase (symlink → ~/.config/ghostty/theme).
 config-file = theme

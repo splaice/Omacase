@@ -1,5 +1,5 @@
-# macarchy Brewfile — the opinionated package set. `brew bundle` is idempotent.
-# Edit, then `macarchy update` (or `brew bundle`) to converge.
+# omacase Brewfile — the opinionated package set. `brew bundle` is idempotent.
+# Edit, then `omacase update` (or `brew bundle`) to converge.
 
 # --- Window management & desktop -------------------------------------------
 tap "nikitabobko/tap"
@@ -7,7 +7,7 @@ tap "FelixKratz/formulae"
 cask "nikitabobko/tap/aerospace"     # tiling WM (default profile, no SIP disable)
 brew "FelixKratz/formulae/sketchybar" # status bar (Waybar analog)
 brew "FelixKratz/formulae/borders"    # JankyBorders — active-window borders
-# yabai profile (advanced; needs SIP partially disabled — see `macarchy wm yabai`)
+# yabai profile (advanced; needs SIP partially disabled — see `omacase wm yabai`)
 brew "koekeishiya/formulae/yabai"
 brew "koekeishiya/formulae/skhd"
 tap  "koekeishiya/formulae"
@@ -42,7 +42,7 @@ brew "gh"
 
 # --- Dotfiles & tooling -----------------------------------------------------
 brew "chezmoi"           # dotfiles manager
-brew "gum"               # TUI for `macarchy menu`
+brew "gum"               # TUI for `omacase menu`
 
 # --- Fonts ------------------------------------------------------------------
 cask "font-jetbrains-mono-nerd-font"
