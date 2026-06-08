@@ -47,13 +47,14 @@ run() {
 }
 
 dryrun_banner() {
-  is_dryrun && printf '\033[1;33m▒▒ DRY RUN — no changes will be made ▒▒\033[0m\n'
+  # NOTE: must return 0 — called as a bare statement under `set -e`.
+  if is_dryrun; then printf '\033[1;33m▒▒ DRY RUN — no changes will be made ▒▒\033[0m\n'; fi
 }
 
 # --- idempotency -------------------------------------------------------------
 # once <key> <command...> : run command only the first time, record a marker.
 # Use for genuinely one-shot actions (e.g. changing login shell). Most steps
-# should instead be naturally idempotent (brew bundle, chezmoi apply).
+# should instead be naturally idempotent (brew bundle, symlinking, defaults).
 once() {
   local key="$1"; shift
   local marker="$OMACASE_STATE/once.$key"

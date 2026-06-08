@@ -8,7 +8,7 @@ omacase_doctor() {
 
   step "Tooling"
   for c in brew gum sketchybar borders; do
-    if have "$c"; then success "$c installed"; else error "$c missing — run \`omacase install\`"; ((issues++)); fi
+    if have "$c"; then success "$c installed"; else error "$c missing — run \`omacase install\`"; issues=$((issues + 1)); fi
   done
 
   step "Backups"
@@ -21,11 +21,11 @@ omacase_doctor() {
   local wm; wm="$(cat "$OMACASE_STATE/wm" 2>/dev/null || echo aerospace)"
   info "Active profile: $wm"
   if [ "$wm" = aerospace ]; then
-    pgrep -x AeroSpace >/dev/null && success "AeroSpace running" || { warn "AeroSpace not running — \`omacase wm aerospace\`"; ((issues++)); }
+    pgrep -x AeroSpace >/dev/null && success "AeroSpace running" || { warn "AeroSpace not running — \`omacase wm aerospace\`"; issues=$((issues + 1)); }
   else
-    pgrep -x yabai >/dev/null && success "yabai running" || { warn "yabai not running"; ((issues++)); }
+    pgrep -x yabai >/dev/null && success "yabai running" || { warn "yabai not running"; issues=$((issues + 1)); }
     if csrutil status 2>/dev/null | grep -qi enabled; then
-      error "SIP fully enabled — yabai scripting addition won't load. See \`omacase wm yabai\`."; ((issues++))
+      error "SIP fully enabled — yabai scripting addition won't load. See \`omacase wm yabai\`."; issues=$((issues + 1))
     fi
   fi
 
