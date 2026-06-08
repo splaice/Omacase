@@ -1,0 +1,13 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Editor/runtime junk
+*.swp
+*~
+
+# macarchy runtime state (lives in ~/.local/state/macarchy, not the repo, but
+# guard against accidental local copies)
+state/
+*.local

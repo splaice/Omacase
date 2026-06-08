@@ -1,0 +1,4 @@
+# Catppuccin Mocha — SketchyBar palette (sourced as theme.sh).
+export BAR_COLOR=0xff1e1e2e
+export LABEL_COLOR=0xffcdd6f4
+export ACCENT=0xff89b4fa

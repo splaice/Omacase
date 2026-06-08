@@ -1,0 +1,50 @@
+#!/bin/bash
+# macarchy — single command to install, configure, theme, and manage an
+# opinionated tiling macOS. Subcommands live in lib/*.sh.
+set -euo pipefail
+
+# Resolve the repo root regardless of how we were invoked (symlink-safe).
+SOURCE="${BASH_SOURCE[0]}"
+while [ -h "$SOURCE" ]; do
+  DIR="$(cd -P "$(dirname "$SOURCE")" && pwd)"
+  SOURCE="$(readlink "$SOURCE")"
+  [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE"
+done
+export MACARCHY_ROOT="$(cd -P "$(dirname "$SOURCE")/.." && pwd)"
+
+source "$MACARCHY_ROOT/lib/common.sh"
+
+usage() {
+  cat <<'EOF'
+macarchy — opinionated tiling macOS, managed from one command
+
+usage: macarchy <command> [args]
+
+  install            Full idempotent setup (re-runnable)
+  update             git pull + brew bundle + re-apply dotfiles & defaults
+  theme [name]       Apply a theme everywhere (no name = list/pick)
+  wm <aerospace|yabai>   Switch window-manager profile
+  doctor             Check permissions, SIP state, and missing grants
+  config             Open the config directory
+  menu               Interactive TUI (bind to a Raycast hotkey)
+  version            Print version
+  uninstall          Remove macarchy-managed config (keeps your apps)
+
+Run `macarchy doctor` after install to grant Accessibility permissions.
+EOF
+}
+
+cmd="${1:-menu}"; shift || true
+case "$cmd" in
+  install)        source "$MACARCHY_ROOT/lib/install.sh";  macarchy_install "$@" ;;
+  update)         source "$MACARCHY_ROOT/lib/update.sh";   macarchy_update  "$@" ;;
+  theme)          source "$MACARCHY_ROOT/lib/theme.sh";    macarchy_theme   "$@" ;;
+  wm)             source "$MACARCHY_ROOT/lib/wm.sh";       macarchy_wm      "$@" ;;
+  doctor)         source "$MACARCHY_ROOT/lib/doctor.sh";   macarchy_doctor  "$@" ;;
+  menu)           source "$MACARCHY_ROOT/lib/menu.sh";     macarchy_menu    "$@" ;;
+  config)         exec "${EDITOR:-open}" "$MACARCHY_ROOT/home" ;;
+  version|-v|--version) cat "$MACARCHY_ROOT/VERSION" ;;
+  uninstall)      source "$MACARCHY_ROOT/lib/install.sh";  macarchy_uninstall "$@" ;;
+  help|-h|--help) usage ;;
+  *) error "unknown command: $cmd"; echo; usage; exit 1 ;;
+esac

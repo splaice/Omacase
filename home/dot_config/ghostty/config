@@ -1,0 +1,16 @@
+# macarchy Ghostty config. Theme is swapped by `macarchy theme` via the
+# config-file include below (symlinked to themes/<name>/ghostty).
+font-family = "JetBrainsMono Nerd Font"
+font-size = 14
+font-thicken = true
+
+window-padding-x = 10
+window-padding-y = 10
+window-decoration = false
+macos-titlebar-style = hidden
+background-opacity = 0.97
+mouse-hide-while-typing = true
+copy-on-select = clipboard
+
+# Theme is managed by macarchy (symlink → ~/.config/ghostty/theme).
+config-file = theme

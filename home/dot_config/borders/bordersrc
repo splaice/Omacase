@@ -1,0 +1,10 @@
+#!/bin/bash
+# macarchy JankyBorders — the one bit of Hyprland eye-candy macOS allows.
+# Colors come from ~/.config/borders/theme.conf (set by `macarchy theme`).
+source "$HOME/.config/borders/theme.conf" 2>/dev/null || true
+
+borders \
+  active_color="${ACTIVE_BORDER:-0xff89b4fa}" \
+  inactive_color="${INACTIVE_BORDER:-0xff45475a}" \
+  width=4.0 \
+  hidpi=on

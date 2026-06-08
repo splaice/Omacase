@@ -1,0 +1,4 @@
+# Tokyo Night — SketchyBar palette (sourced as theme.sh).
+export BAR_COLOR=0xff1a1b26
+export LABEL_COLOR=0xffc0caf5
+export ACCENT=0xff7aa2f7

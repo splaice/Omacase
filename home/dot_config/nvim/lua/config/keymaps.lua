@@ -1,0 +1,2 @@
+-- Extra keymaps on top of LazyVim defaults (loaded after lazy starts).
+-- Add macarchy-specific maps here.
