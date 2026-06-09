@@ -26,8 +26,34 @@ omacase_theme() {
 
   is_dryrun || echo "$name" > "$OMACASE_STATE/theme"
   _theme_appearance "$name"
+  _theme_claudecode "$name"
   _theme_reload
   success "Theme '$name' applied."
+}
+
+# Keep Claude Code's UI theme in step with the omacase theme's brightness.
+# Claude reads ~/.claude/settings.json ("theme"); built-in themes apply on its
+# next launch (only custom themes hot-reload). We flip just the light/dark part,
+# preserving a -daltonized/-ansi variant and never fighting an explicit "auto".
+# jq edits in place so every other setting is left untouched.
+_theme_claudecode() {
+  local settings="$HOME/.claude/settings.json"
+  have jq || return 0
+  [ -f "$settings" ] || return 0
+  local want=dark; _theme_is_light "$1" && want=light
+  local cur; cur="$(jq -r '.theme // ""' "$settings" 2>/dev/null)"
+  [ "$cur" = auto ] && return 0
+  local suffix=""; case "$cur" in *-daltonized) suffix=-daltonized ;; *-ansi) suffix=-ansi ;; esac
+  local new="$want$suffix"
+  [ "$cur" = "$new" ] && return 0
+  if is_dryrun; then printf '\033[2m[dry-run]\033[0m Claude Code theme → %s\n' "$new"; return 0; fi
+  local tmp; tmp="$(mktemp)"
+  if jq --arg t "$new" '.theme = $t' "$settings" > "$tmp" 2>/dev/null && [ -s "$tmp" ]; then
+    mv "$tmp" "$settings"
+    info "Claude Code theme → $new (applies on its next launch)"
+  else
+    rm -f "$tmp"
+  fi
 }
 
 _theme_list() { ls -1 "$OMACASE_ROOT/themes" 2>/dev/null; }
