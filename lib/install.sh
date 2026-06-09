@@ -8,19 +8,19 @@ omacase_install() {
   dryrun_banner
   source "$OMACASE_ROOT/lib/backup.sh"
 
-  step "1/6  Packages & apps (brew bundle)"
+  step "1/8  Packages & apps (brew bundle)"
   run brew bundle --file="$OMACASE_ROOT/Brewfile" || warn "Some brew items failed; re-run later."
 
-  step "2/6  Safety backup (so this is reversible)"
+  step "2/8  Safety backup (so this is reversible)"
   _auto_backup
 
-  step "3/6  Dotfiles (symlinks)"
+  step "3/8  Dotfiles (symlinks)"
   _link_dotfiles
 
-  step "4/6  macOS defaults"
+  step "4/8  macOS defaults"
   bash "$OMACASE_ROOT/macos/defaults.sh"   # honors OMACASE_DRYRUN itself
 
-  step "5/6  Theme"
+  step "5/8  Theme"
   source "$OMACASE_ROOT/lib/theme.sh"
   omacase_theme "$(cat "$OMACASE_STATE/theme" 2>/dev/null || echo catppuccin-mocha)"
   # Theme switching flips macOS Light/Dark; that needs Automation consent, which
@@ -28,12 +28,16 @@ omacase_install() {
   is_dryrun || can_set_appearance || \
     warn "Grant your terminal Automation → System Events so themes can sync macOS Light/Dark (\`omacase doctor\` re-checks)."
 
-  step "6/7  Window manager + services"
+  step "6/8  Window manager + services"
   check_loop_conflict || true   # Loop fights AeroSpace/yabai; offer to quit it first
   source "$OMACASE_ROOT/lib/wm.sh"
   omacase_wm "$(cat "$OMACASE_STATE/wm" 2>/dev/null || echo aerospace)"
 
-  step "7/7  Launch desktop apps (triggers their permission prompts)"
+  step "7/8  Spotlight launchers (web apps + appearance toggle)"
+  source "$OMACASE_ROOT/lib/actions.sh"
+  omacase_launchers build || warn "Some launchers failed; re-run with \`omacase launchers build\`."
+
+  step "8/8  Launch desktop apps (triggers their permission prompts)"
   _launch_apps
 
   step "Done"

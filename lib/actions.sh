@@ -12,6 +12,8 @@ _webapp_url() {
     grok)     echo "https://grok.com" ;;
     calendar) echo "https://calendar.google.com/" ;;
     email)    echo "https://mail.google.com/" ;;
+    hey-cal)  echo "https://app.hey.com/calendar/weeks/" ;;  # a nod to DHH/Omarchy
+    hey-mail) echo "https://app.hey.com" ;;
     youtube)  echo "https://youtube.com/" ;;
     whatsapp) echo "https://web.whatsapp.com/" ;;
     messages) echo "https://messages.google.com/web/conversations" ;;
@@ -21,7 +23,7 @@ _webapp_url() {
     *)        return 1 ;;
   esac
 }
-_webapp_names="chatgpt grok calendar email youtube whatsapp messages photos x x-post"
+_webapp_names="chatgpt grok calendar email hey-cal hey-mail youtube whatsapp messages photos x x-post"
 
 # omacase webapp [name] — open a named web app. With no name (or `list`), print
 # the set. Opens as a chromeless "app" window when a Chromium browser is present
@@ -78,6 +80,8 @@ _LAUNCHERS=(
   "Omacase Grok|webapp grok"
   "Omacase Mail|webapp email"
   "Omacase Cal|webapp calendar"
+  "Omacase Hey Mail|webapp hey-mail"
+  "Omacase Hey Calendar|webapp hey-cal"
   "Omacase YouTube|webapp youtube"
   "Omacase WhatsApp|webapp whatsapp"
   "Omacase Messages|webapp messages"
