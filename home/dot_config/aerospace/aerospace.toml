@@ -81,6 +81,7 @@ cmd-ctrl-alt-shift-8 = 'move-node-to-workspace 8'
 cmd-ctrl-alt-shift-9 = 'move-node-to-workspace 9'
 
 # --- misc ---
+cmd-ctrl-alt-enter         = 'exec-and-forget open -na Ghostty'   # Super+Return → terminal (Omarchy)
 cmd-ctrl-alt-tab           = 'workspace-back-and-forth'
 cmd-ctrl-alt-shift-tab     = 'move-workspace-to-monitor --wrap-around next'
 cmd-ctrl-alt-shift-c       = 'reload-config'

@@ -89,6 +89,11 @@ browser, else the default browser.
 ## Super — AeroSpace window management
 **Super** = **right ⌘** (Karabiner maps it to `⌃⌥⌘`). Mirrors Omarchy's `SUPER`.
 
+### Apps
+| Keys | Action |
+|---|---|
+| `Super + Return` | Open a new Ghostty terminal window |
+
 ### Focus / move (WASD — W up, A left, S down, D right)
 | Keys | Action |
 |---|---|
