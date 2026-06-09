@@ -31,11 +31,18 @@ omacase_doctor() {
 
   step "Desktop apps"
   pgrep -x Raycast >/dev/null && success "Raycast running" || { warn "Raycast not running — \`open -a Raycast\`"; issues=$((issues + 1)); }
-  if pgrep -x Karabiner-Elements >/dev/null; then
-    if pgrep -x karabiner_grabber >/dev/null; then
-      success "Karabiner active (Super key live)"
+  # Karabiner 15+ uses DriverKit; the real "Super key live" signal is the system
+  # extension being 'activated enabled' (not 'waiting for user').
+  if pgrep -x Karabiner-Elements >/dev/null || pgrep -f Karabiner-Core-Service >/dev/null; then
+    local se; se="$(systemextensionsctl list 2>/dev/null | grep -i karabiner)"
+    if printf '%s' "$se" | grep -q 'activated enabled'; then
+      success "Karabiner driver active (Super key live)"
+    elif printf '%s' "$se" | grep -q 'waiting for user'; then
+      warn "Karabiner driver is 'waiting for user' — APPROVE it: System Settings → General →"
+      warn "  Login Items & Extensions → Driver Extensions (toggle Karabiner on)."
+      issues=$((issues + 1))
     else
-      warn "Karabiner running but driver/Input-Monitoring not granted — Super (right ⌘) won't work yet."
+      warn "Karabiner driver extension not enabled — enable it + Input Monitoring."
       issues=$((issues + 1))
     fi
   else
