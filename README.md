@@ -71,11 +71,44 @@ Launcher — **Spotlight** (built in; no third-party launcher):
 (`home/dot_config/karabiner/karabiner.json`) — Hyper *minus* Shift, so `Super+Shift`
 stays free as the "move" layer. It drives AeroSpace, mirroring Omarchy's `SUPER`.
 
-Super — AeroSpace tiling (Hyprland-style):
-- `Super + w/a/s/d` — focus (up/left/down/right)
-- `Super + Shift + w/a/s/d` — move window
-- `Super + [1-9]` — switch workspace · `Super + Shift + [1-9]` — move window to workspace
-- `Super + f` — fullscreen · `Super + Shift + Space` — toggle float · `Super + Shift + c` — reload
+### Super — AeroSpace tiling (Hyprland-style)
+
+Terminal:
+| Keys | Action |
+|---|---|
+| `Super + Return` | New Ghostty window |
+| `Super + Shift + Return` | Ghostty into tmux (attaches/creates session `main`) |
+
+Focus & move (WASD — W up, A left, S down, D right):
+| Keys | Action |
+|---|---|
+| `Super + w / a / s / d` | Focus window up / left / down / right |
+| `Super + Shift + w / a / s / d` | Move window up / left / down / right |
+
+Layout & size:
+| Keys | Action |
+|---|---|
+| `Super + f` | Fullscreen toggle |
+| `Super + = / -` | Grow / shrink focused window |
+| `Super + e` | Tiles layout — flip split orientation (side-by-side ↔ stacked) |
+| `Super + q` | Accordion layout — focused window stays large, rest tuck aside |
+| `Super + Shift + Space` | Float / unfloat the window |
+
+Workspaces & monitors:
+| Keys | Action |
+|---|---|
+| `Super + 1 … 9` | Switch to workspace N |
+| `Super + Shift + 1 … 9` | Send focused window to workspace N |
+| `Super + Tab` | Next workspace (wraps around) |
+| `Super + Shift + Tab` | Previous workspace (wraps around) |
+
+Config & service mode:
+| Keys | Action |
+|---|---|
+| `Super + Shift + c` | Reload AeroSpace config |
+| `Super + Shift + ;` | Enter service mode, then: `esc` reload · `r` reset tree · `f` float toggle · `backspace` close others · `tab` former workspace · `m` move workspace to next monitor |
+
+Full reference (incl. Spotlight launchers and web apps): [`KEYBINDS.md`](KEYBINDS.md).
 
 ## The two honest limits
 1. **Permissions** (Accessibility/Input Monitoring) must be granted by hand — macOS

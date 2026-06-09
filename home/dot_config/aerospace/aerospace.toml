@@ -82,16 +82,21 @@ cmd-ctrl-alt-shift-9 = 'move-node-to-workspace 9'
 
 # --- misc ---
 cmd-ctrl-alt-enter         = 'exec-and-forget open -na Ghostty'   # Super+Return → terminal (Omarchy)
-cmd-ctrl-alt-tab           = 'workspace-back-and-forth'
-cmd-ctrl-alt-shift-tab     = 'move-workspace-to-monitor --wrap-around next'
+cmd-ctrl-alt-shift-enter   = 'exec-and-forget open -na Ghostty --args -e tmux new-session -A -s main'   # Super+Shift+Return → terminal + tmux (attach/create "main")
+cmd-ctrl-alt-tab           = 'workspace --wrap-around next'   # Super+Tab → next workspace (Omarchy)
+cmd-ctrl-alt-shift-tab     = 'workspace --wrap-around prev'   # Super+Shift+Tab → previous workspace (Omarchy)
 cmd-ctrl-alt-shift-c       = 'reload-config'
 cmd-ctrl-alt-shift-semicolon = 'mode service'   # enter a service sub-mode
 
+# Service mode hosts the functions Omarchy puts on Super+Ctrl / Super+Shift+Alt —
+# chords we can't express, since Super (⌃⌥⌘) already consumes Ctrl and Alt.
 [mode.service.binding]
 esc          = ['reload-config', 'mode main']
 r            = ['flatten-workspace-tree', 'mode main']  # reset tree
 f            = ['layout floating tiling', 'mode main']
 backspace    = ['close-all-windows-but-current', 'mode main']
+tab          = ['workspace-back-and-forth', 'mode main']                       # former workspace (Omarchy Super+Ctrl+Tab)
+m            = ['move-workspace-to-monitor --wrap-around next', 'mode main']    # send workspace to next monitor
 
 # Example window rule: float the system Settings & Finder info windows.
 [[on-window-detected]]

@@ -93,6 +93,7 @@ browser, else the default browser.
 | Keys | Action |
 |---|---|
 | `Super + Return` | Open a new Ghostty terminal window |
+| `Super + Shift + Return` | Open Ghostty into tmux (attaches/creates session `main`) |
 
 ### Focus / move (WASD — W up, A left, S down, D right)
 | Keys | Action |
@@ -115,16 +116,21 @@ browser, else the default browser.
 |---|---|
 | `Super + 1 … 9` | Switch to workspace N |
 | `Super + Shift + 1 … 9` | Send focused window to workspace N |
-| `Super + Tab` | Toggle to previous workspace |
-| `Super + Shift + Tab` | Move workspace to the next monitor |
+| `Super + Tab` | Next workspace (wraps around) |
+| `Super + Shift + Tab` | Previous workspace (wraps around) |
 
 ### Service mode — `Super + Shift + ;`, then:
+Hosts the functions Omarchy puts on `Super+Ctrl` / `Super+Shift+Alt` — chords we
+can't express because **Super** (`⌃⌥⌘`) already uses Ctrl and Alt.
+
 | Key | Action |
 |---|---|
 | `esc` | Reload config and exit service mode |
 | `r` | Flatten / reset the workspace tree (fixes weird splits) |
 | `f` | Toggle floating/tiling for the window |
 | `backspace` | Close all windows but the focused one |
+| `tab` | Jump to the former (last-focused) workspace |
+| `m` | Move the current workspace to the next monitor |
 
 ---
 
