@@ -4,14 +4,14 @@
 # (omarchy-launch-webapp, the toggle scripts). Each is a clean one-liner a
 # Shortcut's "Run Shell Script" step can call.
 
-# Omarchy's default web-app set (name -> URL). Kept in sync with Omarchy's
-# config/hypr/bindings.conf Super+Shift web apps.
+# Web-app set (name -> URL). Based on Omarchy's config/hypr/bindings.conf
+# Super+Shift web apps, with email/calendar pointed at Gmail / Google Calendar.
 _webapp_url() {
   case "$1" in
     chatgpt)  echo "https://chatgpt.com" ;;
     grok)     echo "https://grok.com" ;;
-    calendar) echo "https://app.hey.com/calendar/weeks/" ;;
-    email)    echo "https://app.hey.com" ;;
+    calendar) echo "https://calendar.google.com/" ;;
+    email)    echo "https://mail.google.com/" ;;
     youtube)  echo "https://youtube.com/" ;;
     whatsapp) echo "https://web.whatsapp.com/" ;;
     messages) echo "https://messages.google.com/web/conversations" ;;
@@ -74,17 +74,17 @@ omacase_appearance() {
 # Display name | omacase subcommand+args. Names are picked to be distinct in
 # Spotlight (e.g. "Google Photos", not "Photos", which collides with Photos.app).
 _LAUNCHERS=(
-  "ChatGPT|webapp chatgpt"
-  "Grok|webapp grok"
-  "HEY Email|webapp email"
-  "HEY Calendar|webapp calendar"
-  "YouTube|webapp youtube"
-  "WhatsApp|webapp whatsapp"
-  "Google Messages|webapp messages"
-  "Google Photos|webapp photos"
-  "X|webapp x"
-  "X Post|webapp x-post"
-  "Toggle Appearance|appearance toggle"
+  "Omacase ChatGPT|webapp chatgpt"
+  "Omacase Grok|webapp grok"
+  "Omacase Mail|webapp email"
+  "Omacase Cal|webapp calendar"
+  "Omacase YouTube|webapp youtube"
+  "Omacase WhatsApp|webapp whatsapp"
+  "Omacase Messages|webapp messages"
+  "Omacase Photos|webapp photos"
+  "Omacase X|webapp x"
+  "Omacase X Post|webapp x-post"
+  "Omacase Appearance|appearance toggle"
 )
 
 omacase_launchers() {
@@ -97,6 +97,15 @@ omacase_launchers() {
   have osacompile || abort "osacompile not found (ships with macOS)."
 
   mkdir -p "$dir"
+  # Clear any previously-generated launchers first, so renames/removals don't
+  # leave stale .app bundles behind. Identified by the marker file we write.
+  if ! is_dryrun; then
+    local old
+    for old in "$dir"/*.app; do
+      [ -e "$old/Contents/Resources/.omacase-launcher" ] && rm -rf "$old"
+    done
+  fi
+
   local entry name args app tmp
   for entry in "${_LAUNCHERS[@]}"; do
     name="${entry%%|*}"; args="${entry#*|}"

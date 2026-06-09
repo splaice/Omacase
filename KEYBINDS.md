@@ -36,11 +36,12 @@ omacase launchers          # build ~/Applications/*.app for every web app + Togg
 omacase launchers remove   # delete them again (only the ones omacase made)
 ```
 
-Then open any from Spotlight (`⌘Space`, type the name): ChatGPT, Grok, HEY Email,
-HEY Calendar, YouTube, WhatsApp, Google Messages, Google Photos, X, X Post, Toggle
-Appearance. First launch of *Toggle Appearance* prompts once for Automation. (The
-Super key drives AeroSpace now, so these are invoked by typing in Spotlight, not a
-Super chord.)
+All launchers are named with an **`Omacase ` prefix**, so typing "Omacase" in
+Spotlight (`⌘Space`) lists them all: **Omacase ChatGPT, Omacase Grok, Omacase Mail**
+(Gmail), **Omacase Cal** (Google Calendar), **Omacase YouTube, Omacase WhatsApp,
+Omacase Messages, Omacase Photos, Omacase X, Omacase X Post, Omacase Appearance**.
+First launch of *Omacase Appearance* prompts once for Automation. (The Super key
+drives AeroSpace now, so these are invoked by typing in Spotlight, not a Super chord.)
 
 **Or by hand as a Shortcut** (gets auto-learned Quick Keys, unlike a `.app`):
 Shortcuts app → New Shortcut → "Run Shell Script", paste a command, name it:
@@ -69,8 +70,8 @@ browser, else the default browser.
 |---|---|---|
 | ChatGPT | `webapp chatgpt` | `Super Shift A` |
 | Grok | `webapp grok` | `Super Shift Alt A` |
-| Email | `webapp email` | `Super Shift E` |
-| Calendar | `webapp calendar` | `Super Shift C` |
+| Mail (Gmail) | `webapp email` | `Super Shift E` |
+| Cal (Google) | `webapp calendar` | `Super Shift C` |
 | YouTube | `webapp youtube` | `Super Shift Y` |
 | WhatsApp | `webapp whatsapp` | `Super Shift Alt G` |
 | Messages | `webapp messages` | `Super Shift Ctrl G` |
