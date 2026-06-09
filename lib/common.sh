@@ -62,6 +62,39 @@ once() {
   "$@" && touch "$marker"
 }
 
+# --- conflicting window managers ---------------------------------------------
+# Loop (com.MrKai77.Loop) is a third-party window manager. Its global drag-to-
+# snap and keyboard shortcuts fight AeroSpace/yabai for control of the same
+# windows, producing flicker and lost focus. Detect it and offer to quit it +
+# stop it relaunching at login. Used by both `install` and `doctor`.
+# Returns 0 when there's no live conflict, 1 when Loop is still running after.
+_loop_installed() { [ -d "/Applications/Loop.app" ] || [ -d "$HOME/Applications/Loop.app" ]; }
+_loop_running()   { pgrep -x Loop >/dev/null 2>&1; }
+
+check_loop_conflict() {
+  _loop_installed || return 0
+  if ! _loop_running; then
+    info "Loop is installed but not running — keep it closed to avoid window-manager conflicts."
+    return 0
+  fi
+
+  warn "Loop is running — it conflicts with the Omacase window manager (AeroSpace/yabai)."
+  if confirm "Quit Loop now and stop it launching at login?"; then
+    run osascript -e 'tell application "Loop" to quit' >/dev/null 2>&1 || run killall Loop >/dev/null 2>&1 || true
+    # Best-effort: only removes a classic System Events login item. Apps using
+    # SMAppService won't appear here, so we also tell the user to toggle it off.
+    run osascript -e 'tell application "System Events" to delete login item "Loop"' >/dev/null 2>&1 || true
+    if _loop_running; then
+      warn "Loop did not quit — close it manually (menu bar → Quit)."
+      return 1
+    fi
+    success "Loop quit. Also disable 'Launch at login' in Loop → Settings to be sure."
+    return 0
+  fi
+  warn "Leaving Loop running — expect window-management conflicts with Omacase."
+  return 1
+}
+
 # --- gum (optional TUI sugar) ------------------------------------------------
 gum_choose() { # gum_choose "header" opt1 opt2 ...  -> prints choice
   local header="$1"; shift

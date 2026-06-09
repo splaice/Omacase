@@ -28,6 +28,7 @@ omacase_doctor() {
       error "SIP fully enabled — yabai scripting addition won't load. See \`omacase wm yabai\`."; issues=$((issues + 1))
     fi
   fi
+  check_loop_conflict || issues=$((issues + 1))
 
   step "Desktop apps"
   pgrep -x Raycast >/dev/null && success "Raycast running" || { warn "Raycast not running — \`open -a Raycast\`"; issues=$((issues + 1)); }

@@ -25,6 +25,7 @@ omacase_install() {
   omacase_theme "$(cat "$OMACASE_STATE/theme" 2>/dev/null || echo catppuccin-mocha)"
 
   step "6/7  Window manager + services"
+  check_loop_conflict || true   # Loop fights AeroSpace/yabai; offer to quit it first
   source "$OMACASE_ROOT/lib/wm.sh"
   omacase_wm "$(cat "$OMACASE_STATE/wm" 2>/dev/null || echo aerospace)"
 
