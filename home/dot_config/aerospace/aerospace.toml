@@ -30,8 +30,8 @@ inner.horizontal = 8
 inner.vertical   = 8
 outer.left       = 8
 outer.right      = 8
-outer.top        = 8       # raise to ~40 if SketchyBar overlaps windows
-outer.bottom     = 8
+outer.top        = 8       # macOS menu bar; AeroSpace already avoids it
+outer.bottom     = 40      # room for SketchyBar (position=bottom, height 32)
 
 [mode.main.binding]
 # --- focus (Alt + hjkl) ---

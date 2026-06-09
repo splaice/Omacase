@@ -2,32 +2,56 @@
 # omacase SketchyBar — minimal AeroSpace workspace strip + clock.
 # Theme colors come from ~/.config/sketchybar/theme.sh (set by `omacase theme`).
 source "$HOME/.config/sketchybar/theme.sh" 2>/dev/null || true
-: "${BAR_COLOR:=0xff1e1e2e}" "${LABEL_COLOR:=0xffcdd6f4}" "${ACCENT:=0xff89b4fa}"
+: "${BAR_COLOR:=0xff1e1e2e}" "${LABEL_COLOR:=0xffcdd6f4}" "${ACCENT:=0xff89b4fa}" "${MUTED:=0xff6c7086}"
 
-sketchybar --bar height=32 position=top padding_left=8 padding_right=8 color="$BAR_COLOR"
+# SketchyBar's daemon runs with a minimal PATH (no Homebrew), so bare `aerospace`
+# isn't found in click/init scripts it spawns. Resolve an absolute path once and
+# bake it into those commands.
+AEROSPACE="$(command -v aerospace 2>/dev/null)"
+[ -n "$AEROSPACE" ] || for p in /opt/homebrew/bin/aerospace /usr/local/bin/aerospace; do
+  [ -x "$p" ] && AEROSPACE="$p" && break
+done
+AEROSPACE="${AEROSPACE:-aerospace}"
+
+sketchybar --bar height=32 position=bottom padding_left=8 padding_right=8 color="$BAR_COLOR"
 sketchybar --default label.color="$LABEL_COLOR" icon.color="$LABEL_COLOR" \
   label.font="JetBrainsMono Nerd Font:Bold:13.0" padding_left=4 padding_right=4
+
+# The custom event must exist BEFORE any item subscribes to it, otherwise the
+# --subscribe silently no-ops and items never receive workspace-change updates.
+sketchybar --add event aerospace_workspace_change
 
 # Workspace indicators, driven by AeroSpace's exec-on-workspace-change trigger.
 for sid in 1 2 3 4 5 6 7 8 9; do
   sketchybar --add item space.$sid left \
     --set space.$sid label="$sid" \
-      click_script="aerospace workspace $sid" \
+      click_script="$AEROSPACE workspace $sid" \
       background.corner_radius=6 background.height=22 background.padding_left=2 \
     --subscribe space.$sid aerospace_workspace_change
 done
 
-# Highlight the focused workspace.
-sketchybar --add event aerospace_workspace_change
+# Highlight the focused workspace by color alone (no pill): active number uses
+# the theme highlight (ACCENT); inactive numbers are dimmed (MUTED).
+# AeroSpace's trigger supplies FOCUSED_WORKSPACE on a change; on a forced
+# update (sketchybar --update) or first load it's absent, so fall back to
+# asking AeroSpace directly — otherwise a forced run would dim every item.
 cat > "$HOME/.config/sketchybar/highlight.sh" <<'SH'
 #!/bin/bash
 source "$HOME/.config/sketchybar/theme.sh" 2>/dev/null || true
-: "${ACCENT:=0xff89b4fa}" "${BAR_COLOR:=0xff1e1e2e}"
+: "${ACCENT:=0xff89b4fa}" "${BAR_COLOR:=0xff1e1e2e}" "${LABEL_COLOR:=0xffcdd6f4}" "${MUTED:=0xff6c7086}"
+focused="$FOCUSED_WORKSPACE"
+if [ -z "$focused" ]; then
+  as="$(command -v aerospace 2>/dev/null)"
+  [ -n "$as" ] || for p in /opt/homebrew/bin/aerospace /usr/local/bin/aerospace; do
+    [ -x "$p" ] && as="$p" && break
+  done
+  focused="$("${as:-aerospace}" list-workspaces --focused 2>/dev/null)"
+fi
 for sid in 1 2 3 4 5 6 7 8 9; do
-  if [ "$sid" = "$FOCUSED_WORKSPACE" ]; then
-    sketchybar --set space.$sid background.color="$ACCENT" background.drawing=on
+  if [ "$sid" = "$focused" ]; then
+    sketchybar --set space.$sid background.drawing=off label.color="$ACCENT"
   else
-    sketchybar --set space.$sid background.drawing=off
+    sketchybar --set space.$sid background.drawing=off label.color="$MUTED"
   fi
 done
 SH

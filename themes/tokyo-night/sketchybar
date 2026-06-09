@@ -2,3 +2,4 @@
 export BAR_COLOR=0xff1a1b26
 export LABEL_COLOR=0xffc0caf5
 export ACCENT=0xff7aa2f7
+export MUTED=0xff565f89   # comment — dimmed inactive workspace numbers
