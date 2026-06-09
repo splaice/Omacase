@@ -29,14 +29,14 @@ omacase doctor      # grant Accessibility to AeroSpace, SketchyBar, Karabiner
 | Editor | **Neovim/LazyVim** + Zed |
 | Packages | **Homebrew + Brewfile** |
 | Dotfiles | **Omacase-owned symlinks** (`home/`) — won't collide with your own chezmoi/stow |
-| Theme | **Catppuccin Mocha** (default) / Tokyo Night |
+| Theme | **19 Omarchy themes** (Catppuccin Mocha default) — one command rethemes everything |
 
 ## Commands
 ```
 OMACASE_DRYRUN=1 omacase install   # print every change without touching the system
 omacase install            # idempotent full setup (re-runnable)
 omacase update             # pull + brew bundle + re-apply everything
-omacase theme [name]       # apply a theme everywhere at once
+omacase theme [name]       # retheme everything: apps + macOS Light/Dark + wallpaper
 omacase webapp [name]      # open an Omarchy web app (for a Spotlight Shortcut)
 omacase appearance [...]   # toggle/set macOS Light/Dark (toggle|dark|light)
 omacase wm aerospace|yabai # switch window-manager profile
@@ -50,6 +50,11 @@ omacase menu               # gum TUI (wrap in a Shortcut to launch from Spotligh
 > and the macOS defaults domains it touches *before* changing anything. Don't
 > like the result? `omacase restore` puts your old setup back. Omacase manages
 > its own dotfiles as symlinks, so it never fights an existing chezmoi/stow.
+
+> **One switch, themed everywhere.** `omacase theme <name>` repoints Ghostty,
+> SketchyBar, JankyBorders, btop, Neovim, and Starship — and also flips macOS
+> Light/Dark, the Claude Code CLI theme, and the desktop wallpaper to match.
+> Pick from 19 Omarchy themes (run `omacase theme` to list).
 
 ## Keybinds
 
@@ -82,7 +87,7 @@ Super — AeroSpace tiling (Hyprland-style):
 `skills/omacase/SKILL.md` teaches Claude to drive this CLI — so the same surface that
 installs the system also lets an agent retheme, diagnose, and reconfigure it.
 
-> Status: **0.1.0 scaffold** — the CLI engine, AeroSpace/SketchyBar/Ghostty/borders
-> configs, Karabiner Super key, Neovim/LazyVim (theme-integrated), and both themes
-> are real. Spotlight is the launcher (no setup — `⌘Space`); btop/starship theme
-> fragments and the full Omarchy theme set ship too.
+> Status: **0.1.0** — the CLI engine, AeroSpace (Super-key WASD tiling),
+> SketchyBar, Ghostty, JankyBorders, the Karabiner Super key, Neovim/LazyVim, and
+> all 19 Omarchy themes (terminal + bar + borders + btop + nvim + prompt) are real.
+> Spotlight is the launcher (no setup — `⌘Space`); Raycast is no longer used.
