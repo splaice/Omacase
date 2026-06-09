@@ -49,4 +49,6 @@ brew "gum"               # TUI for `omacase menu`
 cask "font-jetbrains-mono-nerd-font"
 
 # --- Browser ----------------------------------------------------------------
+# Brave is the dedicated `omacase webapp` browser (signed; opens chromeless
+# app windows) so ⌘Q on a web app never quits your daily/default browser.
 cask "brave-browser"     # Chromium + PWAs; pairs with Safari "Add to Dock"
