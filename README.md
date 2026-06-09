@@ -59,15 +59,15 @@ Launcher — **Spotlight** (built in; no third-party launcher):
 > Nothing to configure — `⌘Space` is Spotlight by default. If a previous launcher
 > took it, re-enable System Settings → Keyboard → Keyboard Shortcuts → Spotlight.
 
-**Super** = **right ⌘**, remapped to a Hyper key (⌘⌃⌥⇧) by Karabiner
-(`home/dot_config/karabiner/karabiner.json`). With no third-party launcher, Super
-is yours to bind — point it at your own **Shortcuts** to run them from anywhere.
+**Super** = **right ⌘**, remapped by Karabiner to `⌃⌥⌘`
+(`home/dot_config/karabiner/karabiner.json`) — Hyper *minus* Shift, so `Super+Shift`
+stays free as the "move" layer. It drives AeroSpace, mirroring Omarchy's `SUPER`.
 
-Alt — AeroSpace tiling (Hyprland-style):
-- `Alt + h/j/k/l` — focus
-- `Alt + Shift + h/j/k/l` — move window
-- `Alt + [1-9]` — switch workspace · `Alt + Shift + [1-9]` — move window to workspace
-- `Alt + f` — fullscreen · `Alt + Shift + Space` — toggle float · `Alt + Shift + c` — reload
+Super — AeroSpace tiling (Hyprland-style):
+- `Super + h/j/k/l` — focus
+- `Super + Shift + h/j/k/l` — move window
+- `Super + [1-9]` — switch workspace · `Super + Shift + [1-9]` — move window to workspace
+- `Super + f` — fullscreen · `Super + Shift + Space` — toggle float · `Super + Shift + c` — reload
 
 ## The two honest limits
 1. **Permissions** (Accessibility/Input Monitoring) must be granted by hand — macOS

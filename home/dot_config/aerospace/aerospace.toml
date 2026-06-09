@@ -33,56 +33,58 @@ outer.right      = 8
 outer.top        = 8       # macOS menu bar; AeroSpace already avoids it
 outer.bottom     = 40      # room for SketchyBar (position=bottom, height 32)
 
+# Super = right ⌘ → ⌃⌥⌘ (via Karabiner), so 'cmd-ctrl-alt' is "Super" and
+# 'cmd-ctrl-alt-shift' is "Super + Shift". Mirrors Omarchy's SUPER / SUPER+SHIFT.
 [mode.main.binding]
-# --- focus (Alt + hjkl) ---
-alt-h = 'focus left'
-alt-j = 'focus down'
-alt-k = 'focus up'
-alt-l = 'focus right'
+# --- focus (Super + hjkl) ---
+cmd-ctrl-alt-h = 'focus left'
+cmd-ctrl-alt-j = 'focus down'
+cmd-ctrl-alt-k = 'focus up'
+cmd-ctrl-alt-l = 'focus right'
 
-# --- move (Alt + Shift + hjkl) ---
-alt-shift-h = 'move left'
-alt-shift-j = 'move down'
-alt-shift-k = 'move up'
-alt-shift-l = 'move right'
+# --- move (Super + Shift + hjkl) ---
+cmd-ctrl-alt-shift-h = 'move left'
+cmd-ctrl-alt-shift-j = 'move down'
+cmd-ctrl-alt-shift-k = 'move up'
+cmd-ctrl-alt-shift-l = 'move right'
 
 # --- resize ---
-alt-minus  = 'resize smart -50'
-alt-equal  = 'resize smart +50'
+cmd-ctrl-alt-minus = 'resize smart -50'
+cmd-ctrl-alt-equal = 'resize smart +50'
 
 # --- layout ---
-alt-shift-space = 'layout floating tiling'   # toggle float
-alt-e           = 'layout tiles horizontal vertical'
-alt-w           = 'layout accordion horizontal vertical'
-alt-f           = 'fullscreen'
+cmd-ctrl-alt-shift-space = 'layout floating tiling'   # toggle float
+cmd-ctrl-alt-e           = 'layout tiles horizontal vertical'
+cmd-ctrl-alt-w           = 'layout accordion horizontal vertical'
+cmd-ctrl-alt-f           = 'fullscreen'
 
-# --- workspaces (Alt + number) ---
-alt-1 = 'workspace 1'
-alt-2 = 'workspace 2'
-alt-3 = 'workspace 3'
-alt-4 = 'workspace 4'
-alt-5 = 'workspace 5'
-alt-6 = 'workspace 6'
-alt-7 = 'workspace 7'
-alt-8 = 'workspace 8'
-alt-9 = 'workspace 9'
+# --- workspaces (Super + number) ---
+cmd-ctrl-alt-1 = 'workspace 1'
+cmd-ctrl-alt-2 = 'workspace 2'
+cmd-ctrl-alt-3 = 'workspace 3'
+cmd-ctrl-alt-4 = 'workspace 4'
+cmd-ctrl-alt-5 = 'workspace 5'
+cmd-ctrl-alt-6 = 'workspace 6'
+cmd-ctrl-alt-7 = 'workspace 7'
+cmd-ctrl-alt-8 = 'workspace 8'
+cmd-ctrl-alt-9 = 'workspace 9'
 
-# --- move window to workspace (Alt + Shift + number) ---
-alt-shift-1 = 'move-node-to-workspace 1'
-alt-shift-2 = 'move-node-to-workspace 2'
-alt-shift-3 = 'move-node-to-workspace 3'
-alt-shift-4 = 'move-node-to-workspace 4'
-alt-shift-5 = 'move-node-to-workspace 5'
-alt-shift-6 = 'move-node-to-workspace 6'
-alt-shift-7 = 'move-node-to-workspace 7'
-alt-shift-8 = 'move-node-to-workspace 8'
-alt-shift-9 = 'move-node-to-workspace 9'
+# --- move window to workspace (Super + Shift + number) ---
+cmd-ctrl-alt-shift-1 = 'move-node-to-workspace 1'
+cmd-ctrl-alt-shift-2 = 'move-node-to-workspace 2'
+cmd-ctrl-alt-shift-3 = 'move-node-to-workspace 3'
+cmd-ctrl-alt-shift-4 = 'move-node-to-workspace 4'
+cmd-ctrl-alt-shift-5 = 'move-node-to-workspace 5'
+cmd-ctrl-alt-shift-6 = 'move-node-to-workspace 6'
+cmd-ctrl-alt-shift-7 = 'move-node-to-workspace 7'
+cmd-ctrl-alt-shift-8 = 'move-node-to-workspace 8'
+cmd-ctrl-alt-shift-9 = 'move-node-to-workspace 9'
 
 # --- misc ---
-alt-tab           = 'workspace-back-and-forth'
-alt-shift-tab     = 'move-workspace-to-monitor --wrap-around next'
-alt-shift-c       = 'reload-config'
-alt-shift-semicolon = 'mode service'   # enter a service sub-mode
+cmd-ctrl-alt-tab           = 'workspace-back-and-forth'
+cmd-ctrl-alt-shift-tab     = 'move-workspace-to-monitor --wrap-around next'
+cmd-ctrl-alt-shift-c       = 'reload-config'
+cmd-ctrl-alt-shift-semicolon = 'mode service'   # enter a service sub-mode
 
 [mode.service.binding]
 esc          = ['reload-config', 'mode main']

@@ -2,11 +2,13 @@
 
 Two separate layers:
 
-- **Alt** = window management (AeroSpace tiling)
+- **Super** = **right ⌘** → `⌃⌥⌘` (via Karabiner) = window management (AeroSpace tiling)
 - **Launcher** = **Spotlight** (`⌘Space`) — built in; nothing to configure
-- **Super** = **right ⌘** (a Hyper key via Karabiner) = free for your own Shortcuts
 
-Reload the WM config after edits: **`Alt + Shift + c`**.
+> Super is `⌃⌥⌘` (Hyper minus Shift) so **Super+Shift** stays available as the
+> "move" layer — exactly like Omarchy's `SUPER` / `SUPER+SHIFT`.
+
+Reload the WM config after edits: **`Super + Shift + c`**.
 
 ---
 
@@ -21,9 +23,6 @@ On Tahoe, Spotlight is launcher + Actions + clipboard history + Quick Keys.
 
 > No setup — `⌘Space` is Spotlight by default. If it's been reassigned, re-enable it
 > in System Settings → Keyboard → Keyboard Shortcuts → Spotlight.
->
-> **Super** (right ⌘ = ⌘⌃⌥⇧ via Karabiner) is unbound by default now — point it at
-> your own **Shortcuts** to trigger automations from anywhere.
 
 ---
 
@@ -31,8 +30,8 @@ On Tahoe, Spotlight is launcher + Actions + clipboard history + Quick Keys.
 macOS Shortcuts can't be authored from a script, so build these once: **Shortcuts
 app → New Shortcut → "Run Shell Script"**, paste the command, name it. The name is
 how you invoke it from Spotlight (`⌘Space`, type the name), and Spotlight learns a
-**Quick Key** for the ones you use often. Optionally assign each a hotkey on the
-Karabiner **Super** key.
+**Quick Key** for the ones you use often. (The Super key drives AeroSpace now, so
+invoke Shortcuts via Spotlight rather than a Super chord.)
 
 > Shortcuts run with a minimal `PATH`, so use the **full path** to omacase and add
 > Homebrew to `PATH`. Each script body is:
@@ -70,37 +69,38 @@ browser, else the default browser.
 > Native already — no Shortcut needed: **app launch** (type the app in Spotlight),
 > **emoji** (`⌃⌘Space`), **screenshots** (`⌘⇧3/4/5`), **calculator** (Spotlight math),
 > **clipboard history** (Spotlight, Tahoe), **lock/sleep** (Shortcuts has built-in
-> actions). Window tiling lives on the **Alt** layer below (AeroSpace), not Spotlight.
+> actions). Window tiling lives on the **Super** layer below (AeroSpace), not Spotlight.
 
 ---
 
-## Alt — AeroSpace window management
+## Super — AeroSpace window management
+**Super** = **right ⌘** (Karabiner maps it to `⌃⌥⌘`). Mirrors Omarchy's `SUPER`.
 
 ### Focus / move
 | Keys | Action |
 |---|---|
-| `Alt + h / j / k / l` | Focus left / down / up / right |
-| `Alt + Shift + h / j / k / l` | Move window left / down / up / right |
+| `Super + h / j / k / l` | Focus left / down / up / right |
+| `Super + Shift + h / j / k / l` | Move window left / down / up / right |
 
 ### Size & layout
 | Keys | Action |
 |---|---|
-| `Alt + f` | **Fullscreen toggle** (fills the screen; yields when another window takes the space) |
-| `Alt + =` | Grow focused window |
-| `Alt + -` | Shrink focused window |
-| `Alt + e` | Tiles layout — flip split orientation (side-by-side ↔ stacked) |
-| `Alt + w` | Accordion layout — windows stack, focused one expands |
-| `Alt + Shift + Space` | Float / unfloat the window (escape tiling) |
+| `Super + f` | **Fullscreen toggle** (fills the screen; yields when another window takes the space) |
+| `Super + =` | Grow focused window |
+| `Super + -` | Shrink focused window |
+| `Super + e` | Tiles layout — flip split orientation (side-by-side ↔ stacked) |
+| `Super + w` | Accordion layout — windows stack, focused one expands |
+| `Super + Shift + Space` | Float / unfloat the window (escape tiling) |
 
 ### Workspaces (the way to give each app a full screen)
 | Keys | Action |
 |---|---|
-| `Alt + 1 … 9` | Switch to workspace N |
-| `Alt + Shift + 1 … 9` | Send focused window to workspace N |
-| `Alt + Tab` | Toggle to previous workspace |
-| `Alt + Shift + Tab` | Move workspace to the next monitor |
+| `Super + 1 … 9` | Switch to workspace N |
+| `Super + Shift + 1 … 9` | Send focused window to workspace N |
+| `Super + Tab` | Toggle to previous workspace |
+| `Super + Shift + Tab` | Move workspace to the next monitor |
 
-### Service mode — `Alt + Shift + ;`, then:
+### Service mode — `Super + Shift + ;`, then:
 | Key | Action |
 |---|---|
 | `esc` | Reload config and exit service mode |
@@ -112,15 +112,15 @@ browser, else the default browser.
 
 ## Why windows "keep shrinking"
 AeroSpace tiles **every** window in a workspace, so each new window you open in
-that space shrinks the others to make room. `Alt + f` fullscreen is a per-window
+that space shrinks the others to make room. `Super + f` fullscreen is a per-window
 *toggle* — it does **not** stop new/!other windows from re-tiling the space, so it
 looks like things "un-fullscreen."
 
 The fix is to give busy apps their own space instead of cramming one workspace:
 
-- Put one app per workspace: focus it, `Alt + Shift + 2` to send it to space 2,
-  then `Alt + 1` / `Alt + 2` to flip. A workspace with a single window is
+- Put one app per workspace: focus it, `Super + Shift + 2` to send it to space 2,
+  then `Super + 1` / `Super + 2` to flip. A workspace with a single window is
   effectively full-screen and stays that way.
-- Or use `Alt + w` (accordion) so the focused window stays large and the rest
+- Or use `Super + w` (accordion) so the focused window stays large and the rest
   tuck to the side.
-- Use `Alt + f` for a quick temporary zoom, not as a permanent state.
+- Use `Super + f` for a quick temporary zoom, not as a permanent state.
