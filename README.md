@@ -41,6 +41,7 @@ omacase webapp [name]      # open an Omarchy web app (for a Spotlight Shortcut)
 omacase appearance [...]   # toggle/set macOS Light/Dark (toggle|dark|light)
 omacase launchers [...]    # build Spotlight .app launchers for web apps (build|remove)
 omacase wm aerospace|yabai # switch window-manager profile
+omacase grid               # arrange the focused AeroSpace workspace into a 2x2 grid
 omacase doctor             # check perms, SIP, missing grants
 omacase backup [label]     # snapshot current dotfiles & macOS defaults
 omacase restore [id]       # roll back to a snapshot (--list to see them)
@@ -84,6 +85,7 @@ Focus & move (WASD — W up, A left, S down, D right):
 |---|---|
 | `Super + w / a / s / d` | Focus window up / left / down / right |
 | `Super + Shift + w / a / s / d` | Move window up / left / down / right |
+| `Super + Shift + ← / ↓ / ↑ / →` | Join window with neighbor into a nested container (compose 2×2 grids) |
 
 Layout & size:
 | Keys | Action |
@@ -91,7 +93,8 @@ Layout & size:
 | `Super + f` | Fullscreen toggle |
 | `Super + = / -` | Grow / shrink focused window |
 | `Super + e` | Tiles layout — flip split orientation (side-by-side ↔ stacked) |
-| `Super + q` | Accordion layout — focused window stays large, rest tuck aside |
+| `Super + q` | Quad — toggle the workspace into / out of a 2×2 grid |
+| `Super + z` | Accordion layout — focused window stays large, rest tuck aside |
 | `Super + Shift + Space` | Float / unfloat the window |
 
 Workspaces & monitors:

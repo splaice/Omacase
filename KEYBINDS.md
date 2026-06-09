@@ -1,4 +1,4 @@
-# Omacase Keybinds
+p Omacase Keybinds
 
 Two separate layers:
 
@@ -100,6 +100,12 @@ browser, else the default browser.
 |---|---|
 | `Super + w / a / s / d` | Focus up / left / down / right |
 | `Super + Shift + w / a / s / d` | Move window up / left / down / right |
+| `Super + Shift + ← / ↓ / ↑ / →` | Join focused window with neighbor into a nested container |
+
+> **Build a 2×2 grid.** AeroSpace has no automatic grid layout (it's i3-style tree
+> tiling), but you can compose one with `join-with`. From a row of four windows
+> `[1][2][3][4]`: focus **2** → `Super+Shift+←`, then focus **4** → `Super+Shift+←`.
+> The nested pairs run vertical (opposite-orientation normalization), giving `[1/2][3/4]`.
 
 ### Size & layout
 | Keys | Action |
@@ -108,7 +114,8 @@ browser, else the default browser.
 | `Super + =` | Grow focused window |
 | `Super + -` | Shrink focused window |
 | `Super + e` | Tiles layout — flip split orientation (side-by-side ↔ stacked) |
-| `Super + q` | Accordion layout — windows stack, focused one expands |
+| `Super + q` | **Quad** — toggle the workspace into / out of a 2×2 grid (`omacase grid`) |
+| `Super + z` | Accordion layout — windows stack, focused one expands |
 | `Super + Shift + Space` | Float / unfloat the window (escape tiling) |
 
 ### Workspaces (the way to give each app a full screen)
@@ -145,6 +152,7 @@ The fix is to give busy apps their own space instead of cramming one workspace:
 - Put one app per workspace: focus it, `Super + Shift + 2` to send it to space 2,
   then `Super + 1` / `Super + 2` to flip. A workspace with a single window is
   effectively full-screen and stays that way.
-- Or use `Super + q` (accordion) so the focused window stays large and the rest
+- Or use accordion (`Super + z`) so the focused window stays large and the rest
   tuck to the side.
+- Or `Super + q` to toggle four windows into a clean 2×2 grid.
 - Use `Super + f` for a quick temporary zoom, not as a permanent state.

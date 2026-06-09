@@ -66,3 +66,57 @@ _yabai_notes() {
   Prefer not to? Stay on AeroSpace — it needs none of this.
 EOF
 }
+
+# `omacase grid` — toggle the focused workspace into/out of a 2x2 grid. AeroSpace
+# has no native grid layout (it's i3-style tree tiling), so we build one: flatten
+# the workspace to a single row/column, then join windows by id into two
+# perpendicular pairs — [1/2][3/4]. Opposite-orientation normalization makes each
+# nested pair run across the other axis, yielding quadrants. Bound to Super+q.
+#
+# Toggle: if the workspace is already nested (any window sits in a container
+# whose layout differs from the root — which, given opposite-orientation
+# normalization, only happens when nested), pressing again flattens it back.
+omacase_grid() {
+  have aerospace || abort "grid needs AeroSpace (active profile: $(cat "$OMACASE_STATE/wm" 2>/dev/null || echo unknown))."
+
+  local root parents
+  root="$(aerospace list-windows --workspace focused --format '%{workspace-root-container-layout}' 2>/dev/null | sed -n 1p)"
+  parents="$(aerospace list-windows --workspace focused --format '%{window-parent-container-layout}' 2>/dev/null)"
+
+  # Toggle off: nested → flatten back to a plain tiled layout.
+  if [ -n "$parents" ] && printf '%s\n' "$parents" | grep -qv "^${root}\$"; then
+    aerospace flatten-workspace-tree 2>/dev/null || true
+    return 0
+  fi
+
+  # Toggle on: flatten to one row/column, then pair the first four windows.
+  aerospace flatten-workspace-tree 2>/dev/null || true
+  local ids count
+  ids="$(aerospace list-windows --workspace focused --format '%{window-id}' 2>/dev/null)"
+  count="$(printf '%s\n' "$ids" | grep -c .)"
+  if [ "$count" -lt 4 ]; then
+    _grid_notify "Need 4 windows for a 2x2 grid (this workspace has $count)."
+    return 0
+  fi
+
+  # Pair into the axis perpendicular to the row/column so each pair forms a
+  # quadrant: join "left" under a horizontal root, "up" under a vertical one.
+  local dir=left
+  root="$(aerospace list-windows --workspace focused --format '%{workspace-root-container-layout}' 2>/dev/null | sed -n 1p)"
+  [ "$root" = v_tiles ] && dir=up
+
+  # Window ids stay valid across the first join.
+  local b d
+  b="$(printf '%s\n' "$ids" | sed -n 2p)"
+  d="$(printf '%s\n' "$ids" | sed -n 4p)"
+  aerospace join-with --window-id "$b" "$dir"
+  aerospace join-with --window-id "$d" "$dir"
+  [ "$count" -gt 4 ] && _grid_notify "Gridded the first 4 of $count windows; the rest stay tiled alongside."
+  return 0
+}
+
+# Best-effort desktop notification (grid runs from a keybinding, so there's no
+# terminal to print to). Silent if Automation/notification consent is missing.
+_grid_notify() {
+  osascript -e "display notification \"$1\" with title \"omacase grid\"" >/dev/null 2>&1 || true
+}

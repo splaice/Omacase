@@ -48,6 +48,16 @@ cmd-ctrl-alt-shift-s = 'move down'
 cmd-ctrl-alt-shift-w = 'move up'
 cmd-ctrl-alt-shift-d = 'move right'
 
+# --- join into nested containers (Super + Shift + arrows) ---
+# Merge the focused window with its neighbor into a container. With opposite-
+# orientation normalization on, the nested container runs perpendicular to its
+# parent — so joining two pairs builds a 2x2 grid. E.g. from a row [1][2][3][4]:
+# focus 2 + join left, then focus 4 + join left → [1/2][3/4].
+cmd-ctrl-alt-shift-left  = 'join-with left'
+cmd-ctrl-alt-shift-down  = 'join-with down'
+cmd-ctrl-alt-shift-up    = 'join-with up'
+cmd-ctrl-alt-shift-right = 'join-with right'
+
 # --- resize ---
 cmd-ctrl-alt-minus = 'resize smart -50'
 cmd-ctrl-alt-equal = 'resize smart +50'
@@ -55,7 +65,8 @@ cmd-ctrl-alt-equal = 'resize smart +50'
 # --- layout ---
 cmd-ctrl-alt-shift-space = 'layout floating tiling'   # toggle float
 cmd-ctrl-alt-e           = 'layout tiles horizontal vertical'
-cmd-ctrl-alt-q           = 'layout accordion horizontal vertical'   # moved off w (now focus up)
+cmd-ctrl-alt-q           = 'exec-and-forget omacase grid'   # Super+q → toggle 2x2 grid ("quad")
+cmd-ctrl-alt-z           = 'layout accordion horizontal vertical'   # Super+z → accordion
 cmd-ctrl-alt-f           = 'fullscreen'
 
 # --- workspaces (Super + number) ---
