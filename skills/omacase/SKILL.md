@@ -1,6 +1,6 @@
 ---
 name: omacase
-description: Install, configure, theme, and manage an opinionated tiling macOS (AeroSpace + SketchyBar + Ghostty + Raycast) via the `omacase` CLI. Use when the user wants to set up their Mac, switch themes/window managers, diagnose tiling/permission issues, or change system defaults.
+description: Install, configure, theme, and manage an opinionated tiling macOS (AeroSpace + SketchyBar + Ghostty + Spotlight) via the `omacase` CLI. Use when the user wants to set up their Mac, switch themes/window managers, diagnose tiling/permission issues, or change system defaults.
 ---
 
 # Omacase — opinionated tiling macOS
@@ -16,7 +16,7 @@ config by hand — the CLI keeps state and re-applies themes/WM consistently.
 - `omacase wm <aerospace|yabai>` — switch window-manager profile
 - `omacase doctor` — check tooling, WM, SIP state, and missing permission grants
 - `omacase backup [label]` / `omacase restore [id]` — snapshot & roll back dotfiles + defaults
-- `omacase menu` — gum TUI (bind to a Raycast hotkey)
+- `omacase menu` — gum TUI (wrap in a Shortcut to launch from Spotlight)
 
 ## Reversibility (important)
 - Omacase owns its dotfiles via **symlinks** from `home/` into `$HOME` — it does NOT
@@ -37,10 +37,10 @@ config by hand — the CLI keeps state and re-applies themes/WM consistently.
 - `lib/*.sh` — one file per subcommand.
 
 ## Hard limits — set expectations honestly
-- **Permission grants can't be automated.** AeroSpace/yabai, SketchyBar, Karabiner,
-  and Raycast need Accessibility/Input-Monitoring approval that macOS (TCC) requires
+- **Permission grants can't be automated.** AeroSpace/yabai, SketchyBar, and
+  Karabiner need Accessibility/Input-Monitoring approval that macOS (TCC) requires
   a human to click. `omacase doctor` deep-links the right Settings pane; the user
-  must toggle it.
+  must toggle it. The launcher is Spotlight (built in — no app or hotkey to set up).
 - **yabai needs SIP partially disabled** — a manual Recovery-mode step that cannot be
   scripted from the running OS. Default to the **AeroSpace** profile, which needs none
   of this. Only walk the user through yabai if they explicitly want BSP dynamic tiling.

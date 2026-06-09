@@ -12,7 +12,7 @@ This installs Xcode CLT + Homebrew, clones to `~/.local/share/omacase`, and runs
 `omacase install`. Then:
 
 ```bash
-omacase doctor      # grant Accessibility to AeroSpace, SketchyBar, Karabiner, Raycast
+omacase doctor      # grant Accessibility to AeroSpace, SketchyBar, Karabiner
 ```
 
 ## The stack
@@ -21,7 +21,7 @@ omacase doctor      # grant Accessibility to AeroSpace, SketchyBar, Karabiner, R
 | Window manager | **AeroSpace** (no SIP disable) — yabai available as advanced profile |
 | Status bar | **SketchyBar** |
 | Borders | **JankyBorders** |
-| Launcher | **Raycast** |
+| Launcher | **Spotlight** (built in — Tahoe actions, clipboard, Quick Keys) |
 | Keyboard | **Karabiner-Elements** |
 | Terminal | **Ghostty** + zsh/Starship + modern CLI set |
 | Editor | **Neovim/LazyVim** + Zed |
@@ -39,7 +39,7 @@ omacase wm aerospace|yabai # switch window-manager profile
 omacase doctor             # check perms, SIP, missing grants
 omacase backup [label]     # snapshot current dotfiles & macOS defaults
 omacase restore [id]       # roll back to a snapshot (--list to see them)
-omacase menu               # gum TUI (bind to a Raycast hotkey)
+omacase menu               # gum TUI (wrap in a Shortcut to launch from Spotlight)
 ```
 
 > **Reversible by design.** `install` auto-snapshots any pre-existing dotfiles
@@ -49,18 +49,17 @@ omacase menu               # gum TUI (bind to a Raycast hotkey)
 
 ## Keybinds
 
+Launcher — **Spotlight** (built in; no third-party launcher):
+- `⌘ Space` — Spotlight: launcher / search / Actions / clipboard history (Tahoe)
+- `⌃⌘ Space` — Emoji & Symbols (Character Viewer)
+- `⌘ Tab` / AltTab — switch windows
+
+> Nothing to configure — `⌘Space` is Spotlight by default. If a previous launcher
+> took it, re-enable System Settings → Keyboard → Keyboard Shortcuts → Spotlight.
+
 **Super** = **right ⌘**, remapped to a Hyper key (⌘⌃⌥⇧) by Karabiner
-(`home/dot_config/karabiner/karabiner.json`). Secondary commands sit on left-hand
-keys so right-⌘ + key is always a two-hand chord.
-
-Super (right ⌘) — global command access via Raycast (all left-hand, two-hand chords):
-- `Super + Space` — Raycast root search (launcher / command palette)
-- `Super + F` — clipboard history
-- `Super + D` — switch windows
-- `Super + E` — emoji & symbols / snippets
-
-> Raycast stores hotkeys in its own settings, not a dotfile — set these two in
-> Raycast prefs once. `omacase doctor` reminds you.
+(`home/dot_config/karabiner/karabiner.json`). With no third-party launcher, Super
+is yours to bind — point it at your own **Shortcuts** to run them from anywhere.
 
 Alt — AeroSpace tiling (Hyprland-style):
 - `Alt + h/j/k/l` — focus
@@ -81,5 +80,5 @@ installs the system also lets an agent retheme, diagnose, and reconfigure it.
 
 > Status: **0.1.0 scaffold** — the CLI engine, AeroSpace/SketchyBar/Ghostty/borders
 > configs, Karabiner Super key, Neovim/LazyVim (theme-integrated), and both themes
-> are real. Raycast hotkeys are set by hand once (see `omacase doctor`); btop/starship
-> theme fragments and extra themes are still to come.
+> are real. Spotlight is the launcher (no setup — `⌘Space`); btop/starship theme
+> fragments and the full Omarchy theme set ship too.

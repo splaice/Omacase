@@ -31,7 +31,6 @@ omacase_doctor() {
   check_loop_conflict || issues=$((issues + 1))
 
   step "Desktop apps"
-  pgrep -x Raycast >/dev/null && success "Raycast running" || { warn "Raycast not running — \`open -a Raycast\`"; issues=$((issues + 1)); }
   # Karabiner 15+ uses DriverKit; the real "Super key live" signal is the system
   # extension being 'activated enabled' (not 'waiting for user').
   if pgrep -x Karabiner-Elements >/dev/null || pgrep -f Karabiner-Core-Service >/dev/null; then
@@ -64,20 +63,23 @@ omacase_doctor() {
   These need a manual toggle in System Settings → Privacy & Security.
   No script can grant them — that's the OS security model, by design.
 
-    Accessibility      : AeroSpace / yabai, SketchyBar, Raycast
+    Accessibility      : AeroSpace / yabai, SketchyBar
     Input Monitoring   : Karabiner-Elements, skhd (yabai profile)
     Automation         : terminal → System Events (theme Light/Dark sync)
     Full Disk Access   : (optional) terminal, for some defaults writes
 EOF
 
-  step "Raycast hotkeys (set once in Raycast prefs — not a dotfile)"
+  step "Launcher (Spotlight — built in, no third-party app)"
   cat <<'EOF'
-  Super = right ⌘ (Hyper, via Karabiner). In Raycast → Settings → Hotkey:
-    Super + Space  →  Raycast root search (launcher)
-    Super + F      →  Clipboard History
-    Super + D      →  Switch Windows
-    Super + E      →  Search Emoji & Symbols  (and/or Snippets)
-  Karabiner emits Super as ⌘⌃⌥⇧, so record those chords in Raycast.
+  macOS Spotlight is the launcher / command palette. On Tahoe it also has a
+  clipboard manager, Actions (App Intents), and auto-learned Quick Keys.
+    ⌘ Space        →  Spotlight (launcher / search / actions / clipboard)
+    ⌃⌘ Space       →  Emoji & Symbols (Character Viewer)
+    ⌘ Tab / AltTab →  Switch windows
+  If ⌘Space doesn't open Spotlight (e.g. a launcher had taken it), re-enable it:
+  System Settings → Keyboard → Keyboard Shortcuts → Spotlight → "Show Spotlight search".
+  Tip: bind your own automations as Shortcuts to run them from Spotlight (and via
+  the Karabiner Super key if you like).
 EOF
   if confirm "Open the Accessibility settings pane now?"; then
     open "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility" || true

@@ -1,6 +1,6 @@
 # shellcheck shell=bash
-# `omacase menu` — the gum TUI, the omarchy-menu analog. Bind to a Raycast
-# hotkey (Raycast → Script Commands → run `omacase menu`).
+# `omacase menu` — the gum TUI, the omarchy-menu analog. Run it from a terminal,
+# or wrap `omacase menu` in a Shortcut to launch it from Spotlight / a hotkey.
 
 omacase_menu() {
   local choice

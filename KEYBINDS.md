@@ -3,21 +3,27 @@
 Two separate layers:
 
 - **Alt** = window management (AeroSpace tiling)
-- **Super** = **right ⌘** (a Hyper key via Karabiner) = command access (Raycast)
+- **Launcher** = **Spotlight** (`⌘Space`) — built in; nothing to configure
+- **Super** = **right ⌘** (a Hyper key via Karabiner) = free for your own Shortcuts
 
 Reload the WM config after edits: **`Alt + Shift + c`**.
 
 ---
 
-## Super (right ⌘) — Raycast
-Set these once in Raycast → Settings → Hotkey (Karabiner sends Super as ⌘⌃⌥⇧):
+## Launcher — Spotlight (built in)
+On Tahoe, Spotlight is launcher + Actions + clipboard history + Quick Keys.
 
 | Keys | Action |
 |---|---|
-| `Super + Space` | Raycast root search (launcher / command palette) |
-| `Super + F` | Clipboard history |
-| `Super + D` | Switch windows |
-| `Super + E` | Emoji & symbols / snippets |
+| `⌘ Space` | Spotlight — launcher / search / Actions / clipboard history |
+| `⌃⌘ Space` | Emoji & Symbols (Character Viewer) |
+| `⌘ Tab` / AltTab | Switch windows |
+
+> No setup — `⌘Space` is Spotlight by default. If it's been reassigned, re-enable it
+> in System Settings → Keyboard → Keyboard Shortcuts → Spotlight.
+>
+> **Super** (right ⌘ = ⌘⌃⌥⇧ via Karabiner) is unbound by default now — point it at
+> your own **Shortcuts** to trigger automations from anywhere.
 
 ---
 
