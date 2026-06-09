@@ -34,7 +34,7 @@ config by hand — the CLI keeps state and re-applies themes/WM consistently.
   Keep `OMACASE_DEFAULTS_DOMAINS` in `lib/backup.sh` in sync with the domains it writes.
 - `home/` — dotfile source (symlinked into `$HOME`; `dot_` prefix → `.`).
   `home/dot_config/aerospace/aerospace.toml` holds the Hyprland-style keybinds on
-  the Super key (right ⌘ → ⌃⌥⌘ via Karabiner): Super+hjkl focus, Super+Shift+hjkl
+  the Super key (right ⌘ → ⌃⌥⌘ via Karabiner): Super+WASD focus, Super+Shift+WASD
   move, Super+[1-9] workspaces.
 - `themes/<name>/` — per-app color fragments; `omacase theme` symlinks them into `~/.config`.
 - `lib/*.sh` — one file per subcommand.

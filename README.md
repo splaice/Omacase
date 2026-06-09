@@ -64,8 +64,8 @@ Launcher — **Spotlight** (built in; no third-party launcher):
 stays free as the "move" layer. It drives AeroSpace, mirroring Omarchy's `SUPER`.
 
 Super — AeroSpace tiling (Hyprland-style):
-- `Super + h/j/k/l` — focus
-- `Super + Shift + h/j/k/l` — move window
+- `Super + w/a/s/d` — focus (up/left/down/right)
+- `Super + Shift + w/a/s/d` — move window
 - `Super + [1-9]` — switch workspace · `Super + Shift + [1-9]` — move window to workspace
 - `Super + f` — fullscreen · `Super + Shift + Space` — toggle float · `Super + Shift + c` — reload
 

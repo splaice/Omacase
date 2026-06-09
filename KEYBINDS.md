@@ -76,11 +76,11 @@ browser, else the default browser.
 ## Super — AeroSpace window management
 **Super** = **right ⌘** (Karabiner maps it to `⌃⌥⌘`). Mirrors Omarchy's `SUPER`.
 
-### Focus / move
+### Focus / move (WASD — W up, A left, S down, D right)
 | Keys | Action |
 |---|---|
-| `Super + h / j / k / l` | Focus left / down / up / right |
-| `Super + Shift + h / j / k / l` | Move window left / down / up / right |
+| `Super + w / a / s / d` | Focus up / left / down / right |
+| `Super + Shift + w / a / s / d` | Move window up / left / down / right |
 
 ### Size & layout
 | Keys | Action |
@@ -89,7 +89,7 @@ browser, else the default browser.
 | `Super + =` | Grow focused window |
 | `Super + -` | Shrink focused window |
 | `Super + e` | Tiles layout — flip split orientation (side-by-side ↔ stacked) |
-| `Super + w` | Accordion layout — windows stack, focused one expands |
+| `Super + q` | Accordion layout — windows stack, focused one expands |
 | `Super + Shift + Space` | Float / unfloat the window (escape tiling) |
 
 ### Workspaces (the way to give each app a full screen)
@@ -121,6 +121,6 @@ The fix is to give busy apps their own space instead of cramming one workspace:
 - Put one app per workspace: focus it, `Super + Shift + 2` to send it to space 2,
   then `Super + 1` / `Super + 2` to flip. A workspace with a single window is
   effectively full-screen and stays that way.
-- Or use `Super + w` (accordion) so the focused window stays large and the rest
+- Or use `Super + q` (accordion) so the focused window stays large and the rest
   tuck to the side.
 - Use `Super + f` for a quick temporary zoom, not as a permanent state.
