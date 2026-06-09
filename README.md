@@ -35,6 +35,8 @@ OMACASE_DRYRUN=1 omacase install   # print every change without touching the sys
 omacase install            # idempotent full setup (re-runnable)
 omacase update             # pull + brew bundle + re-apply everything
 omacase theme [name]       # apply a theme everywhere at once
+omacase webapp [name]      # open an Omarchy web app (for a Spotlight Shortcut)
+omacase appearance [...]   # toggle/set macOS Light/Dark (toggle|dark|light)
 omacase wm aerospace|yabai # switch window-manager profile
 omacase doctor             # check perms, SIP, missing grants
 omacase backup [label]     # snapshot current dotfiles & macOS defaults

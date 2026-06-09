@@ -27,6 +27,53 @@ On Tahoe, Spotlight is launcher + Actions + clipboard history + Quick Keys.
 
 ---
 
+## Spotlight Shortcuts — the Omarchy command layer
+macOS Shortcuts can't be authored from a script, so build these once: **Shortcuts
+app → New Shortcut → "Run Shell Script"**, paste the command, name it. The name is
+how you invoke it from Spotlight (`⌘Space`, type the name), and Spotlight learns a
+**Quick Key** for the ones you use often. Optionally assign each a hotkey on the
+Karabiner **Super** key.
+
+> Shortcuts run with a minimal `PATH`, so use the **full path** to omacase and add
+> Homebrew to `PATH`. Each script body is:
+> ```sh
+> export PATH="/opt/homebrew/bin:$PATH"
+> "$HOME/.local/share/omacase/bin/omacase" <args>
+> ```
+
+### omacase actions (mirror Omarchy's Super-key menu)
+| Shortcut name | Command (`omacase …`) | Omarchy analog |
+|---|---|---|
+| Theme <name> | `theme gruvbox` | `Super Shift Ctrl Space` theme menu |
+| Toggle Appearance | `appearance toggle` | `Super Ctrl N` nightlight |
+| Update System | `update` | menu → Update |
+| Omacase Menu | `menu` *(terminal only — gum TUI; launch via Ghostty, not headless)* | `Super Alt Space` omarchy-menu |
+
+### Web apps — `omacase webapp <name>` (Omarchy's set, `Super Shift` + letter)
+Make one Shortcut per app (`webapp email`, `webapp chatgpt`, …); name it for the
+site so Spotlight finds it. Opens a chromeless app window if you have a Chromium
+browser, else the default browser.
+
+| Shortcut | Command | Omarchy |
+|---|---|---|
+| ChatGPT | `webapp chatgpt` | `Super Shift A` |
+| Grok | `webapp grok` | `Super Shift Alt A` |
+| Email | `webapp email` | `Super Shift E` |
+| Calendar | `webapp calendar` | `Super Shift C` |
+| YouTube | `webapp youtube` | `Super Shift Y` |
+| WhatsApp | `webapp whatsapp` | `Super Shift Alt G` |
+| Messages | `webapp messages` | `Super Shift Ctrl G` |
+| Photos | `webapp photos` | `Super Shift P` |
+| X | `webapp x` | `Super Shift X` |
+| X Post | `webapp x-post` | `Super Shift Alt X` |
+
+> Native already — no Shortcut needed: **app launch** (type the app in Spotlight),
+> **emoji** (`⌃⌘Space`), **screenshots** (`⌘⇧3/4/5`), **calculator** (Spotlight math),
+> **clipboard history** (Spotlight, Tahoe), **lock/sleep** (Shortcuts has built-in
+> actions). Window tiling lives on the **Alt** layer below (AeroSpace), not Spotlight.
+
+---
+
 ## Alt — AeroSpace window management
 
 ### Focus / move

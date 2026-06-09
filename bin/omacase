@@ -23,12 +23,14 @@ usage: omacase <command> [args]
   install            Full idempotent setup (re-runnable)
   update             git pull + brew bundle + re-apply dotfiles & defaults
   theme [name]       Apply a theme everywhere (no name = list/pick)
+  webapp [name]      Open an Omarchy web app (no name = list); for Spotlight Shortcuts
+  appearance [...]   Toggle/set macOS Light/Dark (toggle|dark|light)
   wm <aerospace|yabai>   Switch window-manager profile
   doctor             Check permissions, SIP state, and missing grants
   backup [label]     Snapshot current dotfiles & macOS defaults
   restore [id]       Roll back to a snapshot (--list to see them)
   config             Open the config directory
-  menu               Interactive TUI (bind to a Raycast hotkey)
+  menu               Interactive TUI (wrap in a Shortcut to launch from Spotlight)
   version            Print version
   uninstall          Remove omacase-managed config (keeps your apps)
 
@@ -41,6 +43,8 @@ case "$cmd" in
   install)        source "$OMACASE_ROOT/lib/install.sh";  omacase_install "$@" ;;
   update)         source "$OMACASE_ROOT/lib/update.sh";   omacase_update  "$@" ;;
   theme)          source "$OMACASE_ROOT/lib/theme.sh";    omacase_theme   "$@" ;;
+  webapp)         source "$OMACASE_ROOT/lib/actions.sh";  omacase_webapp     "$@" ;;
+  appearance)     source "$OMACASE_ROOT/lib/actions.sh";  omacase_appearance "$@" ;;
   wm)             source "$OMACASE_ROOT/lib/wm.sh";       omacase_wm      "$@" ;;
   doctor)         source "$OMACASE_ROOT/lib/doctor.sh";   omacase_doctor  "$@" ;;
   backup)         source "$OMACASE_ROOT/lib/backup.sh";   omacase_backup  "$@" ;;
