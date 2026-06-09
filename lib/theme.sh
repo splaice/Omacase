@@ -28,7 +28,52 @@ omacase_theme() {
   _theme_appearance "$name"
   _theme_claudecode "$name"
   _theme_reload
+  _theme_wallpaper "$name"
   success "Theme '$name' applied."
+}
+
+# Our theme dirs mostly match Omarchy's, except the Catppuccin flavor naming.
+_omarchy_name() { case "$1" in catppuccin-mocha) echo catppuccin ;; *) echo "$1" ;; esac; }
+
+# Set the desktop wallpaper to the theme's default Omarchy background. Images
+# aren't bundled — the first time a theme is used we fetch its default bg into
+# $OMACASE_DATA/backgrounds/<theme>/ and reuse it thereafter (offline after
+# that). Network/tool/offline failures degrade to a warning, never an abort.
+_theme_wallpaper() {
+  local name="$1" cache="$OMACASE_DATA/backgrounds/$1" img=""
+  # NB: under `set -euo pipefail`, a command substitution whose pipeline fails
+  # (find on a missing dir, gh on a 404) aborts the script — so guard both and
+  # swallow their status with `|| true`.
+  if [ -d "$cache" ]; then
+    img="$(find "$cache" -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' \) 2>/dev/null | sort | head -1)" || true
+  fi
+
+  if [ -z "$img" ]; then
+    is_dryrun && { printf '\033[2m[dry-run]\033[0m fetch+set wallpaper for %s\n' "$name"; return 0; }
+    have curl || return 0
+    local on file=""
+    on="$(_omarchy_name "$name")"
+    # List the theme's backgrounds via the public GitHub contents API (no auth,
+    # plain curl) and pick the default: first real image, skipping the logo.
+    file="$(curl -fsSL "https://api.github.com/repos/basecamp/omarchy/contents/themes/$on/backgrounds" 2>/dev/null \
+            | grep -oE '"name"[[:space:]]*:[[:space:]]*"[^"]+"' | sed -E 's/.*"([^"]+)"$/\1/' \
+            | grep -iE '\.(jpg|jpeg|png)$' | grep -ivE '^omarchy\.' | sort | head -1)" || true
+    [ -n "$file" ] || { info "No wallpaper available for $name (skipped)."; return 0; }
+    mkdir -p "$cache"
+    if curl -fsSL "https://raw.githubusercontent.com/basecamp/omarchy/master/themes/$on/backgrounds/$file" \
+         -o "$cache/$file" 2>/dev/null && [ -s "$cache/$file" ]; then
+      img="$cache/$file"
+    else
+      rm -f "$cache/$file"; warn "Couldn't download wallpaper for $name (offline?) — skipped."; return 0
+    fi
+  fi
+
+  [ -n "$img" ] || return 0
+  if osascript -e "tell application \"System Events\" to set picture of every desktop to \"$img\"" >/dev/null 2>&1; then
+    info "Wallpaper → $(basename "$img")"
+  else
+    warn "Couldn't set wallpaper (grant Automation → System Events to your terminal)."
+  fi
 }
 
 # Keep Claude Code's UI theme in step with the omacase theme's brightness.

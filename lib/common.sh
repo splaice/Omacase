@@ -4,6 +4,8 @@
 
 OMACASE_STATE="${OMACASE_STATE:-$HOME/.local/state/omacase}"
 mkdir -p "$OMACASE_STATE"
+# Data/cache dir for downloaded artifacts (e.g. per-theme wallpapers).
+OMACASE_DATA="${OMACASE_DATA:-$HOME/.local/share/omacase}"
 
 # --- logging -----------------------------------------------------------------
 _c()      { printf '\033[%sm' "$1"; }
