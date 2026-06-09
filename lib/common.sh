@@ -62,6 +62,19 @@ once() {
   "$@" && touch "$marker"
 }
 
+# --- macOS appearance automation ---------------------------------------------
+# Switching themes flips macOS Light/Dark via AppleScript to System Events,
+# which requires Automation consent for the controlling terminal. This probe is
+# read-only (it *gets* dark mode), but it exercises the exact same TCC grant, so
+# it both tests and — on first run — triggers the consent prompt. Returns 0 when
+# appearance control is allowed, 1 when blocked or unavailable.
+can_set_appearance() {
+  case "$(osascript -e 'tell application "System Events" to tell appearance preferences to get dark mode' 2>&1)" in
+    true|false) return 0 ;;
+    *)          return 1 ;;
+  esac
+}
+
 # --- conflicting window managers ---------------------------------------------
 # Loop (com.MrKai77.Loop) is a third-party window manager. Its global drag-to-
 # snap and keyboard shortcuts fight AeroSpace/yabai for control of the same

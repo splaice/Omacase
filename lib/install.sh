@@ -23,6 +23,10 @@ omacase_install() {
   step "5/6  Theme"
   source "$OMACASE_ROOT/lib/theme.sh"
   omacase_theme "$(cat "$OMACASE_STATE/theme" 2>/dev/null || echo catppuccin-mocha)"
+  # Theme switching flips macOS Light/Dark; that needs Automation consent, which
+  # the line above just prompted for on a fresh machine. Flag it if still blocked.
+  is_dryrun || can_set_appearance || \
+    warn "Grant your terminal Automation → System Events so themes can sync macOS Light/Dark (\`omacase doctor\` re-checks)."
 
   step "6/7  Window manager + services"
   check_loop_conflict || true   # Loop fights AeroSpace/yabai; offer to quit it first
@@ -34,7 +38,8 @@ omacase_install() {
 
   step "Done"
   success "omacase installed."
-  warn "Next: run \`omacase doctor\` and grant Accessibility to AeroSpace, SketchyBar, Karabiner & Raycast."
+  warn "Next: run \`omacase doctor\` and grant Accessibility to AeroSpace, SketchyBar, Karabiner & Raycast"
+  warn "  (plus Automation → System Events so themes can sync macOS Light/Dark)."
   warn "macOS requires those grants by hand — no installer can click them for you."
   warn "Don't like the result? \`omacase restore\` rolls back to the pre-install snapshot."
 }

@@ -50,6 +50,15 @@ omacase_doctor() {
     warn "Karabiner-Elements not running — \`open -a Karabiner-Elements\`"; issues=$((issues + 1))
   fi
 
+  step "Appearance sync (theme ⇄ macOS Light/Dark)"
+  if can_set_appearance; then
+    success "Terminal can drive macOS appearance — theme switches will flip Light/Dark."
+  else
+    warn "Terminal can't control System Events, so theme switches can't flip macOS Light/Dark."
+    warn "  Grant it: System Settings → Privacy & Security → Automation → (your terminal) → System Events."
+    issues=$((issues + 1))
+  fi
+
   step "Permissions (macOS requires these by hand)"
   cat <<'EOF'
   These need a manual toggle in System Settings → Privacy & Security.
@@ -57,6 +66,7 @@ omacase_doctor() {
 
     Accessibility      : AeroSpace / yabai, SketchyBar, Raycast
     Input Monitoring   : Karabiner-Elements, skhd (yabai profile)
+    Automation         : terminal → System Events (theme Light/Dark sync)
     Full Disk Access   : (optional) terminal, for some defaults writes
 EOF
 
