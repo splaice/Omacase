@@ -41,7 +41,7 @@ omacase webapp [name]      # open an Omarchy web app (for a Spotlight Shortcut)
 omacase appearance [...]   # toggle/set macOS Light/Dark (toggle|dark|light)
 omacase launchers [...]    # build Spotlight "Oma …" launchers: web apps + workspaces (build|remove)
 omacase wm aerospace|yabai # switch window-manager profile
-omacase grid               # toggle the focused AeroSpace workspace into a 2x2 grid
+omacase grid [1-9]         # toggle an AeroSpace workspace (default: focused) into a 2x2 grid
 omacase workspace <1-9>    # switch AeroSpace workspace (alias: ws)
 omacase doctor             # check perms, SIP, missing grants
 omacase backup [label]     # snapshot current dotfiles & macOS defaults

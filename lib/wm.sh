@@ -67,51 +67,87 @@ _yabai_notes() {
 EOF
 }
 
-# `omacase grid` — toggle the focused workspace into/out of a 2x2 grid. AeroSpace
-# has no native grid layout (it's i3-style tree tiling), so we build one: flatten
-# the workspace to a single row/column, then join windows by id into two
-# perpendicular pairs — [1/2][3/4]. Opposite-orientation normalization makes each
-# nested pair run across the other axis, yielding quadrants. Bound to Super+q.
+# `omacase grid [workspace]` — toggle a workspace (default: the focused one)
+# into/out of a 2x2 grid. AeroSpace has no native grid layout (it's i3-style
+# tree tiling), so we build one: force the root to plain horizontal tiles (a
+# grid of accordions renders as an accordion, not a grid), flatten to a single
+# row, then join windows by id into two perpendicular pairs — [1/2][3/4].
+# Opposite-orientation normalization makes each nested pair run across the
+# other axis, yielding quadrants. Bound to Super+q.
 #
-# Toggle: if the workspace is already nested (any window sits in a container
-# whose layout differs from the root — which, given opposite-orientation
-# normalization, only happens when nested), pressing again flattens it back.
+# Floating windows are ignored throughout: they don't tile, so they must not
+# count toward the 4 needed windows, be join targets, or trip the toggle
+# detection (their parent layout is "floating", never the root layout).
+#
+# Toggle: if any tiled window sits in a container whose layout differs from the
+# root — which, given opposite-orientation normalization, only happens when
+# nested — pressing again flattens back.
 omacase_grid() {
+  ensure_brew_env   # invoked from AeroSpace bindings, whose PATH lacks Homebrew (and thus `aerospace`)
   have aerospace || abort "grid needs AeroSpace (active profile: $(cat "$OMACASE_STATE/wm" 2>/dev/null || echo unknown))."
+  local ws="${1:-focused}"
 
-  local root parents
-  root="$(aerospace list-windows --workspace focused --format '%{workspace-root-container-layout}' 2>/dev/null | sed -n 1p)"
-  parents="$(aerospace list-windows --workspace focused --format '%{window-parent-container-layout}' 2>/dev/null)"
+  # join-with is direction-based, and directions only exist on the visible
+  # workspace (AeroSpace parks hidden workspaces' windows in a corner, so
+  # nothing is "left" of anything there). Bring an explicitly named workspace
+  # forward before rearranging it; Super+q always targets the visible one.
+  [ "$ws" = focused ] || aerospace workspace "$ws" 2>/dev/null || abort "no such workspace '$ws'"
 
-  # Toggle off: nested → flatten back to a plain tiled layout.
-  if [ -n "$parents" ] && printf '%s\n' "$parents" | grep -qv "^${root}\$"; then
-    aerospace flatten-workspace-tree 2>/dev/null || true
+  # Tiled windows only: "<id> <parent-layout> <root-layout>" per line.
+  local tiled root
+  tiled="$(aerospace list-windows --workspace "$ws" \
+             --format '%{window-id} %{window-parent-container-layout} %{workspace-root-container-layout}' \
+             2>/dev/null | awk '$2 != "floating"')"
+  root="$(printf '%s\n' "$tiled" | awk 'NR==1 {print $3}')"
+
+  # Toggle off: any tiled window nested deeper than the root → flatten back.
+  if printf '%s\n' "$tiled" | awk -v r="$root" '$2 != r {found=1} END {exit !found}'; then
+    aerospace flatten-workspace-tree --workspace "$ws" 2>/dev/null || true
     return 0
   fi
 
-  # Toggle on: flatten to one row/column, then pair the first four windows.
-  aerospace flatten-workspace-tree 2>/dev/null || true
+  # Toggle on: flatten to one row, then pair the first four tiled windows.
+  aerospace flatten-workspace-tree --workspace "$ws" 2>/dev/null || true
   local ids count
-  ids="$(aerospace list-windows --workspace focused --format '%{window-id}' 2>/dev/null)"
+  ids="$(aerospace list-windows --workspace "$ws" \
+           --format '%{window-id} %{window-parent-container-layout}' \
+           2>/dev/null | awk '$2 != "floating" {print $1}')"
   count="$(printf '%s\n' "$ids" | grep -c .)"
   if [ "$count" -lt 4 ]; then
-    _grid_notify "Need 4 windows for a 2x2 grid (this workspace has $count)."
+    _grid_notify "Need 4 tiled windows for a 2x2 grid (this workspace has $count)."
     return 0
   fi
 
-  # Pair into the axis perpendicular to the row/column so each pair forms a
-  # quadrant: join "left" under a horizontal root, "up" under a vertical one.
-  local dir=left
-  root="$(aerospace list-windows --workspace focused --format '%{workspace-root-container-layout}' 2>/dev/null | sed -n 1p)"
-  [ "$root" = v_tiles ] && dir=up
+  # Force plain horizontal tiles at the root (any window's parent IS the root
+  # after flattening), so joins form visible quadrants even if the workspace
+  # was in accordion.
+  aerospace layout h_tiles --window-id "$(printf '%s\n' "$ids" | sed -n 1p)" 2>/dev/null || true
 
-  # Window ids stay valid across the first join.
+  # join-with needs the row's on-screen order, which list-windows does NOT
+  # give (it sorts by app name, not tree position). Depth-first order is the
+  # on-screen order: walk dfs indices and read back each focused window,
+  # skipping floating ones.
+  local ordered="" prev_focus line id parent i=0
+  prev_focus="$(aerospace list-windows --focused --format '%{window-id}' 2>/dev/null)"
+  while [ "$i" -lt 32 ]; do
+    aerospace focus --dfs-index "$i" 2>/dev/null || break
+    line="$(aerospace list-windows --focused --format '%{window-id} %{window-parent-container-layout}' 2>/dev/null)"
+    id="${line%% *}"; parent="${line#* }"
+    [ "$parent" = floating ] || ordered="$ordered$id"$'\n'
+    i=$((i + 1))
+  done
+
+  # Join 2→1 and 4→3; under a horizontal root each joined pair becomes a
+  # vertical container, i.e. [1/2][3/4]. Join acts on the focused window —
+  # focusing by id sidesteps any ambiguity about which window "left" is
+  # relative to.
   local b d
-  b="$(printf '%s\n' "$ids" | sed -n 2p)"
-  d="$(printf '%s\n' "$ids" | sed -n 4p)"
-  aerospace join-with --window-id "$b" "$dir"
-  aerospace join-with --window-id "$d" "$dir"
-  [ "$count" -gt 4 ] && _grid_notify "Gridded the first 4 of $count windows; the rest stay tiled alongside."
+  b="$(printf '%s' "$ordered" | sed -n 2p)"
+  d="$(printf '%s' "$ordered" | sed -n 4p)"
+  aerospace focus --window-id "$b" && aerospace join-with left
+  aerospace focus --window-id "$d" && aerospace join-with left
+  [ -n "$prev_focus" ] && aerospace focus --window-id "$prev_focus" 2>/dev/null
+  [ "$count" -gt 4 ] && _grid_notify "Gridded the first 4 of $count tiled windows; the rest stay alongside."
   return 0
 }
 
@@ -124,6 +160,7 @@ _grid_notify() {
 # `omacase workspace <name>` — switch the active AeroSpace workspace. Lets the
 # generated Spotlight launchers (Omacase 1…9) drive AeroSpace, not just keys.
 omacase_workspace() {
+  ensure_brew_env   # invoked from Spotlight launchers, whose PATH lacks Homebrew (and thus `aerospace`)
   local n="${1:-}"
   [ -n "$n" ] || abort "usage: omacase workspace <1-9>"
   have aerospace || abort "workspace switching needs AeroSpace (active profile: $(cat "$OMACASE_STATE/wm" 2>/dev/null || echo unknown))."

@@ -33,6 +33,12 @@ outer.right      = 8
 outer.top        = 8       # macOS menu bar; AeroSpace already avoids it
 outer.bottom     = 40      # room for SketchyBar (position=bottom, height 32)
 
+# exec-and-forget commands inherit AeroSpace's launchd environment, whose PATH
+# is just /usr/bin:/bin:/usr/sbin:/sbin — without this, `omacase grid` and the
+# `brew services` startup commands above silently do nothing.
+[exec.env-vars]
+PATH = '/opt/homebrew/bin:/usr/local/bin:${PATH}'
+
 # Super = right ⌘ → ⌃⌥⌘ (via Karabiner), so 'cmd-ctrl-alt' is "Super" and
 # 'cmd-ctrl-alt-shift' is "Super + Shift". Mirrors Omarchy's SUPER / SUPER+SHIFT.
 [mode.main.binding]
@@ -65,7 +71,9 @@ cmd-ctrl-alt-equal = 'resize smart +50'
 # --- layout ---
 cmd-ctrl-alt-shift-space = 'layout floating tiling'   # toggle float
 cmd-ctrl-alt-e           = 'layout tiles horizontal vertical'
-cmd-ctrl-alt-q           = 'exec-and-forget omacase grid'   # Super+q → toggle 2x2 grid ("quad")
+# Absolute path: exec-and-forget's PATH has no Homebrew until AeroSpace
+# restarts and picks up [exec.env-vars], and reload-config doesn't apply it.
+cmd-ctrl-alt-q           = 'exec-and-forget /opt/homebrew/bin/omacase grid'   # Super+q → toggle 2x2 grid ("quad")
 cmd-ctrl-alt-z           = 'layout accordion horizontal vertical'   # Super+z → accordion
 cmd-ctrl-alt-f           = 'fullscreen'
 
