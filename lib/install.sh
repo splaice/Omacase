@@ -9,6 +9,7 @@ omacase_install() {
   source "$OMACASE_ROOT/lib/backup.sh"
 
   step "1/9  Packages & apps (brew bundle)"
+  _sync_local_tap || warn "Local tap sync failed; borders may be stock."
   run brew bundle --file="$OMACASE_ROOT/Brewfile" || warn "Some brew items failed; re-run later."
 
   step "2/9  Link \`omacase\` onto PATH + shell completion"
@@ -49,6 +50,30 @@ omacase_install() {
   warn "  (plus Automation → System Events so themes can sync macOS Light/Dark)."
   warn "macOS requires those grants by hand — no installer can click them for you."
   warn "Don't like the result? \`omacase restore\` rolls back to the pre-install snapshot."
+}
+
+# Omacase ships a patched JankyBorders (adds `square_apps=` for square-cornered
+# apps like undecorated Ghostty) as formula/borders.rb, built from the
+# splaice/JankyBorders fork. It's served from a machine-local tap so brew
+# treats it like any other package (`brew services start splaice/formulae/borders` etc.).
+# Drop back to FelixKratz/formulae/borders in the Brewfile if upstream merges it.
+_sync_local_tap() {
+  local tap_dir; tap_dir="$(brew --repository)/Library/Taps/splaice/homebrew-formulae"
+  [ -d "$tap_dir/Formula" ] || run brew tap-new splaice/formulae --no-git
+  run cp "$OMACASE_ROOT/formula/borders.rb" "$tap_dir/Formula/borders.rb"
+  run brew trust splaice/formulae >/dev/null 2>&1 || true  # newer brews gate taps
+
+  # Converge to the formula's pinned version. HOMEBREW_NO_REQUIRE_TAP_TRUST is
+  # scoped to this one command: brew's tap-trust check (as of mid-2026) aborts
+  # source builds whenever ANY untrusted tap exists, even unrelated ones.
+  local want have
+  want="$(sed -n 's/^ *version "\(.*\)"$/\1/p' "$OMACASE_ROOT/formula/borders.rb")"
+  have="$(brew list --versions borders 2>/dev/null | awk '{print $2}')"
+  if [ -z "$have" ]; then
+    run env HOMEBREW_NO_REQUIRE_TAP_TRUST=1 brew install splaice/formulae/borders
+  elif [ "$have" != "$want" ]; then
+    run env HOMEBREW_NO_REQUIRE_TAP_TRUST=1 brew reinstall splaice/formulae/borders
+  fi
 }
 
 # Make `omacase` available on PATH for every shell (zsh/bash/fish) and for GUI

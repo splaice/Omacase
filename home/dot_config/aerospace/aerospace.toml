@@ -17,7 +17,7 @@ enable-normalization-opposite-orientation-for-nested-containers = true
 
 # Restart borders/sketchybar when AeroSpace (re)starts.
 after-startup-command = [
-  'exec-and-forget brew services start borders',
+  'exec-and-forget brew services start splaice/formulae/borders',
   'exec-and-forget brew services start sketchybar',
 ]
 # Tell SketchyBar which workspace is focused.

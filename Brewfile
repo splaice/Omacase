@@ -6,7 +6,7 @@ tap "nikitabobko/tap"
 tap "FelixKratz/formulae"
 cask "nikitabobko/tap/aerospace"     # tiling WM (default profile, no SIP disable)
 brew "FelixKratz/formulae/sketchybar" # status bar (Waybar analog)
-brew "FelixKratz/formulae/borders"    # JankyBorders — active-window borders
+brew "splaice/formulae/borders"       # JankyBorders fork (+square_apps); local tap synced by install.sh
 # yabai profile (advanced; needs SIP partially disabled — see `omacase wm yabai`)
 brew "koekeishiya/formulae/yabai"
 brew "koekeishiya/formulae/skhd"

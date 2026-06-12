@@ -28,7 +28,7 @@ omacase doctor      # grant Accessibility to AeroSpace, SketchyBar, Karabiner
 |---|---|
 | Window manager | **AeroSpace** (no SIP disable) — yabai available as advanced profile |
 | Status bar | **SketchyBar** |
-| Borders | **JankyBorders** |
+| Borders | **JankyBorders** ([splaice fork](https://github.com/splaice/JankyBorders): `square_apps=` matches square-cornered windows like undecorated Ghostty) |
 | Launcher | **Spotlight** (built in — Tahoe actions, clipboard, Quick Keys) |
 | Keyboard | **Karabiner-Elements** |
 | Terminal | **Ghostty** + zsh/Starship + tmux + modern CLI set |

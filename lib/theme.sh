@@ -135,7 +135,7 @@ _link() { # _link <src> <dest>  (only if src exists)
 _theme_reload() {
   # Live-reload anything already running; ignore if not.
   pgrep -x sketchybar >/dev/null && run sketchybar --reload || true
-  pgrep -x borders   >/dev/null && run brew services restart borders 2>/dev/null || true
+  pgrep -x borders   >/dev/null && run brew services restart splaice/formulae/borders 2>/dev/null || true
   # Ghostty reloads its config (and the theme include) on SIGUSR2 since 1.2,
   # which also refreshes ANSI-palette CLIs like eza/ls. CAUTION: any OTHER
   # signal makes Ghostty quit. macOS truncates `comm` and hides GUI argv from

@@ -26,7 +26,7 @@ _wm_stop_all() {
 }
 
 _wm_start_shared() {
-  run brew services start borders 2>/dev/null || warn "borders not installed?"
+  run brew services start splaice/formulae/borders 2>/dev/null || warn "borders not installed?"
   run brew services start sketchybar 2>/dev/null || warn "sketchybar not installed?"
 }
 

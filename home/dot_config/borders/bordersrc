@@ -3,8 +3,12 @@
 # Colors come from ~/.config/borders/theme.conf (set by `omacase theme`).
 source "$HOME/.config/borders/theme.conf" 2>/dev/null || true
 
+# square_apps needs the splaice/JankyBorders fork (formula/borders.rb);
+# Ghostty runs undecorated (square corners), so its border is square too.
+# Entries match the process name, case-sensitively. Stock borders just warns.
 borders \
   active_color="${ACTIVE_BORDER:-0xff89b4fa}" \
   inactive_color="${INACTIVE_BORDER:-0xff45475a}" \
   width=4.0 \
-  hidpi=on
+  hidpi=on \
+  square_apps="ghostty"
