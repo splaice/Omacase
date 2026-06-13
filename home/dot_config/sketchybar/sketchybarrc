@@ -3,7 +3,7 @@
 # Each workspace item shows its number plus an icon for every app open in it
 # (chryoung's pure-shell AeroSpace plugin, FelixKratz/SketchyBar discussion #12,
 # adapted to omacase's theme + inlined-helper style). Focus shows by color and
-# an ACCENT outline. The strip sits on the right (reversed, space.N…space.1);
+# an ACCENT outline. The strip sits on the right (ascending, space.1…space.N);
 # the caffeine stay-awake toggle sits on the far left.
 # Theme colors come from ~/.config/sketchybar/theme.sh (set by `omacase theme`).
 source "$HOME/.config/sketchybar/theme.sh" 2>/dev/null || true
@@ -116,9 +116,9 @@ HANDLER
 chmod +x "$HOME/.config/sketchybar/space_handler.sh"
 
 # One item per AeroSpace workspace, on the right. Transparent pill; the handler
-# paints the ACCENT outline on the focused one. `order` is built ascending
-# (space.1 … space.N); --reorder lays items out as the reverse of its list, so
-# the strip reads high→low left-to-right (space.N … space.1, space.1 far right).
+# paints the ACCENT outline on the focused one. SketchyBar lays items out as the
+# reverse of the --reorder list, so prepending each id builds the list high→low
+# (space.N … space.1) to get an ascending strip left-to-right (space.1 … space.N).
 order=""
 for wid in $("$AEROSPACE" list-workspaces --all 2>/dev/null | sort -n); do
   sketchybar --add item "space.$wid" right \
@@ -132,7 +132,7 @@ for wid in $("$AEROSPACE" list-workspaces --all 2>/dev/null | sort -n); do
       script="$HOME/.config/sketchybar/space_handler.sh $wid" \
       click_script="$AEROSPACE workspace $wid" \
     --subscribe "space.$wid" aerospace_workspace_change space_windows_change
-  order="$order space.$wid"
+  order="space.$wid $order"
 done
 
 # Caffeine / stay-awake toggle (replaces Taurine). Click holds a power
@@ -182,7 +182,7 @@ sketchybar --add item caffeine left \
     script="$HOME/.config/sketchybar/caffeine.sh" \
   --subscribe caffeine system_woke
 
-# Pin the reversed workspace order (caffeine sits alone on the left), then paint
+# Pin the workspace order (ascending; caffeine sits alone on the left), then paint
 # initial state: the trigger runs every space handler (highlight + icons);
 # --update runs the caffeine script.
 sketchybar --reorder $order
