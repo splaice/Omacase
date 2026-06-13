@@ -100,7 +100,7 @@ cmd-ctrl-alt-shift-8 = 'move-node-to-workspace 8'
 cmd-ctrl-alt-shift-9 = 'move-node-to-workspace 9'
 
 # --- misc ---
-cmd-ctrl-alt-enter         = 'exec-and-forget open -na Ghostty'   # Super+Return → terminal (Omarchy)
+cmd-ctrl-alt-enter         = 'exec-and-forget /opt/homebrew/bin/omacase terminal'   # Super+Return → new Ghostty window in the running instance
 cmd-ctrl-alt-shift-enter   = 'exec-and-forget open -na Ghostty --args -e tmux new-session -A -s main'   # Super+Shift+Return → terminal + tmux (attach/create "main")
 cmd-ctrl-alt-tab           = 'workspace --wrap-around next'   # Super+Tab → next workspace (Omarchy)
 cmd-ctrl-alt-shift-tab     = 'workspace --wrap-around prev'   # Super+Shift+Tab → previous workspace (Omarchy)

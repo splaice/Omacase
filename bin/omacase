@@ -29,6 +29,7 @@ usage: omacase <command> [args]
   wm <aerospace|yabai>   Switch window-manager profile
   grid [1-9]         Toggle an AeroSpace workspace (default: focused) into a 2x2 grid
   workspace <1-9>    Switch to an AeroSpace workspace (alias: ws)
+  terminal           Open a new Ghostty window in the running instance (alias: term)
   doctor             Check permissions, SIP state, and missing grants
   backup [label]     Snapshot current dotfiles & macOS defaults
   restore [id]       Roll back to a snapshot (--list to see them)
@@ -52,6 +53,7 @@ case "$cmd" in
   wm)             source "$OMACASE_ROOT/lib/wm.sh";       omacase_wm      "$@" ;;
   grid)           source "$OMACASE_ROOT/lib/wm.sh";       omacase_grid    "$@" ;;   # optional workspace arg
   workspace|ws)   source "$OMACASE_ROOT/lib/wm.sh";       omacase_workspace "$@" ;;
+  terminal|term)  source "$OMACASE_ROOT/lib/wm.sh";       omacase_terminal  "$@" ;;
   doctor)         source "$OMACASE_ROOT/lib/doctor.sh";   omacase_doctor  "$@" ;;
   backup)         source "$OMACASE_ROOT/lib/backup.sh";   omacase_backup  "$@" ;;
   restore)        source "$OMACASE_ROOT/lib/backup.sh";   omacase_restore "$@" ;;

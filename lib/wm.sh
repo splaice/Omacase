@@ -157,6 +157,25 @@ _grid_notify() {
   osascript -e "display notification \"$1\" with title \"omacase grid\"" >/dev/null 2>&1 || true
 }
 
+# `omacase terminal` — open a new Ghostty window in the *running* instance.
+# Ghostty's `+new-window` action is GTK/Linux-only (it prints "not supported on
+# this platform" on macOS), and `open -na Ghostty` spawns a whole new process
+# every time. So we drive Ghostty's own File → New Window menu via System
+# Events: deterministic no matter which window is frontmost, and it reuses the
+# existing process. If Ghostty isn't running yet, just launch it — that already
+# yields a window. Bound to Super+Return; the menu click needs Accessibility
+# (granted by `omacase doctor`).
+omacase_terminal() {
+  osascript >/dev/null 2>&1 <<'APPLESCRIPT' || true
+if application "Ghostty" is running then
+  tell application "Ghostty" to activate
+  tell application "System Events" to tell process "Ghostty" to click menu item "New Window" of menu "File" of menu bar 1
+else
+  tell application "Ghostty" to activate
+end if
+APPLESCRIPT
+}
+
 # `omacase workspace <name>` — switch the active AeroSpace workspace. Lets the
 # generated Spotlight launchers (Omacase 1…9) drive AeroSpace, not just keys.
 omacase_workspace() {

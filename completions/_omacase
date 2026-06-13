@@ -29,6 +29,8 @@ _omacase() {
         'grid:arrange the focused AeroSpace workspace into a 2x2 grid'
         'workspace:switch to an AeroSpace workspace (1-9)'
         'ws:switch to an AeroSpace workspace (1-9)'
+        'terminal:open a new Ghostty window in the running instance'
+        'term:open a new Ghostty window in the running instance'
         'doctor:check permissions, SIP state, and missing grants'
         'backup:snapshot current dotfiles & macOS defaults'
         'restore:roll back to a snapshot (--list to see them)'
