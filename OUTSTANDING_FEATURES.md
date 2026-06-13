@@ -23,6 +23,7 @@ Tiers are by value-for-effort. Check items off as we land them. Each item notes
   - `Super+Shift+F` → ranger file popup (`omacase files`; `Super+F` is fullscreen). Chromeless centered Ghostty, toggle. Added `ranger` to the Brewfile.
   - `Super+M` → music overlay (`omacase music`; default Spotify, `omacase music apple` switches to Apple Music, falls back to whichever is installed).
   - `Super+O` → Obsidian overlay (`omacase obsidian`).
+  - `Super+P` → 1Password overlay (`omacase 1password`).
   - Overlay pattern: GUI apps (music/obsidian) toggle reveal/hide as centered floats *above* everything (`_app_toggle` + `on-window-detected` float rules); terminal popups (btop/files) share `_ghostty_popup_toggle`.
   - Files: `lib/wm.sh`, `bin/omacase`, `completions/_omacase`, `home/dot_config/aerospace/aerospace.toml`, `Brewfile`, `KEYBINDS.md`.
 

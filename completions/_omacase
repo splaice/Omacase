@@ -37,6 +37,8 @@ _omacase() {
         'browser:open/focus the system default browser'
         'music:toggle a centered music overlay'
         'obsidian:toggle a centered Obsidian overlay'
+        '1password:toggle a centered 1Password overlay'
+        '1pw:toggle a centered 1Password overlay'
         'doctor:check permissions, SIP state, and missing grants'
         'backup:snapshot current dotfiles & macOS defaults'
         'restore:roll back to a snapshot (--list to see them)'

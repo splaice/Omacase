@@ -100,6 +100,7 @@ browser, else the default browser.
 | `Super + Shift + F` | Toggle a centered ranger file popup (`Super+F` is fullscreen) |
 | `Super + M` | Toggle a centered music overlay (`omacase music apple` to use Apple Music) |
 | `Super + O` | Toggle a centered Obsidian overlay |
+| `Super + P` | Toggle a centered 1Password overlay |
 
 > **Overlay pattern.** `Super + Shift+F / M / O` reveal a centered, floating
 > window *above* everything; press again to hide it — one keystroke flips it

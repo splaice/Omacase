@@ -384,3 +384,6 @@ omacase_music() {
 
 # `omacase obsidian` — toggle the Obsidian overlay (Super+O).
 omacase_obsidian() { _app_toggle "Obsidian"; }
+
+# `omacase 1password` — toggle the 1Password overlay (Super+P).
+omacase_1password() { _app_toggle "1Password"; }

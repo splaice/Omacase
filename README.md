@@ -104,6 +104,7 @@ Apps & overlays (reveal/hide a centered float):
 | `Super + Shift + F` | Toggle a centered ranger file popup (`Super + F` is fullscreen) |
 | `Super + M` | Toggle a music overlay (`omacase music apple` for Apple Music) |
 | `Super + O` | Toggle an Obsidian overlay |
+| `Super + P` | Toggle a 1Password overlay |
 
 Focus & move (WASD — W up, A left, S down, D right):
 | Keys | Action |
