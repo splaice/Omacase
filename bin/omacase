@@ -29,7 +29,7 @@ usage: omacase <command> [args]
   wm <aerospace|yabai>   Switch window-manager profile
   grid [1-9]         Toggle an AeroSpace workspace (default: focused) into a 2x2 grid
   workspace <1-9>    Switch to an AeroSpace workspace (alias: ws)
-  terminal           Open a new Ghostty window in the running instance (alias: term)
+  terminal [cmd...]  Open a new Ghostty window in the running instance, optionally running cmd (alias: term)
   doctor             Check permissions, SIP state, and missing grants
   backup [label]     Snapshot current dotfiles & macOS defaults
   restore [id]       Roll back to a snapshot (--list to see them)

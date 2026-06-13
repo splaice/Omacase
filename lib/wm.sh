@@ -157,22 +157,42 @@ _grid_notify() {
   osascript -e "display notification \"$1\" with title \"omacase grid\"" >/dev/null 2>&1 || true
 }
 
-# `omacase terminal` — open a new Ghostty window in the *running* instance.
+# `omacase terminal [command...]` — open a new Ghostty window in the *running*
+# instance, optionally running a command in it.
+#
 # Ghostty's `+new-window` action is GTK/Linux-only (it prints "not supported on
 # this platform" on macOS), and `open -na Ghostty` spawns a whole new process
 # every time. So we drive Ghostty's own File → New Window menu via System
 # Events: deterministic no matter which window is frontmost, and it reuses the
 # existing process. If Ghostty isn't running yet, just launch it — that already
-# yields a window. Bound to Super+Return; the menu click needs Accessibility
-# (granted by `omacase doctor`).
+# yields a window.
+#
+# A command can't ride the menu (New Window takes no argument, and macOS has no
+# per-window IPC into Ghostty), so we type it into the new window's shell. zsh's
+# line editor buffers the type-ahead at the tty, so it runs once the prompt is
+# ready even if we type slightly early. Used by Super+Return (no command) and
+# Super+Shift+Return (`tmux new-session -A -s main`). The menu click and the
+# keystroke both need Accessibility (granted by `omacase doctor`).
 omacase_terminal() {
-  osascript >/dev/null 2>&1 <<'APPLESCRIPT' || true
-if application "Ghostty" is running then
-  tell application "Ghostty" to activate
-  tell application "System Events" to tell process "Ghostty" to click menu item "New Window" of menu "File" of menu bar 1
-else
-  tell application "Ghostty" to activate
-end if
+  # Pass the command as an argv item so its spaces/flags need no shell-escaping
+  # inside the AppleScript; empty string means "plain window, type nothing".
+  osascript - "$*" >/dev/null 2>&1 <<'APPLESCRIPT' || true
+on run argv
+  set theCmd to item 1 of argv
+  if application "Ghostty" is running then
+    tell application "Ghostty" to activate
+    tell application "System Events" to tell process "Ghostty" to click menu item "New Window" of menu "File" of menu bar 1
+  else
+    tell application "Ghostty" to activate
+  end if
+  if theCmd is not "" then
+    delay 0.5
+    tell application "System Events"
+      keystroke theCmd
+      key code 36
+    end tell
+  end if
+end run
 APPLESCRIPT
 }
 
