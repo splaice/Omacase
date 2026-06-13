@@ -27,8 +27,8 @@ Tiers are by value-for-effort. Check items off as we land them. Each item notes
   - Overlay pattern: GUI apps (music/obsidian) toggle reveal/hide as centered floats *above* everything (`_app_toggle` + `on-window-detected` float rules); terminal popups (btop/files) share `_ghostty_popup_toggle`.
   - Files: `lib/wm.sh`, `bin/omacase`, `completions/_omacase`, `home/dot_config/aerospace/aerospace.toml`, `Brewfile`, `KEYBINDS.md`.
 
-- [ ] **Rationalize a default messaging app** (`Super+G`, left unbound). ⚠️
-  - Omarchy binds `Super+Shift+G` → Signal. Decide omacase's stance: a single default (Signal? Messages?) or configurable like the music overlay (`omacase message [signal|messages|…]`), then bind `Super+G` to an `omacase message` overlay following the same reveal/hide pattern.
+- [x] **Default messaging app** — `Super+G` → iMessage. ✅
+  - `omacase message` (alias `messages`) toggles a centered Messages overlay sized to 80% of the screen (chat wants more room than the other overlays — `_app_toggle` gained an optional size-percent arg). Single default for now; multiple-app support (Signal/etc., like `omacase music`) can come later.
 
 - [ ] **Per-app window rules** — expand `[[on-window-detected]]` (today: only float System Settings).
   - Omarchy: auto-float/center dialogs & TUIs; assign apps to workspaces.

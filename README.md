@@ -105,6 +105,7 @@ Apps & overlays (reveal/hide a centered float):
 | `Super + M` | Toggle a music overlay (`omacase music apple` for Apple Music) |
 | `Super + O` | Toggle an Obsidian overlay |
 | `Super + P` | Toggle a 1Password overlay |
+| `Super + G` | Toggle an iMessage overlay (80% of the screen) |
 
 Focus & move (WASD — W up, A left, S down, D right):
 | Keys | Action |

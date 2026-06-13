@@ -39,6 +39,8 @@ _omacase() {
         'obsidian:toggle a centered Obsidian overlay'
         '1password:toggle a centered 1Password overlay'
         '1pw:toggle a centered 1Password overlay'
+        'message:toggle a centered iMessage overlay'
+        'messages:toggle a centered iMessage overlay'
         'doctor:check permissions, SIP state, and missing grants'
         'backup:snapshot current dotfiles & macOS defaults'
         'restore:roll back to a snapshot (--list to see them)'

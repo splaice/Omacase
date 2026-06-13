@@ -101,11 +101,11 @@ browser, else the default browser.
 | `Super + M` | Toggle a centered music overlay (`omacase music apple` to use Apple Music) |
 | `Super + O` | Toggle a centered Obsidian overlay |
 | `Super + P` | Toggle a centered 1Password overlay |
+| `Super + G` | Toggle a centered iMessage overlay (80% of the screen) |
 
-> **Overlay pattern.** `Super + Shift+F / M / O` reveal a centered, floating
-> window *above* everything; press again to hide it — one keystroke flips it
-> on/off. `Super + G` (messaging) is intentionally unbound for now (see
-> `OUTSTANDING_FEATURES.md`).
+> **Overlay pattern.** `Super + Shift+F / M / O / P / G` reveal a centered,
+> floating window *above* everything; press again to hide it — one keystroke
+> flips it on/off.
 
 ### Focus / move (WASD — W up, A left, S down, D right)
 | Keys | Action |

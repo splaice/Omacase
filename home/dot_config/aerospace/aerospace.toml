@@ -113,8 +113,7 @@ cmd-ctrl-alt-shift-f       = 'exec-and-forget /opt/homebrew/bin/omacase files'  
 cmd-ctrl-alt-m             = 'exec-and-forget /opt/homebrew/bin/omacase music'       # Super+M → music overlay (Spotify/Apple Music)
 cmd-ctrl-alt-o             = 'exec-and-forget /opt/homebrew/bin/omacase obsidian'    # Super+O → Obsidian overlay
 cmd-ctrl-alt-p             = 'exec-and-forget /opt/homebrew/bin/omacase 1password'   # Super+P → 1Password overlay
-# Super+G (messaging) intentionally left unbound — see OUTSTANDING_FEATURES.md
-# (need to rationalize a default messaging app first).
+cmd-ctrl-alt-g             = 'exec-and-forget /opt/homebrew/bin/omacase message'     # Super+G → iMessage overlay (80%)
 
 # Service mode hosts the functions Omarchy puts on Super+Ctrl / Super+Shift+Alt —
 # chords we can't express, since Super (⌃⌥⌘) already consumes Ctrl and Alt.
@@ -147,4 +146,8 @@ run = 'layout floating'
 
 [[on-window-detected]]
 if.app-id = 'com.1password.1password'
+run = 'layout floating'
+
+[[on-window-detected]]
+if.app-id = 'com.apple.MobileSMS'
 run = 'layout floating'

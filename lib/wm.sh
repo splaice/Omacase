@@ -278,10 +278,11 @@ OSA
 
 # Toggle a GUI app as a centered floating overlay. If it's frontmost, hide it;
 # otherwise launch/activate it, float it (so it overlays the tiles), center it
-# at its current size, and raise it above everything. $1 = app name.
+# and raise it above everything. $1 = app name; optional $2 = size as a percent
+# of the screen (e.g. 80) — omitted keeps the window's current size.
 _app_toggle() {
   ensure_brew_env
-  local app="$1" front
+  local app="$1" pct="${2:-0}" front
   front="$(osascript -e 'tell application "System Events" to get name of first process whose frontmost is true' 2>/dev/null)"
   if [ "$front" = "$app" ]; then
     osascript -e "tell application \"System Events\" to set visible of process \"$app\" to false" 2>/dev/null
@@ -290,9 +291,10 @@ _app_toggle() {
   open -a "$app" 2>/dev/null || { warn "Couldn't launch '$app' — is it installed?"; return 1; }
   sleep 0.3
   aerospace layout floating 2>/dev/null || true
-  osascript - "$app" >/dev/null 2>&1 <<'OSA' || true
+  osascript - "$app" "$pct" >/dev/null 2>&1 <<'OSA' || true
 on run argv
   set a to item 1 of argv
+  set pct to (item 2 of argv) as integer
   tell application "Finder" to set b to bounds of window of desktop
   set sw to (item 3 of b)
   set sh to (item 4 of b)
@@ -304,7 +306,12 @@ on run argv
     end repeat
     if exists window 1 then
       set win to window 1
-      set {ww, hh} to size of win
+      if pct > 0 then
+        set {ww, hh} to {(sw * pct) div 100, (sh * pct) div 100}
+        set size of win to {ww, hh}
+      else
+        set {ww, hh} to size of win
+      end if
       set position of win to {(sw - ww) div 2, (sh - hh) div 2}
       perform action "AXRaise" of win
     end if
@@ -387,3 +394,8 @@ omacase_obsidian() { _app_toggle "Obsidian"; }
 
 # `omacase 1password` — toggle the 1Password overlay (Super+P).
 omacase_1password() { _app_toggle "1Password"; }
+
+# `omacase message` — toggle the messaging overlay (Super+G). iMessage for now,
+# sized to 80% of the screen (chat needs more room than the other overlays);
+# multiple-app support can come later (cf. `omacase music`).
+omacase_message() { _app_toggle "Messages" 80; }
