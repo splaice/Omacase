@@ -45,6 +45,7 @@ usage: omacase <command> [args]
   config             Open the config directory
   menu               Interactive TUI (wrap in a Shortcut to launch from Spotlight)
   sysmenu            Toggle the global system menu as a centered popup (Super+Space)
+  notify [...]       Pop a native macOS notification (--title/--subtitle/--sound) for scripts/keybinds
   version            Print version
   uninstall          Remove omacase-managed config (keeps your apps)
 
@@ -69,6 +70,7 @@ case "$cmd" in
   btop)           source "$OMACASE_ROOT/lib/wm.sh";       omacase_btop      "$@" ;;
   files)          source "$OMACASE_ROOT/lib/wm.sh";       omacase_files     "$@" ;;
   sysmenu)        source "$OMACASE_ROOT/lib/wm.sh";       omacase_sysmenu   "$@" ;;
+  notify)         source "$OMACASE_ROOT/lib/notify.sh";   omacase_notify    "$@" ;;
   browser)        source "$OMACASE_ROOT/lib/wm.sh";       omacase_browser   "$@" ;;
   music)          source "$OMACASE_ROOT/lib/wm.sh";       omacase_music     "$@" ;;
   obsidian)       source "$OMACASE_ROOT/lib/wm.sh";       omacase_obsidian  "$@" ;;

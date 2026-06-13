@@ -48,6 +48,7 @@ _omacase() {
         'config:open the config directory'
         'menu:interactive TUI'
         'sysmenu:toggle the global system menu popup (Super+Space)'
+        'notify:pop a native macOS notification (for scripts/keybinds)'
         'version:print version'
         'uninstall:remove omacase-managed config (keeps your apps)'
         'help:show usage'
