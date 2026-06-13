@@ -1,0 +1,37 @@
+# Techno Viking — Starship prompt (used as $STARSHIP_CONFIG via theme.toml).
+# Magenta-forward (#f12eaf) with semantic green/yellow/red.
+"$schema" = 'https://starship.rs/config-schema.json'
+add_newline = true
+palette = 'techno-viking'
+format = '$directory$git_branch$git_status$nodejs$python$character'
+
+[palettes.techno-viking]
+blue = '#6b8fa0'
+green = '#5ce0a8'
+red = '#ff5c5c'
+mauve = '#f12eaf'
+yellow = '#f2c94c'
+
+[directory]
+style = 'bold mauve'
+truncation_length = 3
+truncate_to_repo = true
+
+[git_branch]
+symbol = ' '
+style = 'bold mauve'
+
+[git_status]
+style = 'bold red'
+
+[nodejs]
+symbol = ' '
+style = 'green'
+
+[python]
+symbol = ' '
+style = 'yellow'
+
+[character]
+success_symbol = '[➜](bold mauve)'
+error_symbol = '[➜](bold red)'

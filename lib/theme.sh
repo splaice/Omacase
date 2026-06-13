@@ -23,6 +23,9 @@ omacase_theme() {
   _link "$src/btop"       "$cfg/btop/themes/current.theme"
   _link "$src/nvim.lua"   "$cfg/nvim/lua/theme.lua"
   _link "$src/starship"   "$cfg/starship/theme.toml"
+  # eza/ls colors are optional per theme: link when present, else CLEAR so eza
+  # falls back to the terminal ANSI palette instead of the previous theme's.
+  if [ -e "$src/eza" ]; then _link "$src/eza" "$cfg/eza/theme.sh"; else run rm -f "$cfg/eza/theme.sh"; fi
 
   is_dryrun || echo "$name" > "$OMACASE_STATE/theme"
   _theme_appearance "$name"

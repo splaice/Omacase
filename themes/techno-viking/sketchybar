@@ -1,0 +1,5 @@
+# Techno Viking — SketchyBar palette (sourced as theme.sh).
+export BAR_COLOR=0xff0b1012
+export LABEL_COLOR=0xffe8e7e5
+export ACCENT=0xfff12eaf
+export MUTED=0xff5a6469   # text_dim — dimmed inactive workspace numbers

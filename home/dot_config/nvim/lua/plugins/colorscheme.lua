@@ -53,6 +53,11 @@ return {
     end,
   },
 
+  -- Techno Viking — a LOCAL Omacase plugin (not a remote repo). Its colorscheme
+  -- lives in techno-viking.nvim/colors/techno-viking.lua, shipped via
+  -- home/dot_config/nvim/; lazy loads it from the config dir by `dir`.
+  { dir = vim.fn.stdpath("config") .. "/techno-viking.nvim", name = "techno-viking", lazy = false, priority = 1000 },
+
   -- Activate whichever colorscheme matches the system theme.
   { "LazyVim/LazyVim", opts = { colorscheme = colorscheme } },
 }

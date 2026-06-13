@@ -26,6 +26,9 @@ if command -v eza >/dev/null; then
   alias lt='eza --tree --level=2 --long --icons --git'
   alias lta='lt -a'
 fi
+# Per-theme eza/ls colors, swapped by `omacase theme` (absent → eza uses the
+# terminal ANSI palette). Sourced after the aliases so LS_COLORS/EZA_COLORS win.
+[ -r "$HOME/.config/eza/theme.sh" ] && source "$HOME/.config/eza/theme.sh"
 alias cat='bat --paging=never'
 alias find='fd'
 alias grep='rg'
