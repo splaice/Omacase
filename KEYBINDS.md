@@ -61,7 +61,7 @@ Shortcuts app → New Shortcut → "Run Shell Script", paste a command, name it:
 | Theme <name> | `theme gruvbox` | `Super Shift Ctrl Space` theme menu |
 | Toggle Appearance | `appearance toggle` | `Super Ctrl N` nightlight |
 | Update System | `update` | menu → Update |
-| Omacase Menu | `menu` *(terminal only — gum TUI; launch via Ghostty, not headless)* | `Super Alt Space` omarchy-menu |
+| Omacase Menu | `menu` *(gum TUI; also bound to `Super + Space` via `omacase sysmenu`)* | `Super Alt Space` omarchy-menu |
 
 ### Web apps — `omacase webapp <name>` (Omarchy's set, `Super Shift` + letter)
 Make one Shortcut per app (`webapp email`, `webapp chatgpt`, …); name it for the
@@ -96,6 +96,7 @@ browser, else the default browser.
 |---|---|
 | `Super + Return` | Open a new Ghostty terminal window |
 | `Super + Shift + Return` | Open Ghostty into tmux (attaches/creates session `main`) |
+| `Super + Space` | Toggle the global system menu (centered `omacase menu` popup) |
 | `Super + B` | Open / focus the system default browser |
 | `Super + Shift + F` | Toggle a centered ranger file popup (`Super+F` is fullscreen) |
 | `Super + M` | Toggle a centered music overlay (`omacase music apple` to use Apple Music) |

@@ -47,10 +47,11 @@ Tiers are by value-for-effort. Check items off as we land them. Each item notes
 
 ## Tier 2 — Medium value
 
-- [ ] **Global system menu** — bind a key to an interactive Omacase menu.
-  - Omarchy: `SUPER+ALT+SPACE` menu (Capture / Toggle / Style / Setup / Install / power).
-  - macOS: bind to launch `omacase menu` in a Ghostty popup (or a Shortcut); extend the gum menu with Capture, Toggle, power entries.
-  - Files: `lib/menu.sh`, `home/dot_config/aerospace/aerospace.toml`.
+- [x] **Global system menu** — `Super + Space` → `omacase sysmenu` opens the gum TUI
+  as a centered, floating Ghostty popup (same `_ghostty_popup_toggle` mechanic as btop/files).
+  Mirrors Omarchy's `SUPER+ALT+SPACE` (on macOS the Alt is already inside Super=⌃⌥⌘).
+  - Remaining: extend the gum menu with Capture / Toggle / power entries for fuller Omarchy parity.
+  - Files: `lib/wm.sh` (`omacase_sysmenu`), `lib/menu.sh`, `home/dot_config/aerospace/aerospace.toml`.
 
 - [ ] **DND / Focus toggle + notify helper.**
   - Omarchy: mako DND toggle + `omarchy-notification-send`.

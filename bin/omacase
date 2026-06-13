@@ -44,6 +44,7 @@ usage: omacase <command> [args]
   restore [id]       Roll back to a snapshot (--list to see them)
   config             Open the config directory
   menu               Interactive TUI (wrap in a Shortcut to launch from Spotlight)
+  sysmenu            Toggle the global system menu as a centered popup (Super+Space)
   version            Print version
   uninstall          Remove omacase-managed config (keeps your apps)
 
@@ -67,6 +68,7 @@ case "$cmd" in
   terminal|term)  source "$OMACASE_ROOT/lib/wm.sh";       omacase_terminal  "$@" ;;
   btop)           source "$OMACASE_ROOT/lib/wm.sh";       omacase_btop      "$@" ;;
   files)          source "$OMACASE_ROOT/lib/wm.sh";       omacase_files     "$@" ;;
+  sysmenu)        source "$OMACASE_ROOT/lib/wm.sh";       omacase_sysmenu   "$@" ;;
   browser)        source "$OMACASE_ROOT/lib/wm.sh";       omacase_browser   "$@" ;;
   music)          source "$OMACASE_ROOT/lib/wm.sh";       omacase_music     "$@" ;;
   obsidian)       source "$OMACASE_ROOT/lib/wm.sh";       omacase_obsidian  "$@" ;;

@@ -47,6 +47,7 @@ _omacase() {
         'restore:roll back to a snapshot (--list to see them)'
         'config:open the config directory'
         'menu:interactive TUI'
+        'sysmenu:toggle the global system menu popup (Super+Space)'
         'version:print version'
         'uninstall:remove omacase-managed config (keeps your apps)'
         'help:show usage'

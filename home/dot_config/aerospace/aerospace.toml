@@ -108,6 +108,9 @@ cmd-ctrl-alt-shift-c       = 'reload-config'
 cmd-ctrl-alt-shift-semicolon = 'mode service'   # enter a service sub-mode
 
 # --- app launch (Super + letter; omacase handles float/center/toggle) ---
+# Super+Space → global system menu (Omarchy's Super+Alt+Space; Alt is already in
+# Super=⌃⌥⌘, so it's Super+Space — pressing Option too still triggers it).
+cmd-ctrl-alt-space         = 'exec-and-forget /opt/homebrew/bin/omacase sysmenu'    # Super+Space → omacase menu popup
 cmd-ctrl-alt-b             = 'exec-and-forget /opt/homebrew/bin/omacase browser'    # Super+B → default browser
 cmd-ctrl-alt-shift-f       = 'exec-and-forget /opt/homebrew/bin/omacase files'      # Super+Shift+F → ranger popup (Super+F is fullscreen)
 cmd-ctrl-alt-m             = 'exec-and-forget /opt/homebrew/bin/omacase music'       # Super+M → music overlay (Spotify/Apple Music)

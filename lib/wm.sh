@@ -311,6 +311,18 @@ omacase_files() {
     "ranger --confdir"
 }
 
+# `omacase sysmenu` — toggle the global system menu (Super+Space): a centered,
+# floating Ghostty popup running the `omacase menu` gum TUI. The `--popup`
+# sentinel both marks the process so the toggle pgrep/pkills exactly this window
+# (never a plain terminal `omacase menu`) and stays distinct from the wrapper's
+# own `omacase sysmenu` command line. This is Omarchy's Super+Alt+Space menu — on
+# macOS the Alt already lives inside Super (⌃⌥⌘), so it sits on Super+Space.
+omacase_sysmenu() {
+  _ghostty_popup_toggle "omacase-menu" \
+    "printf '\033]0;omacase-menu\007'; exec omacase menu --popup" \
+    "omacase menu --popup"
+}
+
 # `omacase browser` — open/focus the system default browser (Super+B). Reads the
 # default https handler from LaunchServices; falls back to Safari.
 omacase_browser() {
