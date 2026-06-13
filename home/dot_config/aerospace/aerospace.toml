@@ -125,29 +125,131 @@ backspace    = ['close-all-windows-but-current', 'mode main']
 tab          = ['workspace-back-and-forth', 'mode main']                       # former workspace (Omarchy Super+Ctrl+Tab)
 m            = ['move-workspace-to-monitor --wrap-around next', 'mode main']    # send workspace to next monitor
 
-# Example window rule: float the system Settings & Finder info windows.
-[[on-window-detected]]
-if.app-id = 'com.apple.systempreferences'
-run = 'layout floating'
+# ============================================================================
+# Window rules — exceptions to "tile everything".
+#
+# AeroSpace's on-window-detected can only float/tile (or assign a workspace) —
+# it can't size or position, so these just keep windows OUT of the tiling.
+# (Centered/sized overlays are done by the `omacase` commands at invoke time.)
+#
+# To add an app: find its bundle id with  `osascript -e 'id of app "Name"'`
+# (or `mdls -name kMDItemCFBundleIdentifier /Applications/Name.app`), then copy
+# a block below and change the id. Default behavior (no rule) is to tile.
+# ============================================================================
 
-# Overlay apps (Super+M / Super+O) are revealed/hidden as centered floats by
-# omacase, so keep them out of the tiling whenever they appear.
+# --- Overlay apps: revealed/hidden as centered floats by omacase (Super+M/O/P/G,
+#     and the music/obsidian/1password/message commands) — float on appearance.
 [[on-window-detected]]
 if.app-id = 'com.spotify.client'
 run = 'layout floating'
-
 [[on-window-detected]]
 if.app-id = 'com.apple.Music'
 run = 'layout floating'
-
 [[on-window-detected]]
 if.app-id = 'md.obsidian'
 run = 'layout floating'
-
 [[on-window-detected]]
 if.app-id = 'com.1password.1password'
 run = 'layout floating'
-
 [[on-window-detected]]
 if.app-id = 'com.apple.MobileSMS'
+run = 'layout floating'
+
+# --- macOS system utilities & dialog-style apps: small/single-window, tile badly.
+[[on-window-detected]]
+if.app-id = 'com.apple.systempreferences'
+run = 'layout floating'
+[[on-window-detected]]
+if.app-id = 'com.apple.calculator'
+run = 'layout floating'
+[[on-window-detected]]
+if.app-id = 'com.apple.ActivityMonitor'
+run = 'layout floating'
+[[on-window-detected]]
+if.app-id = 'com.apple.SystemProfiler'
+run = 'layout floating'
+[[on-window-detected]]
+if.app-id = 'com.apple.Console'
+run = 'layout floating'
+[[on-window-detected]]
+if.app-id = 'com.apple.DiskUtility'
+run = 'layout floating'
+[[on-window-detected]]
+if.app-id = 'com.apple.FontBook'
+run = 'layout floating'
+[[on-window-detected]]
+if.app-id = 'com.apple.DigitalColorMeter'
+run = 'layout floating'
+[[on-window-detected]]
+if.app-id = 'com.apple.ColorSyncUtility'
+run = 'layout floating'
+[[on-window-detected]]
+if.app-id = 'com.apple.audio.AudioMIDISetup'
+run = 'layout floating'
+[[on-window-detected]]
+if.app-id = 'com.apple.screenshot.launcher'
+run = 'layout floating'
+[[on-window-detected]]
+if.app-id = 'com.apple.ScreenSharing'
+run = 'layout floating'
+[[on-window-detected]]
+if.app-id = 'com.apple.Image_Capture'
+run = 'layout floating'
+[[on-window-detected]]
+if.app-id = 'com.apple.Passwords'
+run = 'layout floating'
+[[on-window-detected]]
+if.app-id = 'com.apple.archiveutility'
+run = 'layout floating'
+[[on-window-detected]]
+if.app-id = 'cx.c3.theunarchiver'
+run = 'layout floating'
+[[on-window-detected]]
+if.app-id = 'com.apple.airport.airportutility'
+run = 'layout floating'
+[[on-window-detected]]
+if.app-id = 'com.apple.BluetoothFileExchange'
+run = 'layout floating'
+[[on-window-detected]]
+if.app-id = 'com.apple.MigrateAssistant'
+run = 'layout floating'
+[[on-window-detected]]
+if.app-id = 'com.apple.backup.launcher'
+run = 'layout floating'
+[[on-window-detected]]
+if.app-id = 'com.apple.printcenter'
+run = 'layout floating'
+[[on-window-detected]]
+if.app-id = 'com.apple.ScriptEditor2'
+run = 'layout floating'
+[[on-window-detected]]
+if.app-id = 'com.apple.Automator'
+run = 'layout floating'
+[[on-window-detected]]
+if.app-id = 'com.apple.Dictionary'
+run = 'layout floating'
+[[on-window-detected]]
+if.app-id = 'com.apple.PhotoBooth'
+run = 'layout floating'
+
+# --- Input / window-manager / menu-bar helper settings windows.
+[[on-window-detected]]
+if.app-id = 'org.pqrs.Karabiner-Elements.Settings'
+run = 'layout floating'
+[[on-window-detected]]
+if.app-id = 'org.pqrs.Karabiner-EventViewer'
+run = 'layout floating'
+[[on-window-detected]]
+if.app-id = 'com.jordanbaird.Ice'
+run = 'layout floating'
+[[on-window-detected]]
+if.app-id = 'com.naotanhaocan.BetterMouse'
+run = 'layout floating'
+[[on-window-detected]]
+if.app-id = 'com.MrKai77.Loop'
+run = 'layout floating'
+
+# --- Small converters / pickers.
+[[on-window-detected]]
+if.app-id = 'com.sindresorhus.HEIC-Converter'
 run = 'layout floating'

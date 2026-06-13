@@ -30,10 +30,12 @@ Tiers are by value-for-effort. Check items off as we land them. Each item notes
 - [x] **Default messaging app** — `Super+G` → iMessage. ✅
   - `omacase message` (alias `messages`) toggles a centered Messages overlay sized to 80% of the screen (chat wants more room than the other overlays — `_app_toggle` gained an optional size-percent arg). Single default for now; multiple-app support (Signal/etc., like `omacase music`) can come later.
 
-- [ ] **Per-app window rules** — expand `[[on-window-detected]]` (today: only float System Settings).
-  - Omarchy: auto-float/center dialogs & TUIs; assign apps to workspaces.
-  - macOS: more `layout floating` rules (Calculator, System Information, small utilities) + `move-node-to-workspace` assignments (e.g. chat→a workspace).
-  - Files: `home/dot_config/aerospace/aerospace.toml` (line ~120 onward).
+- [x] **Per-app window rules** — curated float list for system utilities. ✅
+  - A grouped, commented "Window rules" section in `aerospace.toml` floats ~30 system-utility / dialog-style apps (Calculator, Activity Monitor, System Settings, Disk Utility, Font Book, Screenshot, Console, …), the input/WM helper settings (Karabiner, Ice, BetterMouse, Loop), and small converters — so they escape tiling. Everything else tiles (the correct default); extend by copy-pasting a block (the header documents how + the float/tile-only caveat).
+  - Kept native/inline (chosen over a generated registry): AeroSpace is single-file with no includes, the exception set is small, and a plain block is the copy-pasteable path for others.
+  - Note: `on-window-detected` can't size/position — only float/tile/assign-workspace. Centered/sized overlays stay the job of the `omacase` commands.
+  - Deferred: workspace pinning (`move-node-to-workspace`) — opinionated, interacts with dynamic workspaces.
+  - Files: `home/dot_config/aerospace/aerospace.toml`.
 
 - [ ] **Bar: update-available indicator** — show when `brew outdated` has updates.
   - Omarchy: Waybar update indicator.
