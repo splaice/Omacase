@@ -12,6 +12,10 @@ omacase_update() {
   run brew update || true
   source "$OMACASE_ROOT/lib/install.sh"
   omacase_install
+  # One-time imperative cleanup the declarative apply can't do (e.g. uninstall a
+  # dropped cask). Idempotent + tracked; failure halts migrations but not update.
+  source "$OMACASE_ROOT/lib/migrate.sh"
+  omacase_migrate || warn "Some migrations did not complete — they'll retry next update."
   step "Upgrading outdated formulae & casks"
   run brew upgrade || warn "Some upgrades failed."
   success "omacase up to date."

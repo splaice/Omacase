@@ -53,10 +53,13 @@ Tiers are by value-for-effort. Check items off as we land them. Each item notes
   - Remaining: extend the gum menu with Capture / Toggle / power entries for fuller Omarchy parity.
   - Files: `lib/wm.sh` (`omacase_sysmenu`), `lib/menu.sh`, `home/dot_config/aerospace/aerospace.toml`.
 
-- [ ] **Config migrations** — versioned, idempotent migrations on `omacase update`.
-  - Omarchy: 300+ timestamped migration scripts.
-  - macOS: a `migrations/` dir + a runner in `lib/update.sh` that tracks the last-applied id in `$OMACASE_STATE`.
-  - Files: `lib/update.sh`, new `migrations/`.
+- [x] **Config migrations** — `omacase migrate` (`lib/migrate.sh`), run by `omacase update`.
+  Timestamp-ordered idempotent scripts in `migrations/`; high-water mark in
+  `$OMACASE_STATE/migrations-last`. **Surgical scope:** only removes Omacase-managed
+  drops by exact name (never `brew bundle cleanup`), so a user's own Homebrew
+  packages are untouched. Seeded with `20260613-remove-dropped-apps` (Ice/Zed/
+  yabai/skhd + the koekeishiya tap).
+  - To add one: drop `migrations/<YYYYMMDD-slug>.sh` defining an idempotent `migrate()`.
 
 - [ ] **Wallpaper cycling** — multiple backgrounds per theme + a cycle hotkey.
   - Omarchy: per-theme `backgrounds/` dir, `omarchy-theme-bg-next`.

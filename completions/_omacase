@@ -21,6 +21,7 @@ _omacase() {
       local -a subcommands=(
         'install:full idempotent setup (re-runnable)'
         'update:git pull + brew bundle + re-apply dotfiles & defaults'
+        'migrate:apply pending one-time migrations (also run by update)'
         'outdated:print the count of outdated Homebrew packages'
         'theme:apply a theme everywhere (no name = list/pick)'
         'webapp:open an Omarchy web app (no name = list)'
