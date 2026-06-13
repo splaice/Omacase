@@ -44,6 +44,7 @@ brew "gh"
 
 # --- Tooling ----------------------------------------------------------------
 brew "gum"               # TUI for `omacase menu`
+brew "terminal-notifier" # reliable native notifications for `omacase notify` (osascript's are flaky)
 # (Omacase manages its own dotfiles via symlinks — no chezmoi dependency.)
 
 # --- Fonts ------------------------------------------------------------------

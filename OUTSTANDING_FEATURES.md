@@ -53,11 +53,10 @@ Tiers are by value-for-effort. Check items off as we land them. Each item notes
   - Remaining: extend the gum menu with Capture / Toggle / power entries for fuller Omarchy parity.
   - Files: `lib/wm.sh` (`omacase_sysmenu`), `lib/menu.sh`, `home/dot_config/aerospace/aerospace.toml`.
 
-- [ ] **DND / Focus toggle** — notify helper ✓ done (`omacase notify`, `lib/notify.sh`,
-  osascript `display notification`; `_grid_notify` now uses it).
+- [ ] **DND / Focus toggle** — notify helper ✓ done (`omacase notify`, `lib/notify.sh`;
+  prefers `terminal-notifier`, falls back to flaky osascript; `_grid_notify` uses it).
   - Omarchy: mako DND toggle + `omarchy-notification-send` (the notify half).
   - macOS remaining: toggle a Focus via `shortcuts run`/osascript; optional SketchyBar indicator.
-    Optional later: richer notifications (app icon / click actions) via `terminal-notifier`.
   - Files: Focus toggle → new `lib/` helper or `omacase` subcommand.
 
 - [ ] **Config migrations** — versioned, idempotent migrations on `omacase update`.
