@@ -44,9 +44,22 @@ ICON_WEB=$'\xf3\xb0\x87\xa7'       # browsers
 ICON_DEV=$'\xf3\xb0\x85\xa8'       # editors / IDEs
 ICON_TERM=$'\xf3\xb0\x86\x8d'      # terminals
 ICON_FILE=$'\xf3\xb0\x89\x8b'      # Finder
-ICON_CHAT=$'\xf3\xb0\x8d\xa9'      # chat
+ICON_CHAT=$'\xf3\xb0\x8d\xa9'      # chat / messaging
+ICON_AI=$'\xf3\xb0\x9a\xa9'        # AI assistants (Claude, ChatGPT, Copilot…)
+ICON_MIC=$'\xf3\xb0\x8d\xac'       # voice / dictation (Wispr Flow)
+ICON_VIDEOCHAT=$'\xf3\xb0\xa4\xb9' # video calls (Zoom)
+ICON_VPN=$'\xf3\xb0\x96\x82'       # VPN (Tailscale, NordVPN)
+ICON_LIST=$'\xf3\xb0\x97\xa0'      # tasks / todos (Todoist)
 ICON_MUSIC=$'\xf3\xb0\x8e\x84'     # music
+ICON_MOVIE=$'\xf3\xb0\x8e\x81'     # video editing (iMovie)
+ICON_PODCAST=$'\xf3\xb0\xa6\x94'   # podcasts (Overcast)
 ICON_NOTE=$'\xf3\xb1\x9e\x8e'      # notes / docs
+ICON_BOOK=$'\xf3\xb0\x8b\x95'      # knowledge base (Obsidian)
+ICON_PRESENT=$'\xf3\xb0\xa6\x85'   # presentations (Keynote)
+ICON_TABLE=$'\xf3\xb0\x93\xab'     # spreadsheets (Numbers)
+ICON_PRINT3D=$'\xf3\xb0\x9c\xab'   # 3D / CAD (Blender, Bambu, MeshLab…)
+ICON_DOCKER=$'\xf3\xb0\xa1\xa8'    # Docker
+ICON_CLOUD=$'\xf3\xb0\x85\xa3'     # cloud storage (OneDrive)
 ICON_COG=$'\xf3\xb0\x92\x93'       # system settings / info
 ICON_CHART=$'\xf3\xb1\x95\x8d'     # activity monitor
 ICON_MAIL=$'\xf3\xb0\x87\xae'      # mail
@@ -57,19 +70,33 @@ ICON_NONE=$'\xe2\x80\x94'          # em dash — empty workspace
 
 get_app_icon() {
   case "$1" in
-    "Arc"|"Safari"|"Google Chrome"|"Firefox"|"Brave Browser")  printf '%s' "$ICON_WEB" ;;
-    "Code"|"Visual Studio Code"|"VSCodium"|"Xcode"|"Zed")       printf '%s' "$ICON_DEV" ;;
-    "Ghostty"|"iTerm2"|"Terminal"|"Warp"|"Alacritty")          printf '%s' "$ICON_TERM" ;;
-    "Finder")                                                   printf '%s' "$ICON_FILE" ;;
-    "Discord"|"Slack"|"Telegram"|"Messages")                   printf '%s' "$ICON_CHAT" ;;
-    "Spotify"|"Music")                                          printf '%s' "$ICON_MUSIC" ;;
-    "Notes"|"TextEdit"|"Stickies"|"Microsoft Word")            printf '%s' "$ICON_NOTE" ;;
-    "System Settings"|"System Information")                     printf '%s' "$ICON_COG" ;;
-    "Activity Monitor")                                         printf '%s' "$ICON_CHART" ;;
-    "Mail"|"Microsoft Outlook")                                 printf '%s' "$ICON_MAIL" ;;
-    "Calendar")                                                 printf '%s' "$ICON_CALENDAR" ;;
-    "1Password")                                                printf '%s' "$ICON_PASSKEY" ;;
-    *)                                                          printf '%s' "$ICON_APP" ;;
+    "Arc"|"Safari"|"Google Chrome"|"Firefox"|"Brave Browser")            printf '%s' "$ICON_WEB" ;;
+    "Code"|"Visual Studio Code"|"VSCodium"|"Xcode"|"Zed")                printf '%s' "$ICON_DEV" ;;
+    "Ghostty"|"iTerm2"|"Terminal"|"Warp"|"Alacritty"|"cmux")            printf '%s' "$ICON_TERM" ;;
+    "Finder")                                                            printf '%s' "$ICON_FILE" ;;
+    "Discord"|"Slack"|"Telegram"|"Messages"|"Signal"|"WhatsApp")        printf '%s' "$ICON_CHAT" ;;
+    "Claude"|"ChatGPT"|"Copilot"|"Codex"|"Ollama")                      printf '%s' "$ICON_AI" ;;
+    "Wispr Flow")                                                        printf '%s' "$ICON_MIC" ;;
+    "zoom.us"|"Zoom")                                                    printf '%s' "$ICON_VIDEOCHAT" ;;
+    "Tailscale"|"NordVPN")                                               printf '%s' "$ICON_VPN" ;;
+    "Todoist")                                                           printf '%s' "$ICON_LIST" ;;
+    "Spotify"|"Music"|"GarageBand")                                      printf '%s' "$ICON_MUSIC" ;;
+    "iMovie")                                                            printf '%s' "$ICON_MOVIE" ;;
+    "Overcast")                                                          printf '%s' "$ICON_PODCAST" ;;
+    "Notes"|"TextEdit"|"Stickies"|"Microsoft Word"|"Pages")            printf '%s' "$ICON_NOTE" ;;
+    "Obsidian")                                                          printf '%s' "$ICON_BOOK" ;;
+    "Keynote")                                                           printf '%s' "$ICON_PRESENT" ;;
+    "Numbers")                                                           printf '%s' "$ICON_TABLE" ;;
+    "Blender"|"BambuStudio"|"Bambu Studio"|"Meshmixer"|"MeshLab"|"CrealityScan"|"PSA"|"MRUpdater"|"Moebius") \
+                                                                         printf '%s' "$ICON_PRINT3D" ;;
+    "Docker"|"Docker Desktop")                                           printf '%s' "$ICON_DOCKER" ;;
+    "OneDrive")                                                          printf '%s' "$ICON_CLOUD" ;;
+    "System Settings"|"System Information")                              printf '%s' "$ICON_COG" ;;
+    "Activity Monitor")                                                  printf '%s' "$ICON_CHART" ;;
+    "Mail"|"Microsoft Outlook")                                          printf '%s' "$ICON_MAIL" ;;
+    "Calendar")                                                          printf '%s' "$ICON_CALENDAR" ;;
+    "1Password")                                                         printf '%s' "$ICON_PASSKEY" ;;
+    *)                                                                   printf '%s' "$ICON_APP" ;;
   esac
 }
 
