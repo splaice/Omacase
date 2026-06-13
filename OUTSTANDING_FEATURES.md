@@ -79,6 +79,17 @@ Tiers are by value-for-effort. Check items off as we land them. Each item notes
 - [ ] **Font switcher** — `omacase font <name>` to retarget Ghostty/SketchyBar.
 - [ ] **Quick reminders hotkey** — set/show via Reminders/osascript (`omarchy-reminder` analog).
 - [ ] **Night Shift toggle hotkey** — toggle macOS Night Shift on a key.
+- [ ] **Own Omacase bundle ID + notification identity** — ship a minimal signed
+  `.app` (e.g. `app.omacase` / `com.omacase.Omacase`) so notifications are
+  attributed to "Omacase" with our own left icon, instead of borrowing
+  terminal-notifier's identity or riding `-contentImage`.
+  - Why: macOS pins a banner's left icon to the *sending* bundle; only a real
+    bundle (or `terminal-notifier -sender <our-id>`) gets the true Omacase icon.
+  - Sketch: bundle a tiny notifier `.app` (icon = `assets/omacase-icon.png`),
+    code-sign it, then `terminal-notifier -sender app.omacase` (or post via the
+    bundle directly). Decide the canonical bundle id once and reuse it for any
+    future launchers/Shortcuts.
+  - Files: `lib/notify.sh`, new `app/` (or `macos/`) bundle, install step.
 
 ---
 
