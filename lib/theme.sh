@@ -30,6 +30,10 @@ omacase_theme() {
   _theme_reload
   _theme_wallpaper "$name"
   success "Theme '$name' applied."
+  if ! is_dryrun; then
+    source "$OMACASE_ROOT/lib/notify.sh"
+    omacase_notify --title "Omacase" --subtitle "Theme" --sound Glass "Switched to $name"
+  fi
 }
 
 # Our theme dirs mostly match Omarchy's, except the Catppuccin flavor naming.
