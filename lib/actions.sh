@@ -193,6 +193,7 @@ _caffeinate_paint() {
 
 omacase_caffeinate() {
   ensure_brew_env   # invoked from the SketchyBar click env, whose PATH lacks Homebrew (sketchybar)
+  local before; _caffeinate_awake && before=on || before=off
   case "${1:-paint}" in
     toggle) if _caffeinate_awake; then _caffeinate_stop; else _caffeinate_start; fi ;;
     on)     _caffeinate_start ;;
@@ -204,4 +205,15 @@ omacase_caffeinate() {
   esac
   _caffeinate_awake || rm -f "$(_caffeinate_pidfile)" 2>/dev/null   # drop a stale pid
   _caffeinate_paint
+  # Notify only on a real on↔off transition (so paint/status/no-op on|off stay quiet).
+  local after; _caffeinate_awake && after=on || after=off
+  if [ "$before" != "$after" ]; then
+    source "$OMACASE_ROOT/lib/notify.sh"
+    local img="$OMACASE_ROOT/assets/omacase-icon.png"
+    if [ "$after" = on ]; then
+      omacase_notify --title "Omacase" --subtitle "Caffeinate" --sound Glass --image "$img" "Caffeinated — your Mac will stay awake"
+    else
+      omacase_notify --title "Omacase" --subtitle "Caffeinate" --sound Glass --image "$img" "Decaffeinated — normal sleep restored"
+    fi
+  fi
 }
