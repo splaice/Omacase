@@ -96,7 +96,7 @@ can_set_appearance() {
 
 # --- conflicting window managers ---------------------------------------------
 # Loop (com.MrKai77.Loop) is a third-party window manager. Its global drag-to-
-# snap and keyboard shortcuts fight AeroSpace/yabai for control of the same
+# snap and keyboard shortcuts fight AeroSpace for control of the same
 # windows, producing flicker and lost focus. Detect it and offer to quit it +
 # stop it relaunching at login. Used by both `install` and `doctor`.
 # Returns 0 when there's no live conflict, 1 when Loop is still running after.
@@ -110,7 +110,7 @@ check_loop_conflict() {
     return 0
   fi
 
-  warn "Loop is running — it conflicts with the Omacase window manager (AeroSpace/yabai)."
+  warn "Loop is running — it conflicts with the Omacase window manager (AeroSpace)."
   if confirm "Quit Loop now and stop it launching at login?"; then
     run osascript -e 'tell application "Loop" to quit' >/dev/null 2>&1 || run killall Loop >/dev/null 2>&1 || true
     # Best-effort: only removes a classic System Events login item. Apps using

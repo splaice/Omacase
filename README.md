@@ -26,7 +26,7 @@ omacase doctor      # grant Accessibility to AeroSpace, SketchyBar, Karabiner
 ## The stack
 | Layer | Pick |
 |---|---|
-| Window manager | **AeroSpace** (no SIP disable) — yabai available as advanced profile |
+| Window manager | **AeroSpace** (no SIP disable) — i3-style tiling |
 | Status bar | **SketchyBar** |
 | Borders | **JankyBorders** ([splaice fork](https://github.com/splaice/JankyBorders): `square_apps=` matches square-cornered windows like undecorated Ghostty) |
 | Launcher | **Spotlight** (built in — Tahoe actions, clipboard, Quick Keys) |
@@ -46,10 +46,10 @@ omacase theme [name]       # retheme everything: apps + macOS Light/Dark + wallp
 omacase webapp [name]      # open an Omarchy web app (for a Spotlight Shortcut)
 omacase appearance [...]   # toggle/set macOS Light/Dark (toggle|dark|light)
 omacase launchers [...]    # build Spotlight "Oma …" launchers: web apps + workspaces (build|remove)
-omacase wm aerospace|yabai # switch window-manager profile
+omacase wm                 # (re)start the AeroSpace window manager + services
 omacase grid [1-9]         # toggle an AeroSpace workspace (default: focused) into a 2x2 grid
 omacase workspace <1-9>    # switch AeroSpace workspace (alias: ws)
-omacase doctor             # check perms, SIP, missing grants
+omacase doctor             # check perms + missing grants
 omacase backup [label]     # snapshot current dotfiles & macOS defaults
 omacase restore [id]       # roll back to a snapshot (--list to see them)
 omacase menu               # gum TUI (wrap in a Shortcut to launch from Spotlight)
@@ -142,10 +142,10 @@ Full reference (incl. Spotlight launchers and web apps): [`KEYBINDS.md`](KEYBIND
 
 ## The two honest limits
 1. **Permissions** (Accessibility/Input Monitoring) must be granted by hand — macOS
-   requires it. `omacase doctor` links you straight there.
-2. **yabai** needs SIP partially disabled (a manual Recovery step). The default
-   **AeroSpace** profile needs none of that. Blur/window-animations are not possible
-   on macOS regardless of WM — only borders.
+   requires it. `omacase doctor` links you straight there. **AeroSpace** itself needs
+   no SIP changes.
+2. **No blur or window animations** on macOS regardless of WM — only active-window
+   borders (JankyBorders) are possible.
 
 ## Managed by Claude
 `skills/omacase/SKILL.md` teaches Claude to drive this CLI — so the same surface that

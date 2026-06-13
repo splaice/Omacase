@@ -27,7 +27,7 @@ usage: omacase <command> [args]
   webapp [name]      Open an Omarchy web app (no name = list); for Spotlight Shortcuts
   appearance [...]   Toggle/set macOS Light/Dark (toggle|dark|light)
   launchers [...]    Generate Spotlight .app launchers for web apps (build|remove)
-  wm <aerospace|yabai>   Switch window-manager profile
+  wm                 (Re)start the AeroSpace window manager + services
   grid [1-9]         Toggle an AeroSpace workspace (default: focused) into a 2x2 grid
   workspace <1-9>    Switch to an AeroSpace workspace (alias: ws)
   terminal [cmd...]  Open a new Ghostty window in the running instance, optionally running cmd (alias: term)
@@ -39,7 +39,7 @@ usage: omacase <command> [args]
   obsidian           Toggle a centered Obsidian overlay (Super+O)
   1password          Toggle a centered 1Password overlay (Super+P; alias: 1pw)
   message            Toggle a centered iMessage overlay at 80% (Super+G; alias: messages)
-  doctor             Check permissions, SIP state, and missing grants
+  doctor             Check permissions and missing grants
   backup [label]     Snapshot current dotfiles & macOS defaults
   restore [id]       Roll back to a snapshot (--list to see them)
   config             Open the config directory

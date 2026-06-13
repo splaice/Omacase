@@ -1,6 +1,6 @@
 # shellcheck shell=bash
 # `omacase doctor` — diagnose the things an installer can't fix automatically:
-# TCC permission grants and SIP state. Deep-links to the right Settings pane.
+# TCC permission grants and missing tooling. Deep-links to the right Settings pane.
 
 omacase_doctor() {
   ensure_brew_env
@@ -60,16 +60,7 @@ omacase_doctor() {
   else info "no backups yet (created automatically on first install)"; fi
 
   step "Window manager"
-  local wm; wm="$(cat "$OMACASE_STATE/wm" 2>/dev/null || echo aerospace)"
-  info "Active profile: $wm"
-  if [ "$wm" = aerospace ]; then
-    pgrep -x AeroSpace >/dev/null && success "AeroSpace running" || { warn "AeroSpace not running — \`omacase wm aerospace\`"; issues=$((issues + 1)); }
-  else
-    pgrep -x yabai >/dev/null && success "yabai running" || { warn "yabai not running"; issues=$((issues + 1)); }
-    if csrutil status 2>/dev/null | grep -qi enabled; then
-      error "SIP fully enabled — yabai scripting addition won't load. See \`omacase wm yabai\`."; issues=$((issues + 1))
-    fi
-  fi
+  pgrep -x AeroSpace >/dev/null && success "AeroSpace running" || { warn "AeroSpace not running — \`omacase wm\`"; issues=$((issues + 1)); }
   check_loop_conflict || issues=$((issues + 1))
 
   step "Desktop apps"
@@ -105,8 +96,8 @@ omacase_doctor() {
   These need a manual toggle in System Settings → Privacy & Security.
   No script can grant them — that's the OS security model, by design.
 
-    Accessibility      : AeroSpace / yabai, SketchyBar
-    Input Monitoring   : Karabiner-Elements, skhd (yabai profile)
+    Accessibility      : AeroSpace, SketchyBar
+    Input Monitoring   : Karabiner-Elements
     Automation         : terminal → System Events (theme Light/Dark sync)
     Full Disk Access   : (optional) terminal, for some defaults writes
 EOF

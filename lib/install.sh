@@ -33,7 +33,7 @@ omacase_install() {
     warn "Grant your terminal Automation → System Events so themes can sync macOS Light/Dark (\`omacase doctor\` re-checks)."
 
   step "7/9  Window manager + services"
-  check_loop_conflict || true   # Loop fights AeroSpace/yabai; offer to quit it first
+  check_loop_conflict || true   # Loop fights AeroSpace; offer to quit it first
   source "$OMACASE_ROOT/lib/wm.sh"
   omacase_wm "$(cat "$OMACASE_STATE/wm" 2>/dev/null || echo aerospace)"
 

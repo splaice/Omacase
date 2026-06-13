@@ -16,8 +16,8 @@ config by hand — the CLI keeps state and re-applies themes/WM consistently.
 - `omacase webapp [name]` — open an Omarchy web app (no name = list); meant to be wrapped in a Spotlight Shortcut
 - `omacase appearance [toggle|dark|light]` — flip/set macOS system Light/Dark
 - `omacase launchers [build|remove]` — generate/remove Spotlight `.app` launchers (in `~/Applications`) for each web app + appearance toggle, via `osacompile`
-- `omacase wm <aerospace|yabai>` — switch window-manager profile
-- `omacase doctor` — check tooling, WM, SIP state, and missing permission grants
+- `omacase wm` — (re)start the AeroSpace window manager + its shared services
+- `omacase doctor` — check tooling, WM, and missing permission grants
 - `omacase backup [label]` / `omacase restore [id]` — snapshot & roll back dotfiles + defaults
 - `omacase menu` — gum TUI (wrap in a Shortcut to launch from Spotlight)
 
@@ -41,13 +41,10 @@ config by hand — the CLI keeps state and re-applies themes/WM consistently.
 - `lib/*.sh` — one file per subcommand.
 
 ## Hard limits — set expectations honestly
-- **Permission grants can't be automated.** AeroSpace/yabai, SketchyBar, and
+- **Permission grants can't be automated.** AeroSpace, SketchyBar, and
   Karabiner need Accessibility/Input-Monitoring approval that macOS (TCC) requires
   a human to click. `omacase doctor` deep-links the right Settings pane; the user
   must toggle it. The launcher is Spotlight (built in — no app or hotkey to set up).
-- **yabai needs SIP partially disabled** — a manual Recovery-mode step that cannot be
-  scripted from the running OS. Default to the **AeroSpace** profile, which needs none
-  of this. Only walk the user through yabai if they explicitly want BSP dynamic tiling.
 - **No blur / window animations / rounded corners on arbitrary windows** — macOS's
   window server doesn't expose them. JankyBorders (active-window borders) is the only
   Hyprland-style effect available. Don't promise the rest.

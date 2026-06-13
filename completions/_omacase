@@ -42,7 +42,7 @@ _omacase() {
         '1pw:toggle a centered 1Password overlay'
         'message:toggle a centered iMessage overlay'
         'messages:toggle a centered iMessage overlay'
-        'doctor:check permissions, SIP state, and missing grants'
+        'doctor:check permissions and missing grants'
         'backup:snapshot current dotfiles & macOS defaults'
         'restore:roll back to a snapshot (--list to see them)'
         'config:open the config directory'
@@ -69,13 +69,6 @@ _omacase() {
           ;;
         launchers)
           _values 'action' build remove && ret=0
-          ;;
-        wm)
-          local -a profiles=(
-            'aerospace:default profile, no SIP changes'
-            'yabai:advanced profile, needs SIP partially disabled'
-          )
-          _describe -t profiles 'window manager' profiles && ret=0
           ;;
         workspace|ws|grid)
           _values 'workspace' 1 2 3 4 5 6 7 8 9 && ret=0

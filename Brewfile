@@ -4,13 +4,9 @@
 # --- Window management & desktop -------------------------------------------
 tap "nikitabobko/tap"
 tap "FelixKratz/formulae"
-cask "nikitabobko/tap/aerospace"     # tiling WM (default profile, no SIP disable)
+cask "nikitabobko/tap/aerospace"     # tiling WM (no SIP disable, i3-style)
 brew "FelixKratz/formulae/sketchybar" # status bar (Waybar analog)
 brew "splaice/formulae/borders"       # JankyBorders fork (+square_apps); local tap synced by install.sh
-# yabai profile (advanced; needs SIP partially disabled — see `omacase wm yabai`)
-brew "koekeishiya/formulae/yabai"
-brew "koekeishiya/formulae/skhd"
-tap  "koekeishiya/formulae"
 
 # --- The "make Mac behave" set ---------------------------------------------
 # Launcher is macOS Spotlight (⌘Space) — Tahoe's Spotlight has actions,
