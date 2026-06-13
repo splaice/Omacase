@@ -201,6 +201,18 @@ sketchybar --add item sysstats left \
     click_script="/opt/homebrew/bin/omacase btop" \
   --subscribe sysstats system_woke
 
+# Update-available indicator (left): a package-up glyph + count, shown ONLY when
+# Homebrew has outdated packages (hidden otherwise). The count + paint live in
+# `omacase outdated` (which runs brew through a login shell — brew crashes when
+# the bar daemon spawns it directly). Click → run `omacase update` in a terminal
+# so progress is visible. Polled every 30 min and on wake (read-only + gentle).
+sketchybar --add item update left \
+  --set update drawing=off icon=$'\xf3\xb1\x9b\x98' icon.font="JetBrainsMono Nerd Font:Bold:14.0" \
+    label.padding_left=4 padding_left=8 padding_right=8 update_freq=1800 \
+    script="/opt/homebrew/bin/omacase outdated" \
+    click_script="/opt/homebrew/bin/omacase terminal omacase update" \
+  --subscribe update system_woke
+
 # Pin the workspace order (ascending; caffeine sits alone on the left), then paint
 # initial state: the trigger runs every space handler (highlight + icons);
 # --update runs the caffeine script.

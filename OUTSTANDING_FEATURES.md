@@ -37,10 +37,11 @@ Tiers are by value-for-effort. Check items off as we land them. Each item notes
   - Deferred: workspace pinning (`move-node-to-workspace`) — opinionated, interacts with dynamic workspaces.
   - Files: `home/dot_config/aerospace/aerospace.toml`.
 
-- [ ] **Bar: update-available indicator** — show when `brew outdated` has updates.
-  - Omarchy: Waybar update indicator.
-  - macOS: SketchyBar item on an interval running `brew outdated`; click → `omacase update`.
-  - Files: `home/dot_config/sketchybar/sketchybarrc`.
+- [x] **Bar: update-available indicator** — Homebrew outdated count on the left. ✅
+  - Logic lives in `omacase outdated` (lib/update.sh): counts `brew outdated` and paints the SketchyBar `update` item; shown only when >0, hidden otherwise. Polled every 30 min + on wake. Click → `omacase update` in a terminal.
+  - Gotcha handled: brew crashes when the SketchyBar daemon spawns it directly (`Hardware::CPU.cores` → nil), so `omacase outdated` runs brew inside a fresh login shell; `HOMEBREW_NO_AUTO_UPDATE=1` keeps it read-only/fast.
+  - Future: fold in omacase self-updates once omacase ships versioned releases (no distribution yet).
+  - Files: `lib/update.sh`, `bin/omacase`, `completions/_omacase`, `home/dot_config/sketchybar/sketchybarrc`.
 
 ---
 

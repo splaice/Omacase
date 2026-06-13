@@ -22,6 +22,7 @@ usage: omacase <command> [args]
 
   install            Full idempotent setup (re-runnable)
   update             git pull + brew bundle + re-apply dotfiles & defaults
+  outdated           Print the count of outdated Homebrew packages (drives the bar indicator)
   theme [name]       Apply a theme everywhere (no name = list/pick)
   webapp [name]      Open an Omarchy web app (no name = list); for Spotlight Shortcuts
   appearance [...]   Toggle/set macOS Light/Dark (toggle|dark|light)
@@ -54,6 +55,7 @@ cmd="${1:-menu}"; shift || true
 case "$cmd" in
   install)        source "$OMACASE_ROOT/lib/install.sh";  omacase_install "$@" ;;
   update)         source "$OMACASE_ROOT/lib/update.sh";   omacase_update  "$@" ;;
+  outdated)       source "$OMACASE_ROOT/lib/update.sh";   omacase_outdated "$@" ;;
   theme)          source "$OMACASE_ROOT/lib/theme.sh";    omacase_theme   "$@" ;;
   webapp)         source "$OMACASE_ROOT/lib/actions.sh";  omacase_webapp     "$@" ;;
   appearance)     source "$OMACASE_ROOT/lib/actions.sh";  omacase_appearance "$@" ;;
