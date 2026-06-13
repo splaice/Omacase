@@ -53,12 +53,6 @@ Tiers are by value-for-effort. Check items off as we land them. Each item notes
   - Remaining: extend the gum menu with Capture / Toggle / power entries for fuller Omarchy parity.
   - Files: `lib/wm.sh` (`omacase_sysmenu`), `lib/menu.sh`, `home/dot_config/aerospace/aerospace.toml`.
 
-- [ ] **DND / Focus toggle** — notify helper ✓ done (`omacase notify`, `lib/notify.sh`;
-  prefers `terminal-notifier`, falls back to flaky osascript; `_grid_notify` uses it).
-  - Omarchy: mako DND toggle + `omarchy-notification-send` (the notify half).
-  - macOS remaining: toggle a Focus via `shortcuts run`/osascript; optional SketchyBar indicator.
-  - Files: Focus toggle → new `lib/` helper or `omacase` subcommand.
-
 - [ ] **Config migrations** — versioned, idempotent migrations on `omacase update`.
   - Omarchy: 300+ timestamped migration scripts.
   - macOS: a `migrations/` dir + a runner in `lib/update.sh` that tracks the last-applied id in `$OMACASE_STATE`.
@@ -99,11 +93,18 @@ Tiers are by value-for-effort. Check items off as we land them. Each item notes
 (`⌃⌘Q`), idle/screensaver, volume/brightness/media-key OSD, wifi/bluetooth menus,
 clipboard history (Tahoe Spotlight). Clock was removed on purpose.
 
+**DND / Focus toggle — won't implement; defer to macOS.** macOS owns Focus
+(Control Center / Focus modes) with a strong, locked-down implementation and no
+stable public toggle. We won't fight it with brittle UI-scripting or DoNotDisturb
+DB pokes — use the native Focus controls. (Only the notify *helper* half of the
+original item shipped: `omacase notify`.)
+
 **Linux-only / impractical:** ISO installer, Limine/Plymouth/SDDM, btrfs+Snapper
 boot rollback, hardware tuning, gaming stack, Windows VM, UFW/FIDO2, keyboard RGB,
 Hyprland blur/shadows, window **grouping/tabbed** & **scratchpad** (AeroSpace
 limitation), Caps→Compose key.
 
 **Already in Omacase:** caffeinate toggle, gaps, accordion, 2×2 grid (`Super+q`),
-web apps + Spotlight launchers, dictation (Wispr Flow), modern CLI stack
-(eza/bat/fd/rg/fzf/zoxide/atuin/mise/direnv).
+global system menu (`Super+Space`), native notifications (`omacase notify` +
+terminal-notifier), web apps + Spotlight launchers, dictation (Wispr Flow),
+modern CLI stack (eza/bat/fd/rg/fzf/zoxide/atuin/mise/direnv).
