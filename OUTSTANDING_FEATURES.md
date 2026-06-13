@@ -18,11 +18,16 @@ Tiers are by value-for-effort. Check items off as we land them. Each item notes
   - Click **toggles** a **controlled btop window** via the `omacase btop` subcommand (`lib/wm.sh`): a new window in the *existing* (undecorated) Ghostty instance — not a 2nd instance (avoids the session-restore prompt) — running `exec btop` (so quitting btop closes the window), floated via `aerospace layout floating`, centered at ~65% of the main display via System Events. Clicking again sends `q` and the window closes.
   - Files: `lib/wm.sh` (`omacase_btop`), `bin/omacase` + `completions/_omacase` (dispatch/usage), `home/dot_config/sketchybar/sketchybarrc` (`sysstats.sh` + click → `omacase btop`).
 
-- [ ] **App-launch keybind layer** — `Super+Shift+<letter>` to launch/focus native apps.
-  - Omarchy: `SUPER+SHIFT+B` browser, `F` files, `M` Spotify, `G` Signal, `O` Obsidian, `/` 1Password, etc.
-  - macOS: AeroSpace `exec-and-forget open -a "<App>"` (focuses if running). Mirrors existing `Super+Return`.
-  - Files: `home/dot_config/aerospace/aerospace.toml`; document in `KEYBINDS.md`, `README.md`.
-  - Notes: pick the app set (browser, Finder, editor, 1Password, chat, music). Mind Super = `⌃⌥⌘`, Shift layer free.
+- [x] **App-launch keybind layer** — bare-Super launch/overlay binds. ✅
+  - `Super+B` → default browser (`omacase browser`, reads the LaunchServices https handler).
+  - `Super+Shift+F` → ranger file popup (`omacase files`; `Super+F` is fullscreen). Chromeless centered Ghostty, toggle. Added `ranger` to the Brewfile.
+  - `Super+M` → music overlay (`omacase music`; default Spotify, `omacase music apple` switches to Apple Music, falls back to whichever is installed).
+  - `Super+O` → Obsidian overlay (`omacase obsidian`).
+  - Overlay pattern: GUI apps (music/obsidian) toggle reveal/hide as centered floats *above* everything (`_app_toggle` + `on-window-detected` float rules); terminal popups (btop/files) share `_ghostty_popup_toggle`.
+  - Files: `lib/wm.sh`, `bin/omacase`, `completions/_omacase`, `home/dot_config/aerospace/aerospace.toml`, `Brewfile`, `KEYBINDS.md`.
+
+- [ ] **Rationalize a default messaging app** (`Super+G`, left unbound). ⚠️
+  - Omarchy binds `Super+Shift+G` → Signal. Decide omacase's stance: a single default (Signal? Messages?) or configurable like the music overlay (`omacase message [signal|messages|…]`), then bind `Super+G` to an `omacase message` overlay following the same reveal/hide pattern.
 
 - [ ] **Per-app window rules** — expand `[[on-window-detected]]` (today: only float System Settings).
   - Omarchy: auto-float/center dialogs & TUIs; assign apps to workspaces.

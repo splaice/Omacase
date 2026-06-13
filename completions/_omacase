@@ -33,6 +33,10 @@ _omacase() {
         'term:open a new Ghostty window in the running instance'
         'btop:toggle a centered, chromeless btop popup'
         'caffeinate:toggle a stay-awake power assertion'
+        'files:toggle a centered ranger file-manager popup'
+        'browser:open/focus the system default browser'
+        'music:toggle a centered music overlay'
+        'obsidian:toggle a centered Obsidian overlay'
         'doctor:check permissions, SIP state, and missing grants'
         'backup:snapshot current dotfiles & macOS defaults'
         'restore:roll back to a snapshot (--list to see them)'
@@ -73,6 +77,9 @@ _omacase() {
           ;;
         caffeinate|caffeine)
           _values 'state' toggle on off status && ret=0
+          ;;
+        music)
+          _values 'music app' spotify apple && ret=0
           ;;
         restore)
           local backups=${OMACASE_STATE:-$HOME/.local/state/omacase}/backups

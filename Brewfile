@@ -28,6 +28,7 @@ brew "ripgrep"           # grep
 brew "zoxide"            # cd
 brew "fzf"               # fuzzy finder
 brew "btop"              # system monitor
+brew "ranger"            # TUI file manager (Super+Shift+F popup via `omacase files`)
 brew "atuin"             # shell history
 brew "git-delta"         # git diffs
 brew "tmux"              # multiplexer

@@ -206,33 +206,114 @@ omacase_workspace() {
   run aerospace workspace "$n"
 }
 
-# `omacase btop` — toggle a centered, chromeless btop popup. Bound to the
-# SketchyBar CPU/mem click.
-#
-# Open: a NEW WINDOW in the existing (undecorated) Ghostty instance — not a 2nd
-# instance, which trips Ghostty's session-restore prompt and makes window
-# targeting ambiguous — running `exec btop` (replaces the shell, so quitting
-# btop closes the window with no leftover prompt and no close-confirm). It's
-# floated off the tiling and centered at ~65% of the main display.
-# Close: if a btop window is already up, focus it and send `q`; because we
-# exec'd btop, that quits it and the window closes. So clicking toggles.
-# Needs Accessibility (granted by `omacase doctor`).
-omacase_btop() {
-  ensure_brew_env   # invoked from SketchyBar's click env, whose PATH lacks Homebrew (and thus `aerospace`)
+# --- App-launch / overlay popups --------------------------------------------
+# Shared pattern: reveal a thing centered and floating "above everything", or
+# hide it when it's already up — so a keybind reveals/hides a single overlay.
+# Terminal popups (btop, files) run a TUI in a chromeless Ghostty window;
+# GUI popups (music, obsidian) toggle an app's visibility. All need
+# Accessibility (granted by `omacase doctor`).
 
-  local exists='tell application "System Events" to tell process "Ghostty" to (exists (first window whose name contains "btop"))'
-  if osascript -e "$exists" 2>/dev/null | grep -q true; then
-    # Toggle off: raise the btop window and quit btop (exec'd → window closes).
+# Center a floating Ghostty popup (matched by title substring) at ~65% of the
+# main display once it appears.
+_popup_center() {
+  local match="$1" bounds sw sh w h px py
+  bounds="$(osascript -e 'tell application "Finder" to get bounds of window of desktop' 2>/dev/null | tr ',' ' ')"
+  set -- $bounds; sw="${3:-1440}"; sh="${4:-900}"
+  w=$(( sw * 65 / 100 )); h=$(( sh * 65 / 100 )); px=$(( (sw - w) / 2 )); py=$(( (sh - h) / 2 ))
+  osascript - "$match" "$px" "$py" "$w" "$h" >/dev/null 2>&1 <<'OSA' || true
+on run argv
+  set m to item 1 of argv
+  set px to (item 2 of argv) as integer
+  set py to (item 3 of argv) as integer
+  set ww to (item 4 of argv) as integer
+  set hh to (item 5 of argv) as integer
+  tell application "System Events" to tell process "Ghostty"
+    set n to 0
+    repeat until (exists (first window whose name contains m)) or n > 50
+      delay 0.1
+      set n to n + 1
+    end repeat
+    if exists (first window whose name contains m) then
+      set win to (first window whose name contains m)
+      set position of win to {px, py}
+      set size of win to {ww, hh}
+    end if
+  end tell
+end run
+OSA
+}
+
+# Toggle a chromeless, centered Ghostty TUI popup. $1 = window-title match,
+# $2 = the shell command to run. Reveal: NEW WINDOW in the existing (undecorated)
+# instance — not a 2nd instance, which trips Ghostty's session-restore prompt —
+# type the command (passed via argv to dodge AppleScript escaping), float it off
+# the tiling, center it. Hide: if its window is up, send "q". Commands should
+# `exec` the TUI so quitting it closes the window cleanly.
+_ghostty_popup_toggle() {
+  ensure_brew_env
+  local match="$1" cmd="$2"
+  if osascript -e "tell application \"System Events\" to tell process \"Ghostty\" to (exists (first window whose name contains \"$match\"))" 2>/dev/null | grep -q true; then
     osascript -e 'tell application "Ghostty" to activate' \
-              -e 'tell application "System Events" to tell process "Ghostty" to perform action "AXRaise" of (first window whose name contains "btop")' \
+              -e "tell application \"System Events\" to tell process \"Ghostty\" to perform action \"AXRaise\" of (first window whose name contains \"$match\")" \
               -e 'tell application "System Events" to keystroke "q"' 2>/dev/null
     return 0
   fi
+  osascript -e 'tell application "Ghostty" to activate' \
+            -e 'tell application "System Events" to tell process "Ghostty" to click menu item "New Window" of menu "File" of menu bar 1' 2>/dev/null
+  sleep 0.4
+  osascript - "$cmd" >/dev/null 2>&1 <<'OSA' || true
+on run argv
+  tell application "System Events"
+    keystroke (item 1 of argv)
+    key code 36
+  end tell
+end run
+OSA
+  aerospace layout floating 2>/dev/null || true
+  _popup_center "$match"
+}
 
-  # The popup is about resources, not processes, so it runs btop with its own
-  # config (no "proc" box) — kept beside the main btop.conf so it shares the
-  # themes dir, but separate so btop's on-exit save never rewrites the proc-box
-  # layout that a plain `btop` in a terminal should keep.
+# Toggle a GUI app as a centered floating overlay. If it's frontmost, hide it;
+# otherwise launch/activate it, float it (so it overlays the tiles), center it
+# at its current size, and raise it above everything. $1 = app name.
+_app_toggle() {
+  ensure_brew_env
+  local app="$1" front
+  front="$(osascript -e 'tell application "System Events" to get name of first process whose frontmost is true' 2>/dev/null)"
+  if [ "$front" = "$app" ]; then
+    osascript -e "tell application \"System Events\" to set visible of process \"$app\" to false" 2>/dev/null
+    return 0
+  fi
+  open -a "$app" 2>/dev/null || { warn "Couldn't launch '$app' — is it installed?"; return 1; }
+  sleep 0.3
+  aerospace layout floating 2>/dev/null || true
+  osascript - "$app" >/dev/null 2>&1 <<'OSA' || true
+on run argv
+  set a to item 1 of argv
+  tell application "Finder" to set b to bounds of window of desktop
+  set sw to (item 3 of b)
+  set sh to (item 4 of b)
+  tell application "System Events" to tell process a
+    set n to 0
+    repeat until (exists window 1) or n > 50
+      delay 0.1
+      set n to n + 1
+    end repeat
+    if exists window 1 then
+      set win to window 1
+      set {ww, hh} to size of win
+      set position of win to {(sw - ww) div 2, (sh - hh) div 2}
+      perform action "AXRaise" of win
+    end if
+  end tell
+end run
+OSA
+}
+
+# `omacase btop` — toggle a resources-only btop popup (Super CPU/mem click).
+# Its own config drops the proc box and keeps btop's on-exit save away from the
+# shared btop.conf (which a terminal `btop` should keep, proc list and all).
+omacase_btop() {
   local popup_conf="$HOME/.config/btop/omacase-popup.conf"
   if [ ! -f "$popup_conf" ]; then
     cat > "$popup_conf" <<'BTOPCONF'
@@ -246,40 +327,53 @@ update_ms = 1000
 shown_boxes = "cpu mem net"
 BTOPCONF
   fi
-
-  # Toggle on: new window in the existing instance, then `exec btop` in it
-  # (exec → quitting btop closes the window). Quote the path for safety.
-  osascript -e 'tell application "Ghostty" to activate' \
-            -e 'tell application "System Events" to tell process "Ghostty" to click menu item "New Window" of menu "File" of menu bar 1' 2>/dev/null
-  sleep 0.4
-  osascript -e "tell application \"System Events\" to keystroke \"exec btop -c '$popup_conf'\"" \
-            -e 'tell application "System Events" to key code 36' 2>/dev/null
-
-  aerospace layout floating 2>/dev/null || true   # float so AeroSpace won't tile it
-
-  # Center at ~65% of the main display once the window appears.
-  local bounds sw sh w h px py
-  bounds="$(osascript -e 'tell application "Finder" to get bounds of window of desktop' 2>/dev/null | tr ',' ' ')"
-  set -- $bounds; sw="${3:-1440}"; sh="${4:-900}"
-  w=$(( sw * 65 / 100 )); h=$(( sh * 65 / 100 )); px=$(( (sw - w) / 2 )); py=$(( (sh - h) / 2 ))
-  osascript - "$px" "$py" "$w" "$h" >/dev/null 2>&1 <<'OSA' || true
-on run argv
-  set px to (item 1 of argv) as integer
-  set py to (item 2 of argv) as integer
-  set ww to (item 3 of argv) as integer
-  set hh to (item 4 of argv) as integer
-  tell application "System Events" to tell process "Ghostty"
-    set n to 0
-    repeat until (exists (first window whose name contains "btop")) or n > 50
-      delay 0.1
-      set n to n + 1
-    end repeat
-    if exists (first window whose name contains "btop") then
-      set win to (first window whose name contains "btop")
-      set position of win to {px, py}
-      set size of win to {ww, hh}
-    end if
-  end tell
-end run
-OSA
+  _ghostty_popup_toggle "btop" "exec btop -c '$popup_conf'"
 }
+
+# `omacase files` — toggle a ranger file-manager popup (Super+Shift+F). ranger
+# leaves the title alone (update_title defaults false), so we set it via OSC and
+# match "omacase-files".
+omacase_files() {
+  _ghostty_popup_toggle "omacase-files" "printf '\033]0;omacase-files\007'; exec ranger"
+}
+
+# `omacase browser` — open/focus the system default browser (Super+B). Reads the
+# default https handler from LaunchServices; falls back to Safari.
+omacase_browser() {
+  local id
+  id="$(python3 - <<'PY' 2>/dev/null
+import plistlib, os
+p = os.path.expanduser("~/Library/Preferences/com.apple.LaunchServices/com.apple.launchservices.secure.plist")
+try:
+    d = plistlib.load(open(p, "rb"))
+    for h in d.get("LSHandlers", []):
+        if h.get("LSHandlerURLScheme") == "https":
+            print(h.get("LSHandlerRoleAll", "")); break
+except Exception:
+    pass
+PY
+)"
+  if [ -n "$id" ]; then open -b "$id" 2>/dev/null || open -a Safari; else open -a Safari; fi
+}
+
+# `omacase music [spotify|apple]` — toggle the music overlay (Super+M). Defaults
+# to Spotify; `apple` switches to Apple Music, and the choice persists. If the
+# chosen app isn't installed, falls back to whichever music app is.
+omacase_music() {
+  local statef="$OMACASE_STATE/music-app" app
+  case "${1:-}" in
+    spotify)     echo "Spotify" > "$statef" ;;
+    apple|music) echo "Music"   > "$statef" ;;
+    "")          : ;;
+    *)           abort "usage: omacase music [spotify|apple]" ;;
+  esac
+  app="$(cat "$statef" 2>/dev/null || echo Spotify)"
+  if ! osascript -e "id of app \"$app\"" >/dev/null 2>&1; then
+    if osascript -e 'id of app "Spotify"' >/dev/null 2>&1; then app="Spotify"
+    elif osascript -e 'id of app "Music"' >/dev/null 2>&1; then app="Music"; fi
+  fi
+  _app_toggle "$app"
+}
+
+# `omacase obsidian` — toggle the Obsidian overlay (Super+O).
+omacase_obsidian() { _app_toggle "Obsidian"; }

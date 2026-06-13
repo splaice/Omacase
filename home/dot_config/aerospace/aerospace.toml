@@ -107,6 +107,14 @@ cmd-ctrl-alt-shift-tab     = 'workspace --wrap-around prev'   # Super+Shift+Tab 
 cmd-ctrl-alt-shift-c       = 'reload-config'
 cmd-ctrl-alt-shift-semicolon = 'mode service'   # enter a service sub-mode
 
+# --- app launch (Super + letter; omacase handles float/center/toggle) ---
+cmd-ctrl-alt-b             = 'exec-and-forget /opt/homebrew/bin/omacase browser'    # Super+B → default browser
+cmd-ctrl-alt-shift-f       = 'exec-and-forget /opt/homebrew/bin/omacase files'      # Super+Shift+F → ranger popup (Super+F is fullscreen)
+cmd-ctrl-alt-m             = 'exec-and-forget /opt/homebrew/bin/omacase music'       # Super+M → music overlay (Spotify/Apple Music)
+cmd-ctrl-alt-o             = 'exec-and-forget /opt/homebrew/bin/omacase obsidian'    # Super+O → Obsidian overlay
+# Super+G (messaging) intentionally left unbound — see OUTSTANDING_FEATURES.md
+# (need to rationalize a default messaging app first).
+
 # Service mode hosts the functions Omarchy puts on Super+Ctrl / Super+Shift+Alt —
 # chords we can't express, since Super (⌃⌥⌘) already consumes Ctrl and Alt.
 [mode.service.binding]
@@ -120,4 +128,18 @@ m            = ['move-workspace-to-monitor --wrap-around next', 'mode main']    
 # Example window rule: float the system Settings & Finder info windows.
 [[on-window-detected]]
 if.app-id = 'com.apple.systempreferences'
+run = 'layout floating'
+
+# Overlay apps (Super+M / Super+O) are revealed/hidden as centered floats by
+# omacase, so keep them out of the tiling whenever they appear.
+[[on-window-detected]]
+if.app-id = 'com.spotify.client'
+run = 'layout floating'
+
+[[on-window-detected]]
+if.app-id = 'com.apple.Music'
+run = 'layout floating'
+
+[[on-window-detected]]
+if.app-id = 'md.obsidian'
 run = 'layout floating'
