@@ -43,16 +43,20 @@ omacase_theme() {
 # Our theme dirs mostly match Omarchy's, except the Catppuccin flavor naming.
 _omarchy_name() { case "$1" in catppuccin-mocha) echo catppuccin ;; *) echo "$1" ;; esac; }
 
-# Set the desktop wallpaper to the theme's default Omarchy background. Images
-# aren't bundled — the first time a theme is used we fetch its default bg into
-# $OMACASE_DATA/backgrounds/<theme>/ and reuse it thereafter (offline after
-# that). Network/tool/offline failures degrade to a warning, never an abort.
+# Set the desktop wallpaper for the theme. Priority: (1) a wallpaper bundled with
+# the theme (themes/<name>/background.*) — lets custom themes that have no Omarchy
+# source ship their own bg; (2) a previously-fetched image cached in
+# $OMACASE_DATA/backgrounds/<theme>/; (3) fetch the theme's default Omarchy bg into
+# that cache and reuse it (offline after that). Failures degrade to a warning.
 _theme_wallpaper() {
   local name="$1" cache="$OMACASE_DATA/backgrounds/$1" img=""
   # NB: under `set -euo pipefail`, a command substitution whose pipeline fails
   # (find on a missing dir, gh on a 404) aborts the script — so guard both and
   # swallow their status with `|| true`.
-  if [ -d "$cache" ]; then
+  # (1) Theme-bundled wallpaper wins.
+  img="$(find "$OMACASE_ROOT/themes/$name" -maxdepth 1 -type f -iname 'background.*' 2>/dev/null | sort | head -1)" || true
+  # (2) else a fetched/cached image.
+  if [ -z "$img" ] && [ -d "$cache" ]; then
     img="$(find "$cache" -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' \) 2>/dev/null | sort | head -1)" || true
   fi
 
