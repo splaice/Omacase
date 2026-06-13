@@ -32,7 +32,7 @@ omacase doctor      # grant Accessibility to AeroSpace, SketchyBar, Karabiner
 | Launcher | **Spotlight** (built in — Tahoe actions, clipboard, Quick Keys) |
 | Keyboard | **Karabiner-Elements** |
 | Terminal | **Ghostty** + zsh/Starship + tmux + modern CLI set |
-| Editor | **Neovim/LazyVim** + Zed |
+| Editor | **Neovim/LazyVim** |
 | Packages | **Homebrew + Brewfile** |
 | Dotfiles | **Omacase-owned symlinks** (`home/`) — won't collide with your own chezmoi/stow |
 | Theme | **19 Omarchy themes** (Catppuccin Mocha default) — one command rethemes everything |

@@ -71,7 +71,7 @@ ICON_NONE=$'\xe2\x80\x94'          # em dash — empty workspace
 get_app_icon() {
   case "$1" in
     "Arc"|"Safari"|"Google Chrome"|"Firefox"|"Brave Browser")            printf '%s' "$ICON_WEB" ;;
-    "Code"|"Visual Studio Code"|"VSCodium"|"Xcode"|"Zed")                printf '%s' "$ICON_DEV" ;;
+    "Code"|"Visual Studio Code"|"VSCodium"|"Xcode")                      printf '%s' "$ICON_DEV" ;;
     "Ghostty"|"iTerm2"|"Terminal"|"Warp"|"Alacritty"|"cmux")            printf '%s' "$ICON_TERM" ;;
     "Finder")                                                            printf '%s' "$ICON_FILE" ;;
     "Discord"|"Slack"|"Telegram"|"Messages"|"Signal"|"WhatsApp")        printf '%s' "$ICON_CHAT" ;;

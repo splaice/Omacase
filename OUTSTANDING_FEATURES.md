@@ -52,11 +52,6 @@ Tiers are by value-for-effort. Check items off as we land them. Each item notes
   - macOS: bind to launch `omacase menu` in a Ghostty popup (or a Shortcut); extend the gum menu with Capture, Toggle, power entries.
   - Files: `lib/menu.sh`, `home/dot_config/aerospace/aerospace.toml`.
 
-- [ ] **Zed theme sync** — fold Zed into `omacase theme` (installed but unthemed today).
-  - Omarchy: themes restyle VSCode + editors.
-  - macOS: add `themes/<name>/zed` + a symlink/settings step in `lib/theme.sh`.
-  - Files: `lib/theme.sh`, `themes/*/`.
-
 - [ ] **DND / Focus toggle + notify helper.**
   - Omarchy: mako DND toggle + `omarchy-notification-send`.
   - macOS: toggle a Focus via `shortcuts run`/osascript; add a `terminal-notifier`/`osascript` notify helper for scripts.

@@ -40,8 +40,7 @@ brew "tldr"              # example-first man pages
 brew "fastfetch"         # branded system summary (`omacase menu` → About); config in home/
 
 # --- Editor & dev -----------------------------------------------------------
-brew "neovim"            # + LazyVim (seeded via dotfiles)
-cask "zed"               # GUI editor
+brew "neovim"            # + LazyVim (seeded via dotfiles) — the editor
 brew "mise"              # runtime version manager (node/python/ruby)
 brew "direnv"
 brew "lazygit"
