@@ -205,3 +205,62 @@ omacase_workspace() {
   have aerospace || abort "workspace switching needs AeroSpace (active profile: $(cat "$OMACASE_STATE/wm" 2>/dev/null || echo unknown))."
   run aerospace workspace "$n"
 }
+
+# `omacase btop` — toggle a centered, chromeless btop popup. Bound to the
+# SketchyBar CPU/mem click.
+#
+# Open: a NEW WINDOW in the existing (undecorated) Ghostty instance — not a 2nd
+# instance, which trips Ghostty's session-restore prompt and makes window
+# targeting ambiguous — running `exec btop` (replaces the shell, so quitting
+# btop closes the window with no leftover prompt and no close-confirm). It's
+# floated off the tiling and centered at ~65% of the main display.
+# Close: if a btop window is already up, focus it and send `q`; because we
+# exec'd btop, that quits it and the window closes. So clicking toggles.
+# Needs Accessibility (granted by `omacase doctor`).
+omacase_btop() {
+  ensure_brew_env   # invoked from SketchyBar's click env, whose PATH lacks Homebrew (and thus `aerospace`)
+
+  local exists='tell application "System Events" to tell process "Ghostty" to (exists (first window whose name contains "btop"))'
+  if osascript -e "$exists" 2>/dev/null | grep -q true; then
+    # Toggle off: raise the btop window and quit btop (exec'd → window closes).
+    osascript -e 'tell application "Ghostty" to activate' \
+              -e 'tell application "System Events" to tell process "Ghostty" to perform action "AXRaise" of (first window whose name contains "btop")' \
+              -e 'tell application "System Events" to keystroke "q"' 2>/dev/null
+    return 0
+  fi
+
+  # Toggle on: new window in the existing instance, then `exec btop` in it.
+  osascript -e 'tell application "Ghostty" to activate' \
+            -e 'tell application "System Events" to tell process "Ghostty" to click menu item "New Window" of menu "File" of menu bar 1' 2>/dev/null
+  sleep 0.4
+  osascript -e 'tell application "System Events" to keystroke "exec btop"' \
+            -e 'tell application "System Events" to key code 36' 2>/dev/null
+
+  aerospace layout floating 2>/dev/null || true   # float so AeroSpace won't tile it
+
+  # Center at ~65% of the main display once the window appears.
+  local bounds sw sh w h px py
+  bounds="$(osascript -e 'tell application "Finder" to get bounds of window of desktop' 2>/dev/null | tr ',' ' ')"
+  set -- $bounds; sw="${3:-1440}"; sh="${4:-900}"
+  w=$(( sw * 65 / 100 )); h=$(( sh * 65 / 100 )); px=$(( (sw - w) / 2 )); py=$(( (sh - h) / 2 ))
+  osascript - "$px" "$py" "$w" "$h" >/dev/null 2>&1 <<'OSA' || true
+on run argv
+  set px to (item 1 of argv) as integer
+  set py to (item 2 of argv) as integer
+  set ww to (item 3 of argv) as integer
+  set hh to (item 4 of argv) as integer
+  tell application "System Events" to tell process "Ghostty"
+    set n to 0
+    repeat until (exists (first window whose name contains "btop")) or n > 50
+      delay 0.1
+      set n to n + 1
+    end repeat
+    if exists (first window whose name contains "btop") then
+      set win to (first window whose name contains "btop")
+      set position of win to {px, py}
+      set size of win to {ww, hh}
+    end if
+  end tell
+end run
+OSA
+}

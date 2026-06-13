@@ -15,8 +15,8 @@ Tiers are by value-for-effort. Check items off as we land them. Each item notes
 
 - [x] **Bar: system-status modules** — CPU + memory on SketchyBar, click → btop. ✅
   - Scope decision: macOS's own menu bar owns battery/network/bluetooth/audio, so the bottom bar only adds what it lacks: **live CPU + memory** (`sysstats.sh`, left, next to caffeine, updates every 5s).
-  - Click opens a **controlled btop window** (`btop_popup.sh`): a new window in the *existing* (undecorated) Ghostty instance — not a 2nd instance (avoids the session-restore prompt) — running btop, floated via `aerospace layout floating`, centered at ~65% of the main display via System Events.
-  - Files: `home/dot_config/sketchybar/sketchybarrc` (generated `sysstats.sh` + `btop_popup.sh`).
+  - Click **toggles** a **controlled btop window** via the `omacase btop` subcommand (`lib/wm.sh`): a new window in the *existing* (undecorated) Ghostty instance — not a 2nd instance (avoids the session-restore prompt) — running `exec btop` (so quitting btop closes the window), floated via `aerospace layout floating`, centered at ~65% of the main display via System Events. Clicking again sends `q` and the window closes.
+  - Files: `lib/wm.sh` (`omacase_btop`), `bin/omacase` + `completions/_omacase` (dispatch/usage), `home/dot_config/sketchybar/sketchybarrc` (`sysstats.sh` + click → `omacase btop`).
 
 - [ ] **App-launch keybind layer** — `Super+Shift+<letter>` to launch/focus native apps.
   - Omarchy: `SUPER+SHIFT+B` browser, `F` files, `M` Spotify, `G` Signal, `O` Obsidian, `/` 1Password, etc.

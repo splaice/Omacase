@@ -31,6 +31,7 @@ _omacase() {
         'ws:switch to an AeroSpace workspace (1-9)'
         'terminal:open a new Ghostty window in the running instance'
         'term:open a new Ghostty window in the running instance'
+        'btop:toggle a centered, chromeless btop popup'
         'doctor:check permissions, SIP state, and missing grants'
         'backup:snapshot current dotfiles & macOS defaults'
         'restore:roll back to a snapshot (--list to see them)'
