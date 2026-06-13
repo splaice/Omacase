@@ -45,7 +45,7 @@ usage: omacase <command> [args]
   config             Open the config directory
   menu               Interactive TUI (wrap in a Shortcut to launch from Spotlight)
   sysmenu            Toggle the global system menu as a centered popup (Super+Space)
-  notify [...]       Pop a native macOS notification (--title/--subtitle/--sound) for scripts/keybinds
+  notify [...]       Pop a native macOS notification (--title/--subtitle/--sound/--image) for scripts/keybinds
   version            Print version
   uninstall          Remove omacase-managed config (keeps your apps)
 

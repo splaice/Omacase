@@ -15,14 +15,15 @@
 # never fails the caller (a missing banner shouldn't break a script).
 omacase_notify() {
   ensure_brew_env   # may run from a keybind whose PATH lacks Homebrew (→ terminal-notifier)
-  local title="Omacase" subtitle="" sound=""
+  local title="Omacase" subtitle="" sound="" image=""
   while [ $# -gt 0 ]; do
     case "$1" in
       -t|--title)    title="${2:-}";    shift 2 ;;
       --subtitle)    subtitle="${2:-}"; shift 2 ;;
       -s|--sound)    sound="${2:-}";    shift 2 ;;  # e.g. Glass, Ping, Hero (see /System/Library/Sounds)
+      -i|--image)    image="${2:-}";    shift 2 ;;  # path to an image shown on the banner's right (terminal-notifier only)
       --)            shift; break ;;
-      -*)            abort "notify: unknown option '$1' (use --title/--subtitle/--sound)" ;;
+      -*)            abort "notify: unknown option '$1' (use --title/--subtitle/--sound/--image)" ;;
       *)             break ;;
     esac
   done
@@ -36,9 +37,13 @@ omacase_notify() {
     local args=(-title "$title" -message "$msg")
     [ -n "$subtitle" ] && args+=(-subtitle "$subtitle")
     [ -n "$sound" ]    && args+=(-sound "$sound")
+    # -contentImage shows on the banner's right. macOS pins the LEFT app icon to
+    # the sender (terminal-notifier), so this is the reliable way to brand a banner.
+    [ -n "$image" ] && [ -f "$image" ] && args+=(-contentImage "$image")
     terminal-notifier "${args[@]}" >/dev/null 2>&1 || true
     return 0
   fi
+  # (osascript fallback can't render images, so --image is silently dropped there.)
 
   # Fallback. Pass every string as argv so quotes/backslashes in the message
   # can't break out of the AppleScript (the pattern the wm.sh osascript helpers

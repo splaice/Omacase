@@ -32,7 +32,8 @@ omacase_theme() {
   success "Theme '$name' applied."
   if ! is_dryrun; then
     source "$OMACASE_ROOT/lib/notify.sh"
-    omacase_notify --title "Omacase" --subtitle "Theme" --sound Glass "Switched to $name"
+    omacase_notify --title "Omacase" --subtitle "Theme" --sound Glass \
+      --image "$OMACASE_ROOT/assets/omacase-icon.png" "Switched to $name"
   fi
 }
 
