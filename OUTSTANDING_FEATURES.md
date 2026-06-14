@@ -1,13 +1,12 @@
 # Outstanding Features
 
-A working checklist of functionality gaps between **Omacase** and **Omarchy**,
-limited to things that are practical to implement on macOS. Derived from a
-gap analysis (Omacase repo vs. the Omarchy manual / `basecamp/omarchy`,
-stable v3.8.2 ≈ dev 4.0.0-alpha).
+The Omacase ↔ Omarchy **parity record**: what we've built and what we've decided
+against, from a gap analysis (Omacase repo vs. the Omarchy manual /
+`basecamp/omarchy`, stable v3.8.2 ≈ dev 4.0.0-alpha).
 
-Tiers are by value-for-effort. Check items off as we land them. Each item notes
-**what** it is, the **Omarchy** reference, the **macOS path**, and likely
-**files** to touch.
+> **Planned / forward-looking work now lives in [`FUTURE.md`](FUTURE.md).** This
+> file keeps the **completed** items (a record of the parity work) and the
+> explicit **out-of-scope** decisions (so we don't relitigate them).
 
 ---
 
@@ -50,7 +49,7 @@ Tiers are by value-for-effort. Check items off as we land them. Each item notes
 - [x] **Global system menu** — `Super + Space` → `omacase sysmenu` opens the gum TUI
   as a centered, floating Ghostty popup (same `_ghostty_popup_toggle` mechanic as btop/files).
   Mirrors Omarchy's `SUPER+ALT+SPACE` (on macOS the Alt is already inside Super=⌃⌥⌘).
-  - Remaining: extend the gum menu with Capture / Toggle / power entries for fuller Omarchy parity.
+  (Extending the gum-menu *content* — Capture/Toggle/power entries — is planned in `FUTURE.md`.)
   - Files: `lib/wm.sh` (`omacase_sysmenu`), `lib/menu.sh`, `home/dot_config/aerospace/aerospace.toml`.
 
 - [x] **Config migrations** — `omacase migrate` (`lib/migrate.sh`), run by `omacase update`.
@@ -61,32 +60,9 @@ Tiers are by value-for-effort. Check items off as we land them. Each item notes
   yabai/skhd + the koekeishiya tap).
   - To add one: drop `migrations/<YYYYMMDD-slug>.sh` defining an idempotent `migrate()`.
 
-- [ ] **Wallpaper cycling** — multiple backgrounds per theme + a cycle hotkey.
-  - Omarchy: per-theme `backgrounds/` dir, `omarchy-theme-bg-next`.
-  - macOS: extend `omacase theme` wallpaper step; add `omacase wallpaper next` + a keybind.
-  - Files: `lib/theme.sh` (or new), `themes/*/`.
-
----
-
-## Tier 3 — Nice-to-have
-
-- [ ] **Color-picker hotkey** — Digital Color Meter or a CLI picker on a key.
-- [ ] **Screen OCR hotkey** — macOS Live Text / `shortcuts` to grab text from a region.
-- [ ] **Theme install from URL** — `omacase theme install <git-url>`.
-- [ ] **Font switcher** — `omacase font <name>` to retarget Ghostty/SketchyBar.
-- [ ] **Quick reminders hotkey** — set/show via Reminders/osascript (`omarchy-reminder` analog).
-- [ ] **Night Shift toggle hotkey** — toggle macOS Night Shift on a key.
-- [ ] **Own Omacase bundle ID + notification identity** — ship a minimal signed
-  `.app` (e.g. `app.omacase` / `com.omacase.Omacase`) so notifications are
-  attributed to "Omacase" with our own left icon, instead of borrowing
-  terminal-notifier's identity or riding `-contentImage`.
-  - Why: macOS pins a banner's left icon to the *sending* bundle; only a real
-    bundle (or `terminal-notifier -sender <our-id>`) gets the true Omacase icon.
-  - Sketch: bundle a tiny notifier `.app` (icon = `assets/omacase-icon.png`),
-    code-sign it, then `terminal-notifier -sender app.omacase` (or post via the
-    bundle directly). Decide the canonical bundle id once and reuse it for any
-    future launchers/Shortcuts.
-  - Files: `lib/notify.sh`, new `app/` (or `macos/`) bundle, install step.
+> Remaining Tier-2/Tier-3 ideas (wallpaper cycling, gum-menu content, theme-from-URL,
+> font switcher, color-picker / OCR / reminders / Night-Shift hotkeys, an Omacase
+> bundle id) moved to [`FUTURE.md`](FUTURE.md).
 
 ---
 
