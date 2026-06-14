@@ -198,6 +198,11 @@ run = 'layout floating'
 [[on-window-detected]]
 if.app-id = 'com.apple.Image_Capture'
 run = 'layout floating'
+# Preview — file/PDF/image viewer, opened transiently via `open` from the
+# terminal; float it so a quick look-at-a-file doesn't reshuffle the tiles.
+[[on-window-detected]]
+if.app-id = 'com.apple.Preview'
+run = 'layout floating'
 [[on-window-detected]]
 if.app-id = 'com.apple.Passwords'
 run = 'layout floating'
