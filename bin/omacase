@@ -25,6 +25,7 @@ usage: omacase <command> [args]
   outdated           Print the count of outdated Homebrew packages (drives the bar indicator)
   migrate            Apply pending one-time migrations (also run by update)
   theme [name]       Apply a theme everywhere (no name = list/pick)
+  palette [name]     Edit a theme's Ghostty ANSI palette in a TUI with a live eza preview (no name = active theme)
   wallpaper [...]    Pick the active theme's background: list|next|prev|pick|<n> (alias: wp)
   webapp [name]      Open an Omarchy web app (no name = list); for Spotlight Shortcuts
   appearance [...]   Toggle/set macOS Light/Dark (toggle|dark|light)
@@ -62,6 +63,7 @@ case "$cmd" in
   outdated)       source "$OMACASE_ROOT/lib/update.sh";   omacase_outdated "$@" ;;
   migrate)        source "$OMACASE_ROOT/lib/migrate.sh";  omacase_migrate "$@" ;;
   theme)          source "$OMACASE_ROOT/lib/theme.sh";    omacase_theme   "$@" ;;
+  palette)        source "$OMACASE_ROOT/lib/palette.sh";  omacase_palette "$@" ;;
   wallpaper|wp)   source "$OMACASE_ROOT/lib/theme.sh";    omacase_wallpaper "$@" ;;
   webapp)         source "$OMACASE_ROOT/lib/actions.sh";  omacase_webapp     "$@" ;;
   appearance)     source "$OMACASE_ROOT/lib/actions.sh";  omacase_appearance "$@" ;;

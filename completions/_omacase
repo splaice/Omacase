@@ -24,6 +24,7 @@ _omacase() {
         'migrate:apply pending one-time migrations (also run by update)'
         'outdated:print the count of outdated Homebrew packages'
         'theme:apply a theme everywhere (no name = list/pick)'
+        'palette:edit a theme Ghostty ANSI palette in a TUI with a live eza preview'
         'wallpaper:pick the active theme background (list|next|prev|<n>)'
         'wp:pick the active theme background (list|next|prev|<n>)'
         'webapp:open an Omarchy web app (no name = list)'
@@ -60,7 +61,7 @@ _omacase() {
       ;;
     argument)
       case $line[1] in
-        theme)
+        theme|palette)
           local -a themes=( $root/themes/*(N/:t) )
           _describe -t themes 'theme' themes && ret=0
           ;;

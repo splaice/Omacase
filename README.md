@@ -45,6 +45,7 @@ OMACASE_DRYRUN=1 omacase install   # print every change without touching the sys
 omacase install            # idempotent full setup (re-runnable)
 omacase update             # pull + brew bundle + re-apply everything
 omacase theme [name]       # retheme everything: apps + macOS Light/Dark + wallpaper
+omacase palette [name]     # TUI to edit a theme's Ghostty ANSI palette with a live eza preview
 omacase wallpaper [...]     # pick the active theme's background (list|next|prev|<n>; alias wp)
 omacase webapp [name]      # open an Omarchy web app (for a Spotlight Shortcut)
 omacase appearance [...]   # toggle/set macOS Light/Dark (toggle|dark|light)
@@ -70,6 +71,14 @@ omacase migrate            # apply pending one-time migrations (also run by upda
 > SketchyBar, JankyBorders, btop, Neovim, and Starship — and also flips macOS
 > Light/Dark, the Claude Code CLI theme, and the desktop wallpaper to match.
 > Pick from 19 Omarchy themes (run `omacase theme` to list).
+
+> **Tune a palette without the reload loop.** `omacase palette [name]` opens a
+> TUI over a theme's Ghostty ANSI slots (0–15 + background/foreground/cursor).
+> It renders an example `eza` listing in **truecolor**, so as you nudge a slot
+> you see exactly how directories/links/executables will look — no save-and-
+> reload-Ghostty cycle. `s` saves the hex back in place; `a` also live-reloads
+> Ghostty when you're editing the active theme. (CLI colors are ANSI-indexed, so
+> e.g. directories = slot 4 / "blue" in whatever the active theme calls blue.)
 
 > **Tab-complete everything.** `omacase <Tab>` completes subcommands, and the
 > arguments complete from live data — theme names, web apps, snapshot IDs,
