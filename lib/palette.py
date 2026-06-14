@@ -55,6 +55,30 @@ def bg(rgb):
 
 RESET = CSI + "0m"
 BOLD = CSI + "1m"
+REVERSE = CSI + "7m"
+
+_ANSI_RE = re.compile(r"\x1b\[[0-9;?]*[A-Za-z]")
+
+
+def vlen(s):
+    """Visible width: characters that actually take a cell (escapes stripped)."""
+    return len(_ANSI_RE.sub("", s))
+
+
+def vtrunc(s, width):
+    """Truncate to `width` visible cells, preserving escape sequences."""
+    out, w, i = [], 0, 0
+    while i < len(s) and w < width:
+        m = _ANSI_RE.match(s, i)
+        if m:
+            out.append(m.group(0))
+            i = m.end()
+            continue
+        out.append(s[i])
+        w += 1
+        i += 1
+    out.append(RESET)
+    return "".join(out)
 
 
 # ---- file model: parse, keep editable colors, rewrite in place ---------------
@@ -260,103 +284,86 @@ class Editor:
         return (fgc.rgb if fgc else (200, 200, 200)), bold
 
     # --- rendering ---
+    # Every line is positioned absolutely with CSI<row>;<col>H. In raw mode a
+    # bare "\n" is a line feed WITHOUT a carriage return, so relative newlines
+    # stair-step; absolute moves sidestep that entirely. Visible widths are
+    # measured with vlen() (escapes stripped) so padding never overflows/wraps.
+    RIGHT = 48  # visible column where the preview panel starts
+
     def render(self):
-        cols, rows = shutil.get_terminal_size((96, 30))
-        out = [CSI + "H"]  # home
-        bgc = self.named["background"].rgb if "background" in self.named else (0, 0, 0)
+        cols, _ = shutil.get_terminal_size((96, 30))
         mutec = self.slot_rgb(8)
+        bgc = self.named["background"].rgb if "background" in self.named else (0, 0, 0)
+        left = self.left_rows()
+        right = self.right_rows(bgc)
+        # Wrap the frame in synchronized-update markers (mode 2026, which Ghostty
+        # supports) so the whole redraw lands atomically — no flicker.
+        buf = [CSI + "?2026h" + CSI + "2J"]
 
-        def line(s=""):
-            out.append(s + CSI + "K\n")
+        def put(row, s):
+            buf.append("%s%d;1H%s%sK" % (CSI, row, vtrunc(s, cols - 1), CSI))
 
-        # header
-        star = " ●" if self.dirty else ""
-        line(BOLD + "  omacase palette " + RESET + fg(self.slot_rgb(5))
-             + "· " + self.theme + star + RESET
-             + ("" if self.active else fg(mutec) + "  (not the active theme)" + RESET))
-        line()
+        star = (fg(self.slot_rgb(2)) + " ●" + RESET) if self.dirty else ""
+        na = "" if self.active else fg(mutec) + "   (not the active theme)" + RESET
+        put(1, "  " + BOLD + "omacase palette " + RESET
+            + fg(self.slot_rgb(5)) + "· " + self.theme + RESET + star + na)
 
-        left = self.left_panel()
-        right = self.right_panel(bgc)
-        gap = "   "
-        lw = 40
         n = max(len(left), len(right))
         for i in range(n):
-            lcell = left[i] if i < len(left) else ("", 0)
+            lcell = left[i] if i < len(left) else ""
             rcell = right[i] if i < len(right) else ""
-            text, vis = lcell
-            pad = " " * max(0, lw - vis)
-            line("  " + text + pad + gap + rcell)
+            pad = " " * max(2, self.RIGHT - vlen(lcell))
+            put(3 + i, "  " + lcell + pad + rcell)
 
-        line()
-        foot = ("  ↑/↓ slot · ←/→ ±1 · [ / ] ±16 · Tab channel · e hex · "
-                "s save · a apply · u revert · q quit")
-        line(fg(mutec) + foot[:cols - 2] + RESET)
-        if self.msg:
-            line(fg(self.slot_rgb(2)) + "  " + self.msg + RESET)
-        else:
-            line()
-        out.append(CSI + "J")  # clear below
-        write("".join(out))
+        frow = 4 + n
+        put(frow, "  " + fg(mutec) + "↑/↓ slot · ←/→ ±1 · [ / ] ±16 · "
+            "Tab channel · e hex · s save · a apply · u revert · q quit" + RESET)
+        put(frow + 1, "  " + (fg(self.slot_rgb(2)) + self.msg + RESET if self.msg else ""))
+        buf.append("%s%d;1H" % (CSI, frow + 3))  # park cursor below
+        buf.append(CSI + "?2026l")               # end synchronized update
+        write("".join(buf))
         sys.stdout.flush()
 
-    def left_panel(self):
-        """Return list of (text, visible_width)."""
+    def left_rows(self):
         rows = []
         for idx, c in enumerate(self.colors):
             selected = idx == self.sel
             swatch = bg(c.rgb) + "   " + RESET
-            marker = fg(self.slot_rgb(5)) + "▸" + RESET if selected else " "
-            label = c.label.ljust(11)
-            hexs = c.hexstr().lower()
-            # role hint for palette slots
-            hint = ""
-            if c.id.startswith("palette"):
-                n = int(c.id[7:])
-                roles = self.slot_roles.get(n)
-                if roles:
-                    hint = " · " + ", ".join(roles)
-            base = "%s %s %s %s" % (marker, swatch, label, hexs)
-            vis = 1 + 1 + 3 + 1 + 11 + 1 + 7  # marker sp swatch sp label sp hex
+            marker = (fg(self.slot_rgb(5)) + "▸" + RESET) if selected else " "
+            base = "%s %s %s %s" % (marker, swatch, c.label.ljust(12),
+                                    c.hexstr().lower().ljust(7))
             if selected:
-                r, g, b = c.rgb
                 chans = []
-                for ci, (cn, cv) in enumerate(zip("rgb", (r, g, b))):
+                for ci, (cn, cv) in enumerate(zip("rgb", c.rgb)):
                     tok = "%s%d" % (cn, cv)
                     if ci == self.chan:
-                        tok = CSI + "7m" + tok + RESET  # reverse = active channel
+                        tok = REVERSE + tok + RESET  # active channel
                     chans.append(tok)
                 base += "  " + " ".join(chans)
-                vis += 2 + len("r%d g%d b%d" % (r, g, b))
-            else:
-                base += fg(self.slot_rgb(8)) + hint + RESET
-                vis += len(hint)
-            rows.append((base, vis))
+            elif c.id.startswith("palette"):
+                roles = self.slot_roles.get(int(c.id[7:]))
+                if roles:
+                    base += fg(self.slot_rgb(8)) + " · " + ", ".join(roles) + RESET
+            rows.append(base)
         return rows
 
-    def right_panel(self, bgc):
-        rows = []
+    def right_rows(self, bgc):
         mutec = self.slot_rgb(8)
-        title = (bg(bgc) + fg(mutec) + " example listing — eza "
-                 + " " * 18 + RESET)
-        rows.append(title)
+        rows = [fg(mutec) + "example listing — eza" + RESET]
         for perms, name, suffix, key, target in SAMPLE:
             rgb, bold = self.file_style(key)
-            permcol = fg(mutec) + perms + RESET + bg(bgc)
-            namecol = (BOLD if bold else "") + fg(rgb) + name + suffix + RESET + bg(bgc)
-            tail = ""
+            body = (fg(mutec) + perms + RESET + bg(bgc) + "  "
+                    + (BOLD if bold else "") + fg(rgb) + name + suffix + RESET)
             if target:
-                tail = fg(mutec) + " -> " + RESET + bg(bgc) + fg(self.slot_rgb(8)) + target + RESET + bg(bgc)
-            row = bg(bgc) + " " + permcol + "  " + namecol + tail
-            # pad to a fixed width inside the bg
-            rows.append(row + " " * 6 + RESET)
+                body += (bg(bgc) + fg(mutec) + " → " + RESET
+                         + bg(bgc) + fg(mutec) + target + RESET)
+            # one continuous theme-background panel, padded to a fixed width
+            visible = vlen(body)
+            row = bg(bgc) + " " + body + bg(bgc) + " " * max(1, 30 - visible) + RESET
+            rows.append(row)
         rows.append("")
-        # 16-slot reference strip
-        strip = "  "
-        for n in range(16):
-            strip += bg(self.slot_rgb(n)) + "  " + RESET
-        rows.append(strip)
-        rows.append(fg(mutec) + "  ANSI slots 0–15" + RESET)
+        strip = "".join(bg(self.slot_rgb(n)) + "  " + RESET for n in range(16))
+        rows.append(strip + fg(mutec) + "  slots 0–15" + RESET)
         return rows
 
     # --- editing ---
