@@ -81,6 +81,21 @@ _theme_wallpaper() {
   fi
 
   [ -n "$img" ] || return 0
+  # macOS caches the desktop picture by PATH: setting it to a path it already
+  # shows — even after the file's bytes changed in place — won't refresh the
+  # screen. Stage a copy whose name encodes the source mtime, so a content change
+  # yields a NEW path that macOS does pick up. Per-theme subdir + prune keeps it
+  # to one staged file each.
+  if ! is_dryrun; then
+    local ext="${img##*.}" stamp livedir
+    stamp="$(stat -f%m "$img" 2>/dev/null || echo 0)"
+    livedir="$OMACASE_DATA/backgrounds/.live/$name"
+    mkdir -p "$livedir"
+    local live="$livedir/bg-$stamp.$ext"
+    [ -f "$live" ] || cp "$img" "$live"
+    find "$livedir" -type f ! -name "bg-$stamp.$ext" -delete 2>/dev/null || true
+    img="$live"
+  fi
   if osascript -e "tell application \"System Events\" to set picture of every desktop to \"$img\"" >/dev/null 2>&1; then
     info "Wallpaper → $(basename "$img")"
   else
