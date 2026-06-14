@@ -221,22 +221,35 @@ SAMPLE = [
 
 
 # ---- raw terminal I/O --------------------------------------------------------
-def read_key(timeout=None):
-    if timeout is not None:
-        r, _, _ = select.select([sys.stdin], [], [], timeout)
-        if not r:
-            return None
-    ch = sys.stdin.read(1)
-    if ch != ESC:
-        return ch
-    # possible escape sequence (arrows): peek for more bytes briefly
-    r, _, _ = select.select([sys.stdin], [], [], 0.03)
+_ARROWS = {b"A": "UP", b"B": "DOWN", b"C": "RIGHT", b"D": "LEFT"}
+
+
+def read_key(fd=None):
+    """Read one key. Returns 'UP'/'DOWN'/'LEFT'/'RIGHT' for arrows, 'ESC' for a
+    bare Escape, or the literal character otherwise. Reads straight from the raw
+    fd with os.read so select() and the reads agree — mixing select() with
+    buffered text I/O would let an arrow's `ESC [ A` burst get half-swallowed and
+    misread (e.g. as a lone ESC = quit). Both `ESC [ A` and `ESC O A` (the
+    application-cursor-key form some terminals send) are handled."""
+    if fd is None:
+        fd = sys.stdin.fileno()
+    b = os.read(fd, 1)
+    if not b:
+        return None
+    if b != b"\x1b":
+        return b.decode("latin-1")
+    # ESC: is more pending (an escape sequence) or a lone Escape press?
+    r, _, _ = select.select([fd], [], [], 0.05)
     if not r:
         return "ESC"
-    seq = sys.stdin.read(1)
-    if seq == "[":
-        code = sys.stdin.read(1)
-        return {"A": "UP", "B": "DOWN", "C": "RIGHT", "D": "LEFT"}.get(code, None)
+    seq = os.read(fd, 1)
+    if seq in (b"[", b"O"):
+        code = os.read(fd, 1)
+        # extended sequences (e.g. ESC [ 1 ; 5 A) carry parameter bytes before
+        # the final letter — skip digits/';' until we reach it.
+        while code and (code.isdigit() or code == b";"):
+            code = os.read(fd, 1)
+        return _ARROWS.get(code)
     return None
 
 
