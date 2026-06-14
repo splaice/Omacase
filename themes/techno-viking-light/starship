@@ -10,7 +10,7 @@ blue = '#3c6e82'
 green = '#1f9d6a'
 red = '#cc2f2c'
 mauve = '#c21b86'
-yellow = '#9c7a12'
+yellow = '#c8910a'
 
 [directory]
 style = 'bold mauve'
