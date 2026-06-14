@@ -10,7 +10,11 @@ omacase_install() {
 
   step "1/10  Packages & apps (brew bundle)"
   _sync_local_tap || warn "Local tap sync failed; borders may be stock."
-  run brew bundle --file="$OMACASE_ROOT/Brewfile" || warn "Some brew items failed; re-run later."
+  # NO_REQUIRE_TAP_TRUST: newer Homebrew gates third-party taps behind a `brew
+  # trust` prompt; the Brewfile's taps (nikitabobko, FelixKratz, finbarr, splaice)
+  # are curated by omacase, so skip the gate instead of failing the bundle.
+  run env HOMEBREW_NO_REQUIRE_TAP_TRUST=1 brew bundle --file="$OMACASE_ROOT/Brewfile" \
+    || warn "Some brew items failed; re-run later."
 
   step "2/10  Link \`omacase\` onto PATH + shell completion"
   _link_command
