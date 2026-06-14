@@ -1,0 +1,37 @@
+# Techno Viking Light — Starship prompt (used as $STARSHIP_CONFIG via theme.toml).
+# Deep magenta (#c21b86) for contrast on a light terminal; dark semantic colors.
+"$schema" = 'https://starship.rs/config-schema.json'
+add_newline = true
+palette = 'techno-viking-light'
+format = '$directory$git_branch$git_status$nodejs$python$character'
+
+[palettes.techno-viking-light]
+blue = '#3c6e82'
+green = '#1f9d6a'
+red = '#cc2f2c'
+mauve = '#c21b86'
+yellow = '#9c7a12'
+
+[directory]
+style = 'bold mauve'
+truncation_length = 3
+truncate_to_repo = true
+
+[git_branch]
+symbol = ' '
+style = 'bold mauve'
+
+[git_status]
+style = 'bold red'
+
+[nodejs]
+symbol = ' '
+style = 'green'
+
+[python]
+symbol = ' '
+style = 'yellow'
+
+[character]
+success_symbol = '[➜](bold mauve)'
+error_symbol = '[➜](bold red)'

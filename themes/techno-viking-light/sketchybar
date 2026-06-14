@@ -1,0 +1,6 @@
+# Techno Viking Light — SketchyBar palette (sourced as theme.sh).
+# Light BAR_COLOR → omacase's luminance check flips macOS to Light automatically.
+export BAR_COLOR=0xfff5f2f4
+export LABEL_COLOR=0xff2a2230
+export ACCENT=0xffc21b86
+export MUTED=0xffb3a8b0   # light grey — dimmed inactive workspace numbers

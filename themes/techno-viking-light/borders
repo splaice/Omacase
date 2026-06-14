@@ -1,0 +1,4 @@
+# Techno Viking Light — JankyBorders palette (sourced as theme.conf).
+# Active border keeps the bright magenta (a fill/line — pops on a light desktop).
+export ACTIVE_BORDER=0xfff12eaf
+export INACTIVE_BORDER=0xffcdbfc8

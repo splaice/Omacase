@@ -1,0 +1,28 @@
+# Techno Viking Light — Ghostty colors (paper white + deep magenta).
+# Light sibling of techno-viking: bright accents deepened for contrast on light;
+# the bright magenta #F12EAF lives in the bright palette (13) and the cursor.
+background = F5F2F4
+foreground = 2A2230
+selection-background = DFD6DD
+selection-foreground = 2A2230
+cursor-color = C21B86
+
+# Normal colors (0-7)
+palette = 0=#4C4452
+palette = 1=#CC2F2C
+palette = 2=#1F9D6A
+palette = 3=#9C7A12
+palette = 4=#3C6E82
+palette = 5=#C21B86
+palette = 6=#2D7E8C
+palette = 7=#B3A8B0
+
+# Bright colors (8-15)
+palette = 8=#6E6470
+palette = 9=#D13B38
+palette = 10=#28B07A
+palette = 11=#B08E1E
+palette = 12=#4A7F94
+palette = 13=#F12EAF
+palette = 14=#389AAA
+palette = 15=#C9C0C6
