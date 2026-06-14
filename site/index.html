@@ -38,14 +38,14 @@
     background-image:radial-gradient(120% 80% at 50% -10%, #f4f1e9 0%, var(--paper) 55%, #e7e2d6 100%);
     -webkit-font-smoothing:antialiased;
   }
-  .wrap{max-width:820px; margin:0 auto; padding:0 28px}
+  .wrap{max-width:820px; margin:0 auto; padding-inline: 28px}
   a{color:var(--accent); text-decoration:none; border-bottom:1px solid transparent; transition:border-color .15s}
   a:hover{border-color:var(--accent)}
   h1,h2,h3{color:var(--ink); font-weight:600; line-height:1.1; margin:0}
   .spark{color:var(--accent)}
 
   /* hero */
-  header{padding:88px 0 clamp(130px,17vw,215px); text-align:center}
+  header{padding:88px 0 ; text-align:center}
   .kicker{font-size:18px; letter-spacing:.32em; text-transform:uppercase; color:var(--muted)}
   .title{font-family:var(--serif-display); font-weight:600; font-size:clamp(78px,16vw,168px);
          letter-spacing:-.01em; margin:.06em 0 .04em; color:var(--ink)}
@@ -60,16 +60,13 @@
   .install button{font-family:var(--serif); font-size:16px; color:#fff; background:var(--accent);
                   border:0; padding:0 22px; cursor:pointer; white-space:nowrap; letter-spacing:.02em}
   .install button:hover{background:var(--accent-deep)}
-  .ctas{display:flex; gap:14px; justify-content:center; flex-wrap:wrap; margin-top:8px}
+  .ctas{display:flex; gap:14px; justify-content:center; flex-wrap:wrap; margin-top:48px}
   .btn{display:inline-block; padding:9px 20px; border:1px solid var(--ink); border-radius:999px;
-       color:var(--ink); font-size:18px}
-  .btn:hover{background:var(--ink); color:var(--paper); border-color:var(--ink)}
+       background:var(--ink); color:var(--paper); font-size:18px}
+  .btn:hover{background:var(--paper); color:var(--ink); border-color:var(--ink)}
 
   /* sections */
-  section{padding:clamp(80px,13vw,150px) 0; border-top:1px solid var(--line)}
-  main > section:first-child{padding-top:clamp(130px,17vw,215px)}  /* hero→content gap > content→content */
-  .lede{font-family:var(--serif-display); font-weight:500; font-size:clamp(30px,5vw,46px);
-        line-height:1.12; color:var(--ink); letter-spacing:-.01em; max-width:18ch}
+  section{padding:50px 0; border-top:1px solid var(--line)}
   section p{margin:18px 0 0; max-width:60ch}
   .eyebrow{font-size:16px; letter-spacing:.28em; text-transform:uppercase; color:var(--muted); margin-bottom:8px}
 
@@ -78,7 +75,9 @@
         border:1px solid var(--line); border-radius:14px; overflow:hidden; margin-top:26px}
   .card{background:var(--card); padding:26px 26px 28px}
   .card h3{font-family:var(--serif-display); font-size:27px; font-weight:600; margin-bottom:6px; color:var(--ink)}
-  .card .n{font-family:var(--mono); font-size:13px; color:var(--accent); letter-spacing:.05em}
+  .card h3 a{color:inherit}
+  .card h3 a:hover{border-color:var(--accent)}
+  .card .n{font-family:var(--mono); font-size:13px; color:var(--accent); letter-spacing:.06em; text-transform:lowercase}
   .card p{font-size:18px; line-height:1.5; color:var(--ink-soft); margin:6px 0 0; max-width:none}
 
   /* rules */
@@ -112,58 +111,64 @@
 
 <header class="wrap">
   <h1 class="title">O<u>mac</u>ase</h1>
-  <p class="tagline">Opinionated MacOS configuration.</p>
+  <p class="tagline">Opinionated macOS configuration.</p>
   <p class="tagline">Stoelen with ❤️ from Omarchy.</p>
   <p class="tagline">Covered in irony.</p>
 
-  <div class="install">
-    <code id="cmd">/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/splaice/omacase/main/boot.sh)"</code>
-    <button id="copy" aria-label="Copy install command">copy</button>
-  </div>
   <div class="ctas">
     <a class="btn" href="https://github.com/splaice/omacase">View on GitHub</a>
   </div>
+
 </header>
 
 <main>
 <section class="wrap">
-  <h2 class="lede">An opinionated Mac, in one&nbsp;command.</h2>
-  <p>Omacase installs, configures, themes, and manages a tidy, tiling macOS setup — all from a single line in your terminal. It borrows Omarchy's spirit (keyboard-first, one consistent look everywhere, fully reproducible) and translates it to the way macOS actually wants to work.</p>
-  <p>The first rule is simple: <em>don't fight macOS.</em> The result is a calmer, faster, better-looking Mac — one you can roll back to exactly how it was, whenever you like.</p>
+  <h2 class="lede">What is it?</h2>
+  <p>Omacase installs software, configures software, provides themes, and manages a tiling macOS setup. It steals Omarchy's spirit (keyboard-first, one consistent look everywhere, fully reproducible) and translates it to macOS with the compromises that prevents you from fighting macOS.</p>
 </section>
 
 <section class="wrap">
-  <div class="eyebrow">What you get</div>
+  <div class="eyebrow">Whats included</div>
   <div class="grid">
     <div class="card">
-      <div class="n">01</div>
-      <h3>One command</h3>
-      <p>Set the whole thing up with a single line — and take it back down just as easily. Re-run it anytime; nothing breaks.</p>
+      <div class="n">window manager</div>
+      <h3><a href="https://github.com/nikitabobko/AeroSpace">AeroSpace</a></h3>
+      <p>i3-style tiling — no SIP disabling required. Windows arrange and snap into place; focus, move, and resize them all from the keyboard.</p>
     </div>
     <div class="card">
-      <div class="n">02</div>
-      <h3>Keyboard-driven</h3>
-      <p>Your windows arrange themselves and snap into place. Focus, move, resize, and switch spaces without ever reaching for the mouse.</p>
+      <div class="n">terminal</div>
+      <h3><a href="https://ghostty.org">Ghostty</a></h3>
+      <p>A fast, GPU-accelerated terminal — the home base your shell, editor, and tools live in.</p>
     </div>
     <div class="card">
-      <div class="n">03</div>
-      <h3>One look, everywhere</h3>
-      <p>Pick a theme and it restyles everything at once — terminal, editor, the status bar, window borders, even macOS Light/Dark and your wallpaper. 19 themes ship in the box, or bring your own.</p>
+      <div class="n">status bar</div>
+      <h3><a href="https://github.com/FelixKratz/SketchyBar">SketchyBar</a></h3>
+      <p>A scriptable bar: workspaces, live CPU &amp; memory, a software-update count, and a keep-awake toggle.</p>
     </div>
     <div class="card">
-      <div class="n">04</div>
-      <h3>Reversible by design</h3>
-      <p>Before changing a thing, Omacase quietly snapshots your setup. Don't like the result? One command puts your old Mac back.</p>
+      <div class="n">window borders</div>
+      <h3><a href="https://github.com/FelixKratz/JankyBorders">JankyBorders</a></h3>
+      <p>A clean border around the active window, so what's focused is always obvious.</p>
     </div>
     <div class="card">
-      <div class="n">05</div>
-      <h3>Plays nice with macOS</h3>
-      <p>It leans on Spotlight, the native menu bar, and built-in shortcuts. It trades a little polish for a lot less maintenance — and never picks a fight with the OS.</p>
+      <div class="n">keyboard</div>
+      <h3><a href="https://karabiner-elements.pqrs.org">Karabiner-Elements</a></h3>
+      <p>Mints a “Super” key from the right ⌘ — the modifier that drives the whole tiling layer.</p>
     </div>
     <div class="card">
-      <div class="n">06</div>
-      <h3>A bar that earns it</h3>
-      <p>A minimal status bar adds only what macOS's own menu bar lacks: live CPU &amp; memory, a software-update nudge, and a keep-awake toggle.</p>
+      <div class="n">editor</div>
+      <h3><a href="https://neovim.io">Neovim</a> + <a href="https://www.lazyvim.org">LazyVim</a></h3>
+      <p>A modern, batteries-included terminal editor, pre-configured and themed to match.</p>
+    </div>
+    <div class="card">
+      <div class="n">shell</div>
+      <h3><a href="https://starship.rs">Starship</a> + <a href="https://github.com/tmux/tmux">tmux</a></h3>
+      <p>A fast prompt and a terminal multiplexer, plus a modern CLI set — eza, bat, fd, ripgrep, fzf, zoxide, atuin.</p>
+    </div>
+    <div class="card">
+      <div class="n">packages</div>
+      <h3><a href="https://brew.sh">Homebrew</a></h3>
+      <p>Every package is declared in one Brewfile and installed with Homebrew — so your whole setup is reproducible on any Mac.</p>
     </div>
   </div>
 </section>
@@ -184,26 +189,14 @@
   </div>
 </section>
 
-<section class="wrap">
-  <div class="eyebrow">The two rules</div>
-  <ol class="rules">
-    <li>We don't fight macOS. We compromise polish for ease of maintenance.</li>
-    <li>It uninstalls just as easily as it installs.</li>
-  </ol>
-</section>
 </main>
 
 <footer class="wrap">
-  <div class="big">Make it yours.</div>
-  <div class="install" style="margin-top:6px">
-    <code id="cmd2">/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/splaice/omacase/main/boot.sh)"</code>
-    <button id="copy2" aria-label="Copy install command">copy</button>
-  </div>
   <div class="links">
-    <a href="https://github.com/splaice/omacase">GitHub</a>
-    <a href="https://learn.omacom.io/2/the-omarchy-manual">Omarchy &#8599;</a>
+    <a href="https://github.com/splaice/omacase">Omacase</a>
+    <a href="https://github.com/basecamp/omarchy">Omarchy</a>
   </div>
-  <div class="fine">For macOS on Apple Silicon. Lovingly stolen from Omarchy. &middot; omacase.com</div>
+  <div class="fine">Made for myself, for fun, take what you like leave what you don't</div>
 </footer>
 
 <script>
