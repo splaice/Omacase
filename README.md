@@ -1,3 +1,5 @@
+![Omacase — opinionated macOS configuration, lovingly stolen from Omarchy](assets/omacase-header.jpg)
+
 # Omacase
 
 **Yes, this is what you think it is. Omarchy for MacOS, lol.**
