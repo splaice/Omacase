@@ -53,6 +53,9 @@ omacase doctor             # check perms + missing grants
 omacase backup [label]     # snapshot current dotfiles & macOS defaults
 omacase restore [id]       # roll back to a snapshot (--list to see them)
 omacase menu               # gum TUI (wrap in a Shortcut to launch from Spotlight)
+omacase sysmenu            # the global system menu popup (also bound to Super + Space)
+omacase notify [...]       # native macOS notification (for scripts & keybinds)
+omacase migrate            # apply pending one-time migrations (also run by update)
 ```
 
 > **Reversible by design.** `install` auto-snapshots any pre-existing dotfiles
@@ -100,6 +103,7 @@ Terminal:
 Apps & overlays (reveal/hide a centered float):
 | Keys | Action |
 |---|---|
+| `Super + Space` | Toggle the global system menu (centered `omacase menu` popup) |
 | `Super + B` | Open / focus the system default browser |
 | `Super + Shift + F` | Toggle a centered ranger file popup (`Super + F` is fullscreen) |
 | `Super + M` | Toggle a music overlay (`omacase music apple` for Apple Music) |
@@ -140,12 +144,40 @@ Config & service mode:
 
 Full reference (incl. Spotlight launchers and web apps): [`KEYBINDS.md`](KEYBINDS.md).
 
+## The bar (SketchyBar)
+A minimal bottom bar that adds only what macOS's own menu bar lacks (macOS keeps
+battery / wifi / bluetooth / audio in *its* menu bar):
+- **Workspaces** — AeroSpace workspace indicators, active one highlighted.
+- **CPU + memory** — live, every 5s; **click → btop** in a centered popup.
+- **Homebrew updates** — a count shows when packages are outdated; **click → `omacase update`**.
+- **Caffeine** — a coffee-cup toggle; click to keep the Mac awake (`omacase caffeinate`).
+
+Everything on the bar is restyled by `omacase theme`.
+
+> **Auto-float exceptions.** ~30 system-utility / dialog apps (Calculator, System
+> Settings, Activity Monitor, Disk Utility, Font Book, …) float automatically
+> instead of tiling — extend the "Window rules" block in
+> `home/dot_config/aerospace/aerospace.toml`.
+
 ## The two honest limits
 1. **Permissions** (Accessibility/Input Monitoring) must be granted by hand — macOS
    requires it. `omacase doctor` links you straight there. **AeroSpace** itself needs
    no SIP changes.
 2. **No blur or window animations** on macOS regardless of WM — only active-window
    borders (JankyBorders) are possible.
+
+## What Omacase leaves to macOS (by design)
+Per rule #1 (don't fight macOS), some things are deliberately *not* reimplemented:
+- **Focus / Do-Not-Disturb** — macOS owns Focus modes with no stable public toggle;
+  use Control Center. Omacase ships the notification *helper* (`omacase notify`)
+  but not a DND toggle.
+- **Already native** — screenshots/recording (`⌘⇧3/4/5`), lock (`⌃⌘Q`), clipboard
+  history (Spotlight on Tahoe), volume/brightness/media-key OSD, and the
+  wifi/bluetooth/audio menus.
+- **Linux-only / N/A on macOS** — ISO installer, boot-snapshot rollback, Hyprland
+  blur/shadows, and window grouping/tabbing & scratchpads (AeroSpace limitations).
+
+Planned additions live in [`FUTURE.md`](FUTURE.md).
 
 ## Managed by Claude
 `skills/omacase/SKILL.md` teaches Claude to drive this CLI — so the same surface that

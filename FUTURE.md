@@ -1,8 +1,9 @@
 # Omacase — Future Additions
 
 The consolidated, forward-looking list of planned work for Omacase. Completed
-work and explicit non-goals stay in [`OUTSTANDING_FEATURES.md`](OUTSTANDING_FEATURES.md);
-this file is only what's *planned*.
+features are documented in the [`README.md`](README.md); the explicit non-goals
+are in the README's *"What Omacase leaves to macOS (by design)"* section. This
+file is only what's *planned*.
 
 Everything here follows house style: subcommands in `lib/*.sh`, helpers from
 `lib/common.sh` (`run`/`have`/`info`/`success`/`warn`/`OMACASE_STATE`), idempotent
@@ -154,6 +155,6 @@ opts into a LaunchDaemon. Shared helpers in `lib/common.sh`:
 
 ## Not planned (recorded so we don't relitigate)
 
-See [`OUTSTANDING_FEATURES.md` → *Out of scope*](OUTSTANDING_FEATURES.md): the
-**DND / Focus toggle** (defer to macOS), things already native on macOS
-(screenshots, lock, clipboard history, …), and Linux-only items.
+See the README's [*"What Omacase leaves to macOS (by design)"*](README.md#what-omacase-leaves-to-macos-by-design)
+section: the **DND / Focus toggle** (defer to macOS), things already native on
+macOS (screenshots, lock, clipboard history, …), and Linux-only items.
