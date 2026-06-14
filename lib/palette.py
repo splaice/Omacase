@@ -103,10 +103,13 @@ class Color:
         return self.prefix + self.hexstr() + self.suffix
 
 
-PAL_RE = re.compile(r"^(\s*palette\s*=\s*(\d+)\s*=\s*)(#?)([0-9A-Fa-f]{6})(.*)$")
+# `#*` (not `#?`) tolerates a malformed `##RRGGBB` value: parsing still succeeds
+# and the next save rewrites it with exactly one `#`, so a corrupted file
+# self-heals instead of staying broken.
+PAL_RE = re.compile(r"^(\s*palette\s*=\s*(\d+)\s*=\s*)(#*)([0-9A-Fa-f]{6})(.*)$")
 KEY_RE = re.compile(
     r"^(\s*(background|foreground|cursor-color|cursor-text|"
-    r"selection-background|selection-foreground)\s*=\s*)(#?)([0-9A-Fa-f]{6})(.*)$"
+    r"selection-background|selection-foreground)\s*=\s*)(#*)([0-9A-Fa-f]{6})(.*)$"
 )
 
 
@@ -330,8 +333,12 @@ class Editor:
             selected = idx == self.sel
             swatch = bg(c.rgb) + "   " + RESET
             marker = (fg(self.slot_rgb(5)) + "▸" + RESET) if selected else " "
-            base = "%s %s %s %s" % (marker, swatch, c.label.ljust(12),
-                                    c.hexstr().lower().ljust(7))
+            # Slot index down the left edge (palette 0–15); blank for the named
+            # colors (background/foreground/cursor/selection), which aren't slots.
+            num = c.id[7:].rjust(2) if c.id.startswith("palette") else "  "
+            numcol = fg(self.slot_rgb(8)) + num + RESET
+            base = "%s %s %s %s %s" % (marker, numcol, swatch, c.label.ljust(12),
+                                       c.hexstr().lower().ljust(7))
             if selected:
                 chans = []
                 for ci, (cn, cv) in enumerate(zip("rgb", c.rgb)):
