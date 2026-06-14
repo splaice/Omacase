@@ -42,6 +42,14 @@ brew "direnv"
 brew "lazygit"
 brew "gh"
 
+# --- AI coding & local LLM --------------------------------------------------
+# Native binaries → Homebrew. (Fast-moving npm AI CLIs — gemini, mermaid, pi —
+# are mise `npm:` tools instead; see home/dot_config/mise/config.toml. Claude
+# Code self-manages via its own installer, so it's not declared here.)
+cask "codex"             # OpenAI Codex CLI (official Rust binary; depends on ripgrep)
+brew "opencode"          # opencode — terminal AI coding agent (homebrew-core)
+cask "ollama-app"        # Ollama — local LLM runner (menu-bar app, auto-updates)
+
 # --- Tooling ----------------------------------------------------------------
 brew "gum"               # TUI for `omacase menu`
 brew "terminal-notifier" # reliable native notifications for `omacase notify` (osascript's are flaky)
