@@ -42,6 +42,7 @@ brew "uv"                # fast Python package/tool manager (hosts mlx-lm for th
 brew "direnv"
 brew "lazygit"
 brew "gh"                # GitHub CLI
+brew "just"              # command runner (justfiles)
 
 # --- AI coding & local LLM --------------------------------------------------
 # Native binaries → Homebrew. (Fast-moving npm AI CLIs — gemini, mermaid, pi —
@@ -50,6 +51,8 @@ brew "gh"                # GitHub CLI
 cask "codex"             # OpenAI Codex CLI (official Rust binary; depends on ripgrep)
 brew "opencode"          # opencode — terminal AI coding agent (homebrew-core)
 cask "ollama-app"        # Ollama — local LLM runner (menu-bar app, auto-updates)
+tap  "finbarr/tap"
+brew "finbarr/tap/yolobox" # run AI coding agents in a sandboxed container
 
 # --- Tooling ----------------------------------------------------------------
 brew "gum"               # TUI for `omacase menu`
