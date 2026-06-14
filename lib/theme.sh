@@ -130,19 +130,23 @@ omacase_wallpaper() {
   printf '%s\n' "$bgs" | grep -qxF "$cur" || cur="$(printf '%s\n' "$bgs" | head -1)"
   local idx; idx="$(printf '%s\n' "$bgs" | grep -nxF "$cur" | head -1 | cut -d: -f1)"; idx=$((idx - 1))
 
-  local target
+  local chosen=""
   case "${1:-list}" in
     list|"")
       info "Backgrounds for '$theme' (● = current):"
       printf '%s\n' "$bgs" | awk -v c="$cur" '{printf "  %s %s\n", ($0==c?"\xe2\x97\x8f":" "), $0}'
       return 0 ;;
-    next)   target=$(( (idx + 1) % count )) ;;
-    prev)   target=$(( (idx - 1 + count) % count )) ;;
-    [1-9]*) target=$(( $1 - 1 )); { [ "$target" -ge 0 ] && [ "$target" -lt "$count" ]; } || abort "pick 1-$count" ;;
-    *) abort "usage: omacase wallpaper [list|next|prev|<n>]" ;;
+    pick)   # gum-pick (used by `omacase menu`)
+      [ "$count" -gt 1 ] || { info "Only one background bundled for '$theme'."; return 0; }
+      chosen="$(gum_choose "Wallpaper · $theme" $bgs)" || return 0 ;;
+    next)   chosen="$(printf '%s\n' "$bgs" | sed -n "$(( (idx + 1) % count + 1 ))p")" ;;
+    prev)   chosen="$(printf '%s\n' "$bgs" | sed -n "$(( (idx - 1 + count) % count + 1 ))p")" ;;
+    [1-9]*) local n=$(( $1 - 1 )); { [ "$n" -ge 0 ] && [ "$n" -lt "$count" ]; } || abort "pick 1-$count"
+            chosen="$(printf '%s\n' "$bgs" | sed -n "$((n + 1))p")" ;;
+    *) abort "usage: omacase wallpaper [list|next|prev|pick|<n>]" ;;
   esac
 
-  local chosen; chosen="$(printf '%s\n' "$bgs" | sed -n "$((target + 1))p")"
+  [ -n "$chosen" ] || return 0
   is_dryrun || echo "$chosen" > "$OMACASE_STATE/wallpaper"
   _set_desktop_picture "$dir/$chosen" "$theme"
   success "wallpaper → $chosen ($theme)"
