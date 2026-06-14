@@ -45,7 +45,7 @@
   .spark{color:var(--accent)}
 
   /* hero */
-  header{padding:88px 0 56px; text-align:center}
+  header{padding:88px 0 clamp(130px,17vw,215px); text-align:center}
   .kicker{font-size:18px; letter-spacing:.32em; text-transform:uppercase; color:var(--muted)}
   .title{font-family:var(--serif-display); font-weight:600; font-size:clamp(78px,16vw,168px);
          letter-spacing:-.01em; margin:.06em 0 .04em; color:var(--ink)}
@@ -67,6 +67,7 @@
 
   /* sections */
   section{padding:clamp(80px,13vw,150px) 0; border-top:1px solid var(--line)}
+  main > section:first-child{padding-top:clamp(130px,17vw,215px)}  /* hero→content gap > content→content */
   .lede{font-family:var(--serif-display); font-weight:500; font-size:clamp(30px,5vw,46px);
         line-height:1.12; color:var(--ink); letter-spacing:-.01em; max-width:18ch}
   section p{margin:18px 0 0; max-width:60ch}
