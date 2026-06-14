@@ -11,3 +11,7 @@
 # guard against accidental local copies)
 state/
 *.local
+
+# Python bytecode (e.g. ranger colorscheme compile artifacts)
+__pycache__/
+*.pyc
