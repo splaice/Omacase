@@ -23,9 +23,12 @@ omacase_theme() {
   _link "$src/btop"       "$cfg/btop/themes/current.theme"
   _link "$src/nvim.lua"   "$cfg/nvim/lua/theme.lua"
   _link "$src/starship"   "$cfg/starship/theme.toml"
-  # eza/ls colors are optional per theme: link when present, else CLEAR so eza
-  # falls back to the terminal ANSI palette instead of the previous theme's.
-  if [ -e "$src/eza" ]; then _link "$src/eza" "$cfg/eza/theme.sh"; else run rm -f "$cfg/eza/theme.sh"; fi
+  # CLI tools whose colors track the theme: eza (ls), ranger (file manager), and
+  # glow (markdown). Each theme ships a fragment; link when present, else CLEAR
+  # so the tool falls back to its neutral default instead of the prior theme's.
+  _link_or_clear "$src/eza"    "$cfg/eza/theme.sh"
+  _link_or_clear "$src/ranger" "$cfg/ranger/theme.colors"
+  _link_or_clear "$src/glow"   "$cfg/glow/theme.json"
 
   is_dryrun || echo "$name" > "$OMACASE_STATE/theme"
   _theme_appearance "$name"
@@ -206,6 +209,13 @@ _link() { # _link <src> <dest>  (only if src exists)
   [ -e "$1" ] || return 0
   run mkdir -p "$(dirname "$2")"
   run ln -sfn "$1" "$2"
+}
+
+# _link_or_clear <src> <dest> — link src→dest when src exists, else remove dest.
+# Used for optional per-theme fragments so a theme that omits one resets the
+# target instead of leaving the previous theme's file in place.
+_link_or_clear() {
+  if [ -e "$1" ]; then _link "$1" "$2"; else run rm -f "$2"; fi
 }
 
 _theme_reload() {
