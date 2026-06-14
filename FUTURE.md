@@ -117,12 +117,11 @@ opts into a LaunchDaemon. Shared helpers in `lib/common.sh`:
 
 ## 2. Themes & desktop
 
-- **Wallpaper cycling** — multiple backgrounds per theme + a cycle hotkey.
-  - Omarchy: per-theme `backgrounds/` dir, `omarchy-theme-bg-next`.
-  - macOS: extend the `omacase theme` wallpaper step (already supports a single
-    bundled `themes/<name>/background.*`) to multiple images; add `omacase
-    wallpaper next` + a keybind. Reuse the mtime-staged `.live` cache-bust.
-  - Files: `lib/theme.sh`, `themes/*/`.
+- **Wallpaper cycling hotkey** — `omacase wallpaper [list|next|prev|<n>]` already
+  ships (multiple `themes/<name>/background*` per theme, choice persisted in
+  `$OMACASE_STATE/wallpaper`, mtime-staged `.live` cache-bust). *Remaining:* a
+  Super keybind that calls `omacase wallpaper next` (Omarchy's `omarchy-theme-bg-next`).
+  - Files: `home/dot_config/aerospace/aerospace.toml`.
 - **Theme install from URL** — `omacase theme install <git-url>` (clone a
   community theme into `themes/`, like Omarchy's menu-paste install).
 - **Font switcher** — `omacase font <name>` to retarget Ghostty + SketchyBar.

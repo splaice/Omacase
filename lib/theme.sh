@@ -53,8 +53,14 @@ _theme_wallpaper() {
   # NB: under `set -euo pipefail`, a command substitution whose pipeline fails
   # (find on a missing dir, gh on a 404) aborts the script — so guard both and
   # swallow their status with `|| true`.
-  # (1) Theme-bundled wallpaper wins.
-  img="$(find "$OMACASE_ROOT/themes/$name" -maxdepth 1 -type f -iname 'background.*' 2>/dev/null | sort | head -1)" || true
+  # (1) Theme-bundled wallpaper wins. Honor a chosen alternative (`omacase
+  #     wallpaper`) when this theme has it; else the primary (first `background.*`).
+  local chosen; chosen="$(cat "$OMACASE_STATE/wallpaper" 2>/dev/null || echo)"
+  if [ -n "$chosen" ] && [ -f "$OMACASE_ROOT/themes/$name/$chosen" ]; then
+    img="$OMACASE_ROOT/themes/$name/$chosen"
+  else
+    img="$(find "$OMACASE_ROOT/themes/$name" -maxdepth 1 -type f -iname 'background.*' 2>/dev/null | sort | head -1)" || true
+  fi
   # (2) else a fetched/cached image.
   if [ -z "$img" ] && [ -d "$cache" ]; then
     img="$(find "$cache" -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' \) 2>/dev/null | sort | head -1)" || true
@@ -80,27 +86,66 @@ _theme_wallpaper() {
     fi
   fi
 
+  _set_desktop_picture "$img" "$name"
+}
+
+# Set the desktop picture to $1 (per-theme subdir $2 for staging). macOS caches
+# the desktop picture by PATH: setting a path it already shows won't refresh even
+# after the file's bytes change. Stage a copy named by source stem + mtime, so
+# any content change OR a switch to a different bundled image is a NEW path macOS
+# picks up. Best-effort; dry-run safe.
+_set_desktop_picture() {
+  local img="$1" name="$2"
   [ -n "$img" ] || return 0
-  # macOS caches the desktop picture by PATH: setting it to a path it already
-  # shows — even after the file's bytes changed in place — won't refresh the
-  # screen. Stage a copy whose name encodes the source mtime, so a content change
-  # yields a NEW path that macOS does pick up. Per-theme subdir + prune keeps it
-  # to one staged file each.
-  if ! is_dryrun; then
-    local ext="${img##*.}" stamp livedir
-    stamp="$(stat -f%m "$img" 2>/dev/null || echo 0)"
-    livedir="$OMACASE_DATA/backgrounds/.live/$name"
-    mkdir -p "$livedir"
-    local live="$livedir/bg-$stamp.$ext"
-    [ -f "$live" ] || cp "$img" "$live"
-    find "$livedir" -type f ! -name "bg-$stamp.$ext" -delete 2>/dev/null || true
-    img="$live"
-  fi
-  if osascript -e "tell application \"System Events\" to set picture of every desktop to \"$img\"" >/dev/null 2>&1; then
-    info "Wallpaper → $(basename "$img")"
+  if is_dryrun; then printf '\033[2m[dry-run]\033[0m set wallpaper → %s\n' "$(basename "$img")"; return 0; fi
+  local ext="${img##*.}" stem stamp livedir live
+  stem="${img##*/}"; stem="${stem%.*}"
+  stamp="$(stat -f%m "$img" 2>/dev/null || echo 0)"
+  livedir="$OMACASE_DATA/backgrounds/.live/$name"
+  mkdir -p "$livedir"
+  live="$livedir/bg-$stem-$stamp.$ext"
+  [ -f "$live" ] || cp "$img" "$live"
+  find "$livedir" -type f ! -name "bg-$stem-$stamp.$ext" -delete 2>/dev/null || true
+  if osascript -e "tell application \"System Events\" to set picture of every desktop to \"$live\"" >/dev/null 2>&1; then
+    info "Wallpaper → $(basename "$live")"
   else
     warn "Couldn't set wallpaper (grant Automation → System Events to your terminal)."
   fi
+}
+
+# `omacase wallpaper [list|next|prev|<n>]` — choose among the active theme's
+# bundled backgrounds (themes/<theme>/background*). The choice persists in
+# $OMACASE_STATE/wallpaper and carries to any theme that has a same-named file
+# (so e.g. the 2nd background follows you between techno-viking and -light).
+omacase_wallpaper() {
+  ensure_brew_env
+  local theme dir; theme="$(cat "$OMACASE_STATE/theme" 2>/dev/null || echo)"
+  [ -n "$theme" ] || abort "no active theme — run \`omacase theme\` first."
+  dir="$OMACASE_ROOT/themes/$theme"
+  local bgs; bgs="$(cd "$dir" 2>/dev/null && ls -1 background* 2>/dev/null | sort)"
+  [ -n "$bgs" ] || abort "theme '$theme' has no bundled backgrounds."
+  local count; count="$(printf '%s\n' "$bgs" | grep -c .)"
+
+  local cur; cur="$(cat "$OMACASE_STATE/wallpaper" 2>/dev/null || echo)"
+  printf '%s\n' "$bgs" | grep -qxF "$cur" || cur="$(printf '%s\n' "$bgs" | head -1)"
+  local idx; idx="$(printf '%s\n' "$bgs" | grep -nxF "$cur" | head -1 | cut -d: -f1)"; idx=$((idx - 1))
+
+  local target
+  case "${1:-list}" in
+    list|"")
+      info "Backgrounds for '$theme' (● = current):"
+      printf '%s\n' "$bgs" | awk -v c="$cur" '{printf "  %s %s\n", ($0==c?"\xe2\x97\x8f":" "), $0}'
+      return 0 ;;
+    next)   target=$(( (idx + 1) % count )) ;;
+    prev)   target=$(( (idx - 1 + count) % count )) ;;
+    [1-9]*) target=$(( $1 - 1 )); { [ "$target" -ge 0 ] && [ "$target" -lt "$count" ]; } || abort "pick 1-$count" ;;
+    *) abort "usage: omacase wallpaper [list|next|prev|<n>]" ;;
+  esac
+
+  local chosen; chosen="$(printf '%s\n' "$bgs" | sed -n "$((target + 1))p")"
+  is_dryrun || echo "$chosen" > "$OMACASE_STATE/wallpaper"
+  _set_desktop_picture "$dir/$chosen" "$theme"
+  success "wallpaper → $chosen ($theme)"
 }
 
 # Keep Claude Code's UI theme in step with the omacase theme's brightness.

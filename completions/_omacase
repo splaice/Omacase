@@ -24,6 +24,8 @@ _omacase() {
         'migrate:apply pending one-time migrations (also run by update)'
         'outdated:print the count of outdated Homebrew packages'
         'theme:apply a theme everywhere (no name = list/pick)'
+        'wallpaper:pick the active theme background (list|next|prev|<n>)'
+        'wp:pick the active theme background (list|next|prev|<n>)'
         'webapp:open an Omarchy web app (no name = list)'
         'appearance:toggle/set macOS Light/Dark'
         'launchers:generate Spotlight .app launchers for web apps'
@@ -75,6 +77,9 @@ _omacase() {
           ;;
         workspace|ws|grid)
           _values 'workspace' 1 2 3 4 5 6 7 8 9 && ret=0
+          ;;
+        wallpaper|wp)
+          _values 'wallpaper' list next prev && ret=0
           ;;
         caffeinate|caffeine)
           _values 'state' toggle on off status && ret=0

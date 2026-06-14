@@ -43,6 +43,7 @@ OMACASE_DRYRUN=1 omacase install   # print every change without touching the sys
 omacase install            # idempotent full setup (re-runnable)
 omacase update             # pull + brew bundle + re-apply everything
 omacase theme [name]       # retheme everything: apps + macOS Light/Dark + wallpaper
+omacase wallpaper [...]     # pick the active theme's background (list|next|prev|<n>; alias wp)
 omacase webapp [name]      # open an Omarchy web app (for a Spotlight Shortcut)
 omacase appearance [...]   # toggle/set macOS Light/Dark (toggle|dark|light)
 omacase launchers [...]    # build Spotlight "Oma …" launchers: web apps + workspaces (build|remove)
