@@ -138,6 +138,16 @@ _grid_notify() {
 # Super+Shift+Return (`tmux new-session -A -s main`). The menu click and the
 # keystroke both need Accessibility (granted by `omacase doctor`).
 omacase_terminal() {
+  ensure_brew_env   # need Homebrew's `aerospace` on PATH under AeroSpace's exec env
+  # Activating Ghostty focuses its existing windows (wherever they are) and
+  # AeroSpace follows, so the NEW window would land on that workspace instead of
+  # this one. Remember the focused workspace and which Ghostty windows already
+  # exist, so we can move just the new one back here afterward.
+  local cur before
+  cur="$(aerospace list-workspaces --focused 2>/dev/null || echo)"
+  before="$(aerospace list-windows --all --format '%{window-id}|%{app-name}' 2>/dev/null \
+            | awk -F'|' '$2=="Ghostty"{print $1}' | sort)"
+
   # Pass the command as an argv item so its spaces/flags need no shell-escaping
   # inside the AppleScript; empty string means "plain window, type nothing".
   osascript - "$*" >/dev/null 2>&1 <<'APPLESCRIPT' || true
@@ -158,6 +168,19 @@ on run argv
   end if
 end run
 APPLESCRIPT
+
+  # Move the newly-created Ghostty window (the id that wasn't there before) to
+  # the workspace we launched from, and focus it there.
+  [ -n "$cur" ] || return 0
+  local newid n=0
+  while [ $n -lt 25 ]; do
+    newid="$(comm -13 <(printf '%s\n' "$before") \
+              <(aerospace list-windows --all --format '%{window-id}|%{app-name}' 2>/dev/null \
+                | awk -F'|' '$2=="Ghostty"{print $1}' | sort) | head -1)"
+    [ -n "$newid" ] && break
+    sleep 0.1; n=$((n + 1))
+  done
+  [ -n "$newid" ] && aerospace move-node-to-workspace "$cur" --window-id "$newid" --focus-follows-window 2>/dev/null || true
 }
 
 # `omacase workspace <name>` — switch the active AeroSpace workspace. Lets the
@@ -240,20 +263,45 @@ OSA
   _popup_center "$match"
 }
 
+# Pull every window of AeroSpace app-name $1 onto workspace $2, focusing it
+# there. macOS `open -a`/`activate` focuses an app's existing window wherever it
+# lives and AeroSpace follows the focus — so an overlay or new window yanks you
+# to whatever workspace the app was last on. Capture the workspace you're ON
+# *before* activating, then move the window to it so the app appears in front of
+# the workspace you're actually looking at. Polls briefly for a just-launched
+# window to register. $2 empty (AeroSpace not running) → no-op.
+_pull_app_to_ws() {
+  local app="$1" ws="$2" id name found=0 n=0
+  [ -n "$ws" ] || return 0
+  while [ $n -lt 15 ]; do
+    while IFS='|' read -r id name; do
+      if [ "$name" = "$app" ]; then
+        aerospace move-node-to-workspace "$ws" --window-id "$id" --focus-follows-window 2>/dev/null || true
+        found=1
+      fi
+    done < <(aerospace list-windows --all --format '%{window-id}|%{app-name}' 2>/dev/null)
+    [ $found -eq 1 ] && break
+    sleep 0.1; n=$((n + 1))
+  done
+}
+
 # Toggle a GUI app as a centered floating overlay. If it's frontmost, hide it;
 # otherwise launch/activate it, float it (so it overlays the tiles), center it
 # and raise it above everything. $1 = app name; optional $2 = size as a percent
 # of the screen (e.g. 80) — omitted keeps the window's current size.
 _app_toggle() {
   ensure_brew_env
-  local app="$1" pct="${2:-0}" front
+  local app="$1" pct="${2:-0}" front cur
   front="$(osascript -e 'tell application "System Events" to get name of first process whose frontmost is true' 2>/dev/null)"
   if [ "$front" = "$app" ]; then
     osascript -e "tell application \"System Events\" to set visible of process \"$app\" to false" 2>/dev/null
     return 0
   fi
+  # Workspace we're on now — the overlay should land here, not follow the app.
+  cur="$(aerospace list-workspaces --focused 2>/dev/null || echo)"
   open -a "$app" 2>/dev/null || { warn "Couldn't launch '$app' — is it installed?"; return 1; }
   sleep 0.3
+  _pull_app_to_ws "$app" "$cur"
   aerospace layout floating 2>/dev/null || true
   osascript - "$app" "$pct" >/dev/null 2>&1 <<'OSA' || true
 on run argv
