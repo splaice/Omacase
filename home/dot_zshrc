@@ -35,6 +35,9 @@ alias grep='rg'
 alias vim='nvim'
 alias vi='nvim'
 alias lg='lazygit'
+# glow renders markdown with an omacase style that tracks the terminal theme
+# (ANSI palette), so it matches whichever omacase theme is active.
+alias glow='command glow -s "$HOME/.config/glow/omacase-glow.json"'
 
 # Tools that hook the shell.
 command -v starship >/dev/null && eval "$(starship init zsh)"
