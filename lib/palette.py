@@ -120,7 +120,7 @@ def parse(path):
         if m:
             n = int(m.group(2))
             pal[n] = Color("palette%d" % n, ANSI_NAMES[n] if n < 16 else str(n),
-                           hexrgb(m.group(4)), i, m.group(1) + m.group(3),
+                           hexrgb(m.group(4)), i, m.group(1),
                            m.group(5), m.group(4).isupper(), bool(m.group(3)))
             continue
         m = KEY_RE.match(line)
@@ -128,7 +128,7 @@ def parse(path):
             key = m.group(2)
             label = dict(NAMED_KEYS).get(key, key)
             named[key] = Color(key, label, hexrgb(m.group(4)), i,
-                               m.group(1) + m.group(3), m.group(5),
+                               m.group(1), m.group(5),
                                m.group(4).isupper(), bool(m.group(3)))
     # Ordered editable list: palette 0..15, then the named keys present.
     order = [pal[n] for n in range(16) if n in pal]
