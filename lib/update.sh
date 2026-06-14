@@ -16,6 +16,10 @@ omacase_update() {
   # dropped cask). Idempotent + tracked; failure halts migrations but not update.
   source "$OMACASE_ROOT/lib/migrate.sh"
   omacase_migrate || warn "Some migrations did not complete — they'll retry next update."
+  if have mise; then
+    step "Upgrading mise tools (node + npm CLIs)"
+    run mise upgrade || warn "mise upgrade had issues."   # bumps latest-pinned npm CLIs
+  fi
   step "Upgrading outdated formulae & casks"
   run brew upgrade || warn "Some upgrades failed."
   success "omacase up to date."

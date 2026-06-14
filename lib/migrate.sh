@@ -27,6 +27,7 @@ _migrations_marker() { printf '%s' "$OMACASE_STATE/migrations-last"; }
 
 omacase_migrate() {
   ensure_brew_env
+  local LC_COLLATE=C   # byte-order id sorting/compare, independent of the user's locale
   local dir="$OMACASE_ROOT/migrations"
   [ -d "$dir" ] || { info "No migrations directory."; return 0; }
 

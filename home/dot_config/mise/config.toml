@@ -1,0 +1,14 @@
+# omacase — runtimes + fast-moving npm CLIs, managed by mise (the declarative
+# "Brewfile" for node tools). mise is activated in the shell, so these land on
+# PATH via its shims.
+#
+# Why these live here and not in the Brewfile: they ship on npm sooner than they
+# reach Homebrew. Pinned to "latest"; `omacase update` runs `mise upgrade` to pull
+# the newest versions the moment they're published — no waiting on a brew bump.
+# (Self-updating tools like Claude Code stay on their own installer; native
+# binaries like codex stay on Homebrew.)
+[tools]
+node = "lts"                                  # one isolated node; runs the npm: CLIs below
+"npm:@google/gemini-cli"            = "latest" # gemini  — Google Gemini CLI
+"npm:@mermaid-js/mermaid-cli"       = "latest" # mmdc    — Mermaid diagram renderer
+"npm:@earendil-works/pi-coding-agent" = "latest" # pi    — pi.dev coding agent (successor to @mariozechner/*)

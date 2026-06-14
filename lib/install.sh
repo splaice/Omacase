@@ -8,23 +8,26 @@ omacase_install() {
   dryrun_banner
   source "$OMACASE_ROOT/lib/backup.sh"
 
-  step "1/9  Packages & apps (brew bundle)"
+  step "1/10  Packages & apps (brew bundle)"
   _sync_local_tap || warn "Local tap sync failed; borders may be stock."
   run brew bundle --file="$OMACASE_ROOT/Brewfile" || warn "Some brew items failed; re-run later."
 
-  step "2/9  Link \`omacase\` onto PATH + shell completion"
+  step "2/10  Link \`omacase\` onto PATH + shell completion"
   _link_command
 
-  step "3/9  Safety backup (so this is reversible)"
+  step "3/10  Safety backup (so this is reversible)"
   _auto_backup
 
-  step "4/9  Dotfiles (symlinks)"
+  step "4/10  Dotfiles (symlinks)"
   _link_dotfiles
 
-  step "5/9  macOS defaults"
+  step "5/10  Tool runtimes (mise: node + fast-moving npm CLIs)"
+  _mise_install
+
+  step "6/10  macOS defaults"
   bash "$OMACASE_ROOT/macos/defaults.sh"   # honors OMACASE_DRYRUN itself
 
-  step "6/9  Theme"
+  step "7/10  Theme"
   source "$OMACASE_ROOT/lib/theme.sh"
   omacase_theme "$(cat "$OMACASE_STATE/theme" 2>/dev/null || echo catppuccin-mocha)"
   # Theme switching flips macOS Light/Dark; that needs Automation consent, which
@@ -32,16 +35,16 @@ omacase_install() {
   is_dryrun || can_set_appearance || \
     warn "Grant your terminal Automation → System Events so themes can sync macOS Light/Dark (\`omacase doctor\` re-checks)."
 
-  step "7/9  Window manager + services"
+  step "8/10  Window manager + services"
   check_loop_conflict || true   # Loop fights AeroSpace; offer to quit it first
   source "$OMACASE_ROOT/lib/wm.sh"
   omacase_wm "$(cat "$OMACASE_STATE/wm" 2>/dev/null || echo aerospace)"
 
-  step "8/9  Spotlight launchers (web apps + appearance toggle)"
+  step "9/10  Spotlight launchers (web apps + appearance toggle)"
   source "$OMACASE_ROOT/lib/actions.sh"
   omacase_launchers build || warn "Some launchers failed; re-run with \`omacase launchers build\`."
 
-  step "9/9  Launch desktop apps (triggers their permission prompts)"
+  step "10/10  Launch desktop apps (triggers their permission prompts)"
   _launch_apps
 
   step "Done"
@@ -50,6 +53,14 @@ omacase_install() {
   warn "  (plus Automation → System Events so themes can sync macOS Light/Dark)."
   warn "macOS requires those grants by hand — no installer can click them for you."
   warn "Don't like the result? \`omacase restore\` rolls back to the pre-install snapshot."
+}
+
+# Install the tools declared in ~/.config/mise/config.toml (node + the npm: CLIs
+# that ship faster on npm than Homebrew). Idempotent — converges to the config.
+# mise is provided by `brew bundle` and activated in dot_zshrc.
+_mise_install() {
+  have mise || { warn "mise not found (brew bundle should install it) — skipping npm CLIs."; return 0; }
+  run mise install -y || warn "mise install had issues — re-run \`mise install\` later."
 }
 
 # Omacase ships a patched JankyBorders (adds `square_apps=` for square-cornered
