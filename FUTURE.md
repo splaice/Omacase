@@ -101,7 +101,7 @@ opts into a LaunchDaemon. Shared helpers in `lib/common.sh`:
 4. **Big-tier gate:** mention `gpt-oss-120b` at ≥96 GB, never auto-pull.
 
 ### Build checklist
-- [ ] Brewfile: add `uv`
+- [x] Brewfile: add `uv` (done — `uv` is now a declared Omacase package)
 - [ ] `lib/llm.sh`: `omacase_llm` + helpers, `omacase_llm_tune`
 - [ ] `lib/common.sh`: `system_ram_gb`, `llm_usable_vram_gb`
 - [ ] `bin/omacase`: `llm)` dispatch + usage line

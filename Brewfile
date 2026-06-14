@@ -37,10 +37,11 @@ brew "fastfetch"         # branded system summary (`omacase menu` → About); co
 
 # --- Editor & dev -----------------------------------------------------------
 brew "neovim"            # + LazyVim (seeded via dotfiles) — the editor
-brew "mise"              # runtime version manager (node/python/ruby)
+brew "mise"              # runtime version manager (node/python/ruby) + npm: CLIs
+brew "uv"                # fast Python package/tool manager (hosts mlx-lm for the planned local LLM)
 brew "direnv"
 brew "lazygit"
-brew "gh"
+brew "gh"                # GitHub CLI
 
 # --- AI coding & local LLM --------------------------------------------------
 # Native binaries → Homebrew. (Fast-moving npm AI CLIs — gemini, mermaid, pi —
