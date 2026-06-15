@@ -2,6 +2,7 @@
 if [ -x /opt/homebrew/bin/brew ]; then eval "$(/opt/homebrew/bin/brew shellenv)"; fi
 
 export EDITOR=nvim
+bindkey -e   # keep emacs line-editing (^P/^N history, ^A/^E/^R) — EDITOR=nvim would otherwise make zsh default to vi keymap
 export PATH="$HOME/.local/bin:$PATH"   # user bins (`omacase` itself is linked into Homebrew's bin by `omacase install`)
 
 # Completion. `brew shellenv` (above) put Homebrew's site-functions on fpath —
