@@ -86,14 +86,21 @@ omacase_backup() {
     defaults export "$d" "$dest/defaults/$d.plist" 2>/dev/null || true
   done
 
+  mkdir -p "$OMACASE_STATE"
   echo "$id" > "$OMACASE_STATE/last-backup"
   success "Backup $id saved ($n existing dotfile target(s) + ${#OMACASE_DEFAULTS_DOMAINS[@]} defaults domains)."
   log    "Restore anytime with:  omacase restore $id"
 }
 
-# Auto-backup before a destructive step, but only if there is real (non-Omacase)
-# state to lose — so repeated installs don't pile up empty snapshots.
+# Auto-backup before a destructive step. Always create a first snapshot so the
+# macOS defaults layer is reversible on a clean machine; after that, only create
+# a new snapshot when there is real non-Omacase dotfile state to lose.
 _auto_backup() {
+  if [ ! -f "$OMACASE_STATE/last-backup" ]; then
+    omacase_backup pre-install
+    return
+  fi
+
   local t
   while IFS= read -r t; do
     [ -n "$t" ] || continue
@@ -102,7 +109,39 @@ _auto_backup() {
       return
     fi
   done < <(_managed_targets)
-  info "No pre-existing conflicting dotfiles — skipping backup."
+  info "No pre-existing conflicting dotfiles — keeping existing backup."
+}
+
+_valid_backup_id() {
+  case "$1" in ""|*/*|*..*) return 1 ;; *) return 0 ;; esac
+}
+
+_rel_is_managed_target() {
+  local rel="$1" target managed_rel
+  while IFS= read -r target; do
+    managed_rel="${target#"$HOME"/}"
+    [ "$rel" = "$managed_rel" ] && return 0
+  done < <(_managed_targets)
+  return 1
+}
+
+_valid_restore_rel() {
+  local rel="$1"
+  [ -n "$rel" ] || return 1
+  case "$rel" in /*|*"/../"*|../*|*/..|..|*"/."|.*"/../"*) return 1 ;; esac
+  _rel_is_managed_target "$rel"
+}
+
+_validate_restore_manifest() {
+  local manifest="$1" status rel extra line=0
+  [ -f "$manifest" ] || return 0
+  while read -r status rel extra; do
+    line=$((line + 1))
+    [ -n "${status:-}" ] || continue
+    [ -z "${extra:-}" ] || abort "Invalid backup manifest line $line: too many fields."
+    case "$status" in PRESENT|ABSENT) ;; *) abort "Invalid backup manifest line $line: unknown status '$status'." ;; esac
+    _valid_restore_rel "$rel" || abort "Invalid backup manifest line $line: unsafe path '$rel'."
+  done < "$manifest"
 }
 
 # --- restore -----------------------------------------------------------------
@@ -110,8 +149,10 @@ omacase_restore() {
   if [ "${1:-}" = "--list" ] || [ "${1:-}" = "-l" ]; then _restore_list; return; fi
   local id="${1:-$(cat "$OMACASE_STATE/last-backup" 2>/dev/null)}"
   [ -n "$id" ] || abort "No backups found. (omacase restore --list)"
+  _valid_backup_id "$id" || abort "Invalid backup id '$id'. (omacase restore --list)"
   local dir="$OMACASE_BACKUPS/$id"
   [ -d "$dir" ] || abort "No such backup '$id'. (omacase restore --list)"
+  _validate_restore_manifest "$dir/manifest"
 
   warn "Restoring backup $id ($(grep '^label=' "$dir/meta" 2>/dev/null | cut -d= -f2))."
   warn "This overwrites the current Omacase-managed dotfiles & defaults with the snapshot."

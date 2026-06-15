@@ -37,7 +37,7 @@ outer.bottom     = 40      # room for SketchyBar (position=bottom, height 32)
 # is just /usr/bin:/bin:/usr/sbin:/sbin — without this, `omacase grid` and the
 # `brew services` startup commands above silently do nothing.
 [exec.env-vars]
-PATH = '/opt/homebrew/bin:/usr/local/bin:${PATH}'
+PATH = '/opt/homebrew/bin:${PATH}'
 
 # Super = right ⌘ → ⌃⌥⌘ (via Karabiner), so 'cmd-ctrl-alt' is "Super" and
 # 'cmd-ctrl-alt-shift' is "Super + Shift". Mirrors Omarchy's SUPER / SUPER+SHIFT.

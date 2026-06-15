@@ -13,6 +13,15 @@ _wm_start_shared() {
   run brew services start sketchybar 2>/dev/null || warn "sketchybar not installed?"
 }
 
+_wm_stop_all() {
+  ensure_brew_env
+  run brew services stop sketchybar 2>/dev/null || true
+  run brew services stop splaice/formulae/borders 2>/dev/null || run brew services stop borders 2>/dev/null || true
+  if pgrep -x AeroSpace >/dev/null 2>&1; then
+    run osascript -e 'tell application "AeroSpace" to quit' >/dev/null 2>&1 || true
+  fi
+}
+
 _wm_use_aerospace() {
   ensure_brew_env   # may be invoked from the menu/popup, whose PATH lacks Homebrew
   info "Profile: AeroSpace (no SIP disable required)"
@@ -244,6 +253,10 @@ OSA
 _ghostty_popup_toggle() {
   ensure_brew_env
   local match="$1" cmd="$2" proc="$3"
+  if is_dryrun; then
+    printf '\033[2m[dry-run]\033[0m toggle Ghostty popup %s → %s\n' "$match" "$cmd"
+    return 0
+  fi
   if pgrep -f "$proc" >/dev/null 2>&1; then
     pkill -f "$proc"
     return 0
@@ -292,6 +305,10 @@ _pull_app_to_ws() {
 _app_toggle() {
   ensure_brew_env
   local app="$1" pct="${2:-0}" front cur
+  if is_dryrun; then
+    printf '\033[2m[dry-run]\033[0m toggle app %s\n' "$app"
+    return 0
+  fi
   front="$(osascript -e 'tell application "System Events" to get name of first process whose frontmost is true' 2>/dev/null)"
   if [ "$front" = "$app" ]; then
     osascript -e "tell application \"System Events\" to set visible of process \"$app\" to false" 2>/dev/null
@@ -338,6 +355,10 @@ OSA
 omacase_btop() {
   local popup_conf="$HOME/.config/btop/omacase-popup.conf"
   if [ ! -f "$popup_conf" ]; then
+    if is_dryrun; then
+      printf '\033[2m[dry-run]\033[0m create %s\n' "$popup_conf"
+    else
+      mkdir -p "$(dirname "$popup_conf")"
     cat > "$popup_conf" <<'BTOPCONF'
 #? omacase btop popup — resources only (no proc box). Its own config so btop's
 #? on-exit save can't touch the shared btop.conf (which keeps the proc list).
@@ -348,6 +369,7 @@ rounded_corners = true
 update_ms = 1000
 shown_boxes = "cpu mem net"
 BTOPCONF
+    fi
   fi
   _ghostty_popup_toggle "btop" "exec btop -c '$popup_conf'" "omacase-popup"
 }

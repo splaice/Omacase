@@ -8,6 +8,9 @@ An opinionated, tiling macOS — installed, configured, themed, and managed from
 single command. Omarchy's ethos (keyboard-first, one consistent theme everywhere,
 one-command reproducible) translated to where macOS actually wants to go.
 
+**Supported platform:** Apple Silicon Macs with Homebrew installed at
+`/opt/homebrew`. Intel Macs and custom Homebrew prefixes are intentionally out
+of scope.
 
 **The Rules**
  - The first rule of Omacase is that we don't fight with MacOS. We compromise 
@@ -44,6 +47,7 @@ omacase doctor      # grant Accessibility to AeroSpace, SketchyBar, Karabiner
 OMACASE_DRYRUN=1 omacase install   # print every change without touching the system
 omacase install            # idempotent full setup (re-runnable)
 omacase update             # pull + brew bundle + re-apply everything
+OMACASE_SKIP_MISE_UPGRADE=1 omacase update  # skip npm-backed mise tool upgrades
 omacase theme [name]       # retheme everything: apps + macOS Light/Dark + wallpaper
 omacase palette [name]     # TUI to edit a theme's Ghostty ANSI palette with a live eza preview
 omacase wallpaper [...]     # pick the active theme's background (list|next|prev|<n>; alias wp)
@@ -63,9 +67,24 @@ omacase migrate            # apply pending one-time migrations (also run by upda
 ```
 
 > **Reversible by design.** `install` auto-snapshots any pre-existing dotfiles
-> and the macOS defaults domains it touches *before* changing anything. Don't
-> like the result? `omacase restore` puts your old setup back. Omacase manages
-> its own dotfiles as symlinks, so it never fights an existing chezmoi/stow.
+> and the macOS defaults domains it touches *before* changing anything, including
+> on a clean first install. Don't like the result? `omacase restore` puts your
+> old setup back. Omacase manages its own dotfiles as symlinks, so it never fights
+> an existing chezmoi/stow.
+
+## Trust model
+The bootstrap command is intentionally short and convenient, but it is still
+`curl | bash`: inspect `boot.sh` first if you do not already trust this repo.
+Install/update then trusts:
+- Homebrew packages and casks declared in `Brewfile`.
+- The third-party taps listed there. Omacase scopes Homebrew's tap-trust bypass
+  to its curated bundle/install commands so the setup can run unattended.
+- The local `formula/borders.rb`, which pins the `splaice/JankyBorders` tarball
+  by SHA-256.
+- Wallpaper images fetched from Basecamp's Omarchy repo when a theme has no
+  bundled background.
+- npm-backed tools managed by mise at `latest`; set
+  `OMACASE_SKIP_MISE_UPGRADE=1` during `omacase update` to avoid upgrading them.
 
 > **One switch, themed everywhere.** `omacase theme <name>` repoints Ghostty,
 > SketchyBar, JankyBorders, btop, Neovim, and Starship — and also flips macOS

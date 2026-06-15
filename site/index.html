@@ -112,7 +112,7 @@
 <header class="wrap">
   <h1 class="title">O<u>mac</u>ase</h1>
   <p class="tagline">Opinionated macOS configuration.</p>
-  <p class="tagline">Stoelen with ❤️ from Omarchy.</p>
+  <p class="tagline">Stolen with ❤️ from Omarchy.</p>
   <p class="tagline">Covered in irony.</p>
 
   <div class="ctas">
@@ -128,8 +128,8 @@
 </section>
 
 <section class="wrap">
-  <div class="eyebrow">Whats included</div>
-        <p> Smart default appliactions with strong default configurations to make them play well together.</p>
+  <div class="eyebrow">What's included</div>
+  <p>Smart default applications with strong default configurations to make them play well together.</p>
   <div class="grid">
     <div class="card">
       <div class="n">window manager</div>
@@ -200,18 +200,5 @@
   <div class="fine">Made for myself, for fun, take what you like leave what you don't</div>
 </footer>
 
-<script>
-  function wireCopy(btnId, codeId){
-    var b=document.getElementById(btnId), c=document.getElementById(codeId);
-    if(!b||!c) return;
-    b.addEventListener('click', function(){
-      navigator.clipboard.writeText(c.textContent.trim()).then(function(){
-        var t=b.textContent; b.textContent='copied ✓';
-        setTimeout(function(){ b.textContent=t; }, 1600);
-      });
-    });
-  }
-  wireCopy('copy','cmd'); wireCopy('copy2','cmd2');
-</script>
 </body>
 </html>

@@ -6,7 +6,7 @@ omacase_update() {
   dryrun_banner
   if [ -d "$OMACASE_ROOT/.git" ]; then
     step "Pulling latest omacase"
-    run git -C "$OMACASE_ROOT" pull --ff-only || warn "git pull failed (local changes?). Continuing."
+    run git -C "$OMACASE_ROOT" pull --ff-only || abort "git pull failed (local changes?). Resolve it before updating."
   fi
   step "Updating Homebrew"
   run brew update || true
@@ -16,8 +16,11 @@ omacase_update() {
   # dropped cask). Idempotent + tracked; failure halts migrations but not update.
   source "$OMACASE_ROOT/lib/migrate.sh"
   omacase_migrate || warn "Some migrations did not complete — they'll retry next update."
-  if have mise; then
+  if [ -n "${OMACASE_SKIP_MISE_UPGRADE:-}" ]; then
+    info "Skipping mise tool upgrades (OMACASE_SKIP_MISE_UPGRADE is set)."
+  elif have mise; then
     step "Upgrading mise tools (node + npm CLIs)"
+    warn "mise tools include npm packages pinned to latest; set OMACASE_SKIP_MISE_UPGRADE=1 to skip."
     run mise upgrade || warn "mise upgrade had issues."   # bumps latest-pinned npm CLIs
   fi
   step "Upgrading outdated formulae & casks"

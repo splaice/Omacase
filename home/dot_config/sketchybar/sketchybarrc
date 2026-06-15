@@ -13,9 +13,7 @@ source "$HOME/.config/sketchybar/theme.sh" 2>/dev/null || true
 # isn't found in click/init scripts it spawns. Resolve an absolute path once and
 # bake it into those commands.
 AEROSPACE="$(command -v aerospace 2>/dev/null)"
-[ -n "$AEROSPACE" ] || for p in /opt/homebrew/bin/aerospace /usr/local/bin/aerospace; do
-  [ -x "$p" ] && AEROSPACE="$p" && break
-done
+[ -n "$AEROSPACE" ] || [ ! -x /opt/homebrew/bin/aerospace ] || AEROSPACE="/opt/homebrew/bin/aerospace"
 AEROSPACE="${AEROSPACE:-aerospace}"
 
 sketchybar --bar height=32 position=bottom padding_left=8 padding_right=8 color="$BAR_COLOR"
@@ -35,9 +33,7 @@ sketchybar --add event aerospace_workspace_change
 cat > "$HOME/.config/sketchybar/spaces.sh" <<'SPACES'
 #!/bin/bash
 AERO="$(command -v aerospace 2>/dev/null)"
-[ -n "$AERO" ] || for p in /opt/homebrew/bin/aerospace /usr/local/bin/aerospace; do
-  [ -x "$p" ] && AERO="$p" && break
-done
+[ -n "$AERO" ] || [ ! -x /opt/homebrew/bin/aerospace ] || AERO="/opt/homebrew/bin/aerospace"
 AERO="${AERO:-aerospace}"
 
 ICON_WEB=$'\xf3\xb0\x87\xa7'       # browsers

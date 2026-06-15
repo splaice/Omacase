@@ -28,7 +28,10 @@ omacase_theme() {
   # track whichever theme is active automatically — Ghostty swaps the 16 ANSI
   # colors per theme, and greyscale themes (white, vantablack) render monochrome.
 
-  is_dryrun || echo "$name" > "$OMACASE_STATE/theme"
+  if ! is_dryrun; then
+    ensure_state_dir
+    echo "$name" > "$OMACASE_STATE/theme"
+  fi
   _theme_appearance "$name"
   _theme_claudecode "$name"
   _theme_reload
@@ -148,7 +151,10 @@ omacase_wallpaper() {
   esac
 
   [ -n "$chosen" ] || return 0
-  is_dryrun || echo "$chosen" > "$OMACASE_STATE/wallpaper"
+  if ! is_dryrun; then
+    ensure_state_dir
+    echo "$chosen" > "$OMACASE_STATE/wallpaper"
+  fi
   _set_desktop_picture "$dir/$chosen" "$theme"
   success "wallpaper → $chosen ($theme)"
 }

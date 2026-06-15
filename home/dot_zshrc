@@ -1,4 +1,4 @@
-# omacase zsh — modern CLI defaults. Managed by chezmoi.
+# omacase zsh — modern CLI defaults. Managed by Omacase.
 if [ -x /opt/homebrew/bin/brew ]; then eval "$(/opt/homebrew/bin/brew shellenv)"; fi
 
 export EDITOR=nvim

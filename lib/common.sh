@@ -3,7 +3,6 @@
 # Sourced by bin/omacase and every lib/*.sh.
 
 OMACASE_STATE="${OMACASE_STATE:-$HOME/.local/state/omacase}"
-mkdir -p "$OMACASE_STATE"
 # Data/cache dir for downloaded artifacts (e.g. per-theme wallpapers).
 OMACASE_DATA="${OMACASE_DATA:-$HOME/.local/share/omacase}"
 
@@ -25,22 +24,32 @@ confirm() { # confirm "Question?" -> 0 if yes
 }
 
 # --- environment -------------------------------------------------------------
+ensure_supported_platform() {
+  [ "$(uname -s)" = "Darwin" ] || abort "omacase only runs on macOS."
+  [ "$(uname -m)" = "arm64" ] || abort "omacase supports Apple Silicon Macs only."
+}
+
 ensure_brew_env() {
-  if [ -x /opt/homebrew/bin/brew ]; then eval "$(/opt/homebrew/bin/brew shellenv)"
-  elif [ -x /usr/local/bin/brew ]; then eval "$(/usr/local/bin/brew shellenv)"
-  elif is_dryrun; then warn "Homebrew not found (dry run — continuing)."
-  else abort "Homebrew not found — run boot.sh first."; fi
+  ensure_supported_platform
+  if [ -x /opt/homebrew/bin/brew ]; then
+    eval "$(/opt/homebrew/bin/brew shellenv)"
+  elif is_dryrun; then
+    warn "Homebrew not found at /opt/homebrew (dry run — continuing)."
+    export HOMEBREW_PREFIX=/opt/homebrew
+    export PATH="/opt/homebrew/bin:$PATH"
+  else
+    abort "Homebrew not found at /opt/homebrew — run boot.sh first."
+  fi
 }
 
 have() { command -v "$1" >/dev/null 2>&1; }
 
-# The directory the `omacase` command is symlinked into so it lands on PATH:
-# Homebrew's bin (already on PATH wherever brew is). Falls back to the standard
-# Apple-Silicon / Intel prefixes if `brew --prefix` isn't resolvable.
+# The directory the `omacase` command is symlinked into so it lands on PATH.
+# Omacase supports Apple Silicon Homebrew only: /opt/homebrew.
 _omacase_bindir() {
-  local prefix; prefix="$(brew --prefix 2>/dev/null)"
-  [ -n "$prefix" ] && [ -d "$prefix/bin" ] || prefix="$( [ -d /opt/homebrew/bin ] && echo /opt/homebrew || echo /usr/local )"
-  [ -d "$prefix/bin" ] && printf '%s\n' "$prefix/bin"
+  if [ -d /opt/homebrew/bin ] || is_dryrun; then
+    printf '%s\n' /opt/homebrew/bin
+  fi
 }
 
 # Homebrew's zsh completion dir (sibling of bin). Anything linked here is
@@ -53,7 +62,7 @@ _omacase_zfuncdir() {
 
 # --- dry run -----------------------------------------------------------------
 # Set OMACASE_DRYRUN=1 to print mutating commands instead of running them.
-# Wrap every side-effecting command (brew, chezmoi, ln, defaults, services…)
+# Wrap every side-effecting command (brew, ln, defaults, services…)
 # in `run`. Read-only inspection commands don't need it.
 is_dryrun() { [ -n "${OMACASE_DRYRUN:-}" ]; }
 
@@ -63,6 +72,18 @@ run() {
   else
     "$@"
   fi
+}
+
+ensure_state_dir() {
+  run mkdir -p "$OMACASE_STATE"
+}
+
+shell_quote() {
+  printf "'%s'" "$(printf '%s' "$1" | sed "s/'/'\\\\''/g")"
+}
+
+applescript_string() {
+  printf '"%s"' "$(printf '%s' "$1" | sed 's/\\/\\\\/g; s/"/\\"/g')"
 }
 
 dryrun_banner() {
@@ -78,6 +99,11 @@ once() {
   local key="$1"; shift
   local marker="$OMACASE_STATE/once.$key"
   if [ -f "$marker" ]; then return 0; fi
+  if is_dryrun; then
+    printf '\033[2m[dry-run]\033[0m once %s: %s\n' "$key" "$*"
+    return 0
+  fi
+  ensure_state_dir
   "$@" && touch "$marker"
 }
 

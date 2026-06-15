@@ -14,6 +14,7 @@ abort() { printf '\033[31m✗ %s\033[0m\n' "$*" >&2; exit 1; }
 info()  { printf '\033[34m➜ %s\033[0m\n' "$*"; }
 
 [ "$(uname -s)" = "Darwin" ] || abort "omacase only runs on macOS."
+[ "$(uname -m)" = "arm64" ] || abort "omacase supports Apple Silicon Macs only."
 
 # 1. Xcode Command Line Tools (provides git + compilers Homebrew needs).
 if ! xcode-select -p >/dev/null 2>&1; then
@@ -28,9 +29,12 @@ if ! command -v brew >/dev/null 2>&1; then
   NONINTERACTIVE=1 /bin/bash -c \
     "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 fi
-# Put brew on PATH for this process (Apple Silicon vs Intel).
-if [ -x /opt/homebrew/bin/brew ]; then eval "$(/opt/homebrew/bin/brew shellenv)"
-elif [ -x /usr/local/bin/brew ]; then eval "$(/usr/local/bin/brew shellenv)"; fi
+# Put Apple Silicon Homebrew on PATH for this process.
+if [ -x /opt/homebrew/bin/brew ]; then
+  eval "$(/opt/homebrew/bin/brew shellenv)"
+else
+  abort "Homebrew was not installed at /opt/homebrew; re-run boot.sh after Homebrew finishes."
+fi
 
 # 3. Clone or update the payload.
 if [ -d "$PREFIX/.git" ]; then

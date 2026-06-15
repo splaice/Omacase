@@ -100,13 +100,13 @@ omacase_launchers() {
   esac
   have osacompile || abort "osacompile not found (ships with macOS)."
 
-  mkdir -p "$dir"
+  run mkdir -p "$dir"
   # Clear any previously-generated launchers first, so renames/removals don't
   # leave stale .app bundles behind. Identified by the marker file we write.
   if ! is_dryrun; then
     local old
     for old in "$dir"/*.app; do
-      [ -e "$old/Contents/Resources/.omacase-launcher" ] && rm -rf "$old"
+      [ -e "$old/Contents/Resources/.omacase-launcher" ] && run rm -rf "$old"
     done
   fi
 
@@ -120,13 +120,18 @@ omacase_launchers() {
     name="${entry%%|*}"; args="${entry#*|}"
     app="$dir/$name.app"
     if is_dryrun; then printf '\033[2m[dry-run]\033[0m create %s → omacase %s\n' "$app" "$args"; continue; fi
-    rm -rf "$app"
+    run rm -rf "$app"
     # Launchers run with a minimal PATH, so set Homebrew + call omacase by path.
     # `quit` makes the applet terminate after running, so each launch re-runs the
     # command — otherwise it stays resident and a relaunch just reactivates the
     # idle instance (the script never fires again).
     tmp="$(mktemp).applescript"
-    printf 'do shell script "export PATH=/opt/homebrew/bin:$PATH; %s %s"\ntell me to quit\n' "$bin" "$args" > "$tmp"
+    {
+      printf 'set omacase_bin to %s\n' "$(applescript_string "$bin")"
+      printf 'set omacase_args to %s\n' "$(applescript_string "$args")"
+      printf 'do shell script "export PATH=/opt/homebrew/bin:$PATH; " & quoted form of omacase_bin & " " & omacase_args\n'
+      printf 'tell me to quit\n'
+    } > "$tmp"
     if osacompile -o "$app" "$tmp" >/dev/null 2>&1; then
       : > "$app/Contents/Resources/.omacase-launcher"   # marker for clean removal
       # Run as an agent (LSUIElement): the launcher never becomes the frontmost
@@ -164,19 +169,36 @@ _launchers_remove() {
 _caffeinate_pidfile() { printf '%s' "$OMACASE_STATE/caffeinate.pid"; }
 
 _caffeinate_awake() {   # 0 only if the caffeinate we started is still alive
-  local pid; pid="$(cat "$(_caffeinate_pidfile)" 2>/dev/null)" || return 1
-  [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null
+  local pid cmd
+  pid="$(cat "$(_caffeinate_pidfile)" 2>/dev/null)" || return 1
+  pid="${pid%% *}"
+  [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null || return 1
+  cmd="$(ps -p "$pid" -o command= 2>/dev/null | sed 's/^ *//')"
+  [ "$cmd" = "/usr/bin/caffeinate -d -i" ]
 }
 
 _caffeinate_start() {
   _caffeinate_awake && return 0
+  if is_dryrun; then
+    printf '\033[2m[dry-run]\033[0m start caffeinate\n'
+    return 0
+  fi
+  ensure_state_dir
   nohup /usr/bin/caffeinate -d -i >/dev/null 2>&1 &   # runs until killed
   echo $! > "$(_caffeinate_pidfile)"
 }
 
 _caffeinate_stop() {
-  _caffeinate_awake && kill "$(cat "$(_caffeinate_pidfile)")" 2>/dev/null
-  rm -f "$(_caffeinate_pidfile)"
+  local pid
+  if is_dryrun; then
+    printf '\033[2m[dry-run]\033[0m stop caffeinate\n'
+    return 0
+  fi
+  if _caffeinate_awake; then
+    pid="$(cat "$(_caffeinate_pidfile)" 2>/dev/null)"
+    kill "${pid%% *}" 2>/dev/null || true
+  fi
+  run rm -f "$(_caffeinate_pidfile)"
 }
 
 # Reflect state on the SketchyBar coffee-cup item — best-effort (silent if the
@@ -203,7 +225,7 @@ omacase_caffeinate() {
     paint|"") : ;;
     *) abort "usage: omacase caffeinate [toggle|on|off|status]" ;;
   esac
-  _caffeinate_awake || rm -f "$(_caffeinate_pidfile)" 2>/dev/null   # drop a stale pid
+  _caffeinate_awake || run rm -f "$(_caffeinate_pidfile)" 2>/dev/null   # drop a stale pid
   _caffeinate_paint
   # Notify only on a real on↔off transition (so paint/status/no-op on|off stay quiet).
   local after; _caffeinate_awake && after=on || after=off
