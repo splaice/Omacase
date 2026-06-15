@@ -1,3 +1,0 @@
-# Vantablack — JankyBorders palette (sourced as theme.conf).
-export ACTIVE_BORDER=0xff8d8d8d
-export INACTIVE_BORDER=0xff5c5c5c

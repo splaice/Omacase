@@ -38,12 +38,16 @@ _managed_targets() {
     done )
 }
 
-# True if PATH is a symlink that already points inside this repo.
+# True if PATH is a symlink that already points inside this repo or Omacase's
+# generated theme cache.
 _is_omacase_link() {
   local t="$1" dest
   [ -L "$t" ] || return 1
   dest="$(readlink "$t")"
-  case "$dest" in "$OMACASE_ROOT"/*) return 0 ;; *) return 1 ;; esac
+  case "$dest" in
+    "$OMACASE_ROOT"/*|"$OMACASE_DATA"/generated/themes/*) return 0 ;;
+    *) return 1 ;;
+  esac
 }
 
 # --- backup ------------------------------------------------------------------

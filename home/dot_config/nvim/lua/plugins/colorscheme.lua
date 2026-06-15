@@ -1,5 +1,5 @@
--- omacase theme integration. `omacase theme <name>` symlinks
--- themes/<name>/nvim.lua → ~/.config/nvim/lua/theme.lua, which returns the
+-- omacase theme integration. `omacase theme <name>` symlinks a generated
+-- nvim.lua → ~/.config/nvim/lua/theme.lua, which returns the
 -- active colorscheme name. We read it and hand it to LazyVim so the editor
 -- matches the rest of the system. Every theme's colorscheme plugin is declared
 -- below (one per Omarchy theme) so whichever one theme.lua names is installed

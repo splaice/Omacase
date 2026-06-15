@@ -481,7 +481,7 @@ class Editor:
             elif k in ("s", "S"):
                 save(self.path, self.lines, self.colors)
                 self.dirty = False
-                self.msg = "saved to themes/%s/ghostty" % self.theme
+                self.msg = "saved %s Ghostty palette" % self.theme
             elif k in ("a", "A"):
                 self.apply_live()
             elif k in ("u", "U"):

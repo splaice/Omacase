@@ -14,7 +14,7 @@ Supported target: Apple Silicon macOS with Homebrew at `/opt/homebrew`.
 ## Command surface
 - `omacase install` — full idempotent setup (re-runnable; same engine as update)
 - `omacase update` — git pull + `brew bundle` + re-apply dotfiles, defaults, theme, WM (`OMACASE_SKIP_MISE_UPGRADE=1` skips npm-backed mise upgrades)
-- `omacase theme [name]` — apply a theme everywhere at once; 19 Omarchy themes ship in `themes/` (run `omacase theme` to pick from the list). Light/dark is derived from the theme background and also flips macOS appearance and the Claude Code CLI theme. The desktop wallpaper is set to the theme's Omarchy background (fetched on first use into `~/.local/share/omacase/backgrounds/`, then cached).
+- `omacase theme [name]` — apply a theme everywhere at once; theme names come from `themes/manifest` (run `omacase theme` to pick from the list). Omarchy-derived colors are downloaded from Basecamp's Omarchy repo into `~/.local/share/omacase/upstream/` and rendered into app fragments under `~/.local/share/omacase/generated/themes/`. Light/dark is derived from the theme background and also flips macOS appearance and the Claude Code CLI theme. The desktop wallpaper is fetched on first use into `~/.local/share/omacase/backgrounds/`, then cached.
 - `omacase webapp [name]` — open an Omarchy web app (no name = list); meant to be wrapped in a Spotlight Shortcut
 - `omacase appearance [toggle|dark|light]` — flip/set macOS system Light/Dark
 - `omacase launchers [build|remove]` — generate/remove Spotlight `.app` launchers (in `~/Applications`) for each web app + appearance toggle, via `osacompile`
@@ -47,7 +47,9 @@ Supported target: Apple Silicon macOS with Homebrew at `/opt/homebrew`.
   `home/dot_config/aerospace/aerospace.toml` holds the Hyprland-style keybinds on
   the Super key (right ⌘ → ⌃⌥⌘ via Karabiner): Super+WASD focus, Super+Shift+WASD
   move, Super+[1-9] workspaces.
-- `themes/<name>/` — per-app color fragments; `omacase theme` symlinks them into `~/.config`.
+- `themes/manifest` — theme catalog and upstream/local source map.
+- `themes/techno-viking*/` — local custom theme fragments and backgrounds.
+- `~/.local/share/omacase/generated/themes/<name>/` — generated per-app fragments for Omarchy-derived themes; `omacase theme` symlinks these into `~/.config`.
 - `lib/*.sh` — one file per subcommand.
 
 ## Hard limits — set expectations honestly

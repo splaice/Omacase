@@ -71,6 +71,23 @@ test_restore_rejects_unsafe_manifest() {
   [ $? -ne 0 ] && grep -q "unsafe path" "$out"
 }
 
+test_generated_theme_symlinks_are_owned() {
+  local tmp target
+  tmp="$(mktemp -d)"
+  HOME="$tmp/home"
+  OMACASE_ROOT="$tmp/root"
+  OMACASE_DATA="$tmp/data"
+  OMACASE_STATE="$tmp/state"
+  mkdir -p "$OMACASE_DATA/generated/themes/nord" "$HOME/.config/ghostty"
+  target="$HOME/.config/ghostty/theme"
+  ln -s "$OMACASE_DATA/generated/themes/nord/ghostty" "$target"
+  # shellcheck source=/dev/null
+  source "$ROOT/lib/common.sh"
+  # shellcheck source=/dev/null
+  source "$ROOT/lib/backup.sh"
+  _is_omacase_link "$target"
+}
+
 test_dry_run_launchers_do_not_create_applications_dir() {
   local tmp
   tmp="$(mktemp -d)"
@@ -120,13 +137,75 @@ test_update_fails_when_self_pull_fails() {
   [ $? -ne 0 ] && grep -q "git pull failed" "$out"
 }
 
+test_theme_manifest_lists_all_themes() {
+  OMACASE_ROOT="$ROOT"
+  # shellcheck source=/dev/null
+  source "$ROOT/lib/common.sh"
+  # shellcheck source=/dev/null
+  source "$ROOT/lib/theme.sh"
+  local themes
+  themes="$(_theme_list)"
+  [ "$(printf '%s\n' "$themes" | grep -c .)" -eq 21 ] &&
+    printf '%s\n' "$themes" | grep -qx catppuccin-mocha &&
+    printf '%s\n' "$themes" | grep -qx techno-viking
+}
+
+test_theme_renderer_creates_fragments() {
+  local tmp colors out
+  tmp="$(mktemp -d)"
+  colors="$tmp/colors.toml"
+  out="$tmp/out"
+  cat > "$colors" <<'EOF'
+accent = "#112233"
+cursor = "#445566"
+foreground = "#ddeeff"
+background = "#010203"
+selection_foreground = "#aabbcc"
+selection_background = "#334455"
+color0 = "#000000"
+color1 = "#111111"
+color2 = "#222222"
+color3 = "#333333"
+color4 = "#444444"
+color5 = "#555555"
+color6 = "#666666"
+color7 = "#777777"
+color8 = "#888888"
+color9 = "#999999"
+color10 = "#aaaaaa"
+color11 = "#bbbbbb"
+color12 = "#cccccc"
+color13 = "#dddddd"
+color14 = "#eeeeee"
+color15 = "#ffffff"
+EOF
+  OMACASE_ROOT="$ROOT"
+  # shellcheck source=/dev/null
+  source "$ROOT/lib/common.sh"
+  # shellcheck source=/dev/null
+  source "$ROOT/lib/theme.sh"
+  _theme_render_from_colors sample "Sample" "sample-nvim" "$colors" "$out"
+  [ -s "$out/ghostty" ] &&
+    [ -s "$out/sketchybar" ] &&
+    [ -s "$out/borders" ] &&
+    [ -s "$out/btop" ] &&
+    [ -s "$out/starship" ] &&
+    [ -s "$out/nvim.lua" ] &&
+    grep -q 'background = 010203' "$out/ghostty" &&
+    grep -q 'export ACCENT=0xff112233' "$out/sketchybar" &&
+    grep -q 'return "sample-nvim"' "$out/nvim.lua"
+}
+
 run_test "shell_quote round-trips shell paths" test_shell_quote_round_trips
 run_test "applescript_string escapes launcher paths" test_applescript_string_escapes_quotes
 run_test "_auto_backup creates first restore point" test_auto_backup_creates_first_snapshot
 run_test "restore rejects unsafe manifest paths" test_restore_rejects_unsafe_manifest
+run_test "generated theme symlinks are owned" test_generated_theme_symlinks_are_owned
 run_test "dry-run launchers do not create files" test_dry_run_launchers_do_not_create_applications_dir
 run_test "caffeinate pid ownership is verified" test_caffeinate_rejects_unowned_pid
 run_test "update fails on self-update failure" test_update_fails_when_self_pull_fails
+run_test "theme manifest lists all themes" test_theme_manifest_lists_all_themes
+run_test "theme renderer creates generated fragments" test_theme_renderer_creates_fragments
 
 if [ "$FAILURES" -gt 0 ]; then
   printf '%s test(s) failed\n' "$FAILURES" >&2

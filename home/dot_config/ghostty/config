@@ -1,5 +1,6 @@
 # omacase Ghostty config. Theme is swapped by `omacase theme` via the
-# config-file include below (symlinked to themes/<name>/ghostty).
+# config-file include below. Omarchy-derived themes are generated into
+# ~/.local/share/omacase/generated/themes/<name>/ghostty.
 font-family = "JetBrainsMono Nerd Font"
 font-size = 14
 font-thicken = true

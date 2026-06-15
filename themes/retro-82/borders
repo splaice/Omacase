@@ -1,3 +1,0 @@
-# Retro 82 — JankyBorders palette (sourced as theme.conf).
-export ACTIVE_BORDER=0xfffaa968
-export INACTIVE_BORDER=0xff134e5a

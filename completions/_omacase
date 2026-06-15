@@ -62,7 +62,7 @@ _omacase() {
     argument)
       case $line[1] in
         theme|palette)
-          local -a themes=( $root/themes/*(N/:t) )
+          local -a themes=( ${(f)"$(awk -F'|' '$0 !~ /^#/ && NF >= 5 { print $1 }' $root/themes/manifest 2>/dev/null)"} )
           _describe -t themes 'theme' themes && ret=0
           ;;
         webapp)

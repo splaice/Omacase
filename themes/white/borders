@@ -1,3 +1,0 @@
-# White — JankyBorders palette (sourced as theme.conf).
-export ACTIVE_BORDER=0xff6e6e6e
-export INACTIVE_BORDER=0xffc0c0c0

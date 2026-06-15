@@ -40,7 +40,7 @@ omacase doctor      # grant Accessibility to AeroSpace, SketchyBar, Karabiner
 | Editor | **Neovim/LazyVim** |
 | Packages | **Homebrew + Brewfile** |
 | Dotfiles | **Omacase-owned symlinks** (`home/`) — won't collide with your own chezmoi/stow |
-| Theme | **19 Omarchy themes** (Catppuccin Mocha default) — one command rethemes everything |
+| Theme | **21 themes** (19 Omarchy-derived + 2 Omacase custom; Catppuccin Mocha default) — one command rethemes everything |
 
 ## Commands
 ```
@@ -81,15 +81,18 @@ Install/update then trusts:
   to its curated bundle/install commands so the setup can run unattended.
 - The local `formula/borders.rb`, which pins the `splaice/JankyBorders` tarball
   by SHA-256.
-- Wallpaper images fetched from Basecamp's Omarchy repo when a theme has no
-  bundled background.
+- Omarchy theme color metadata and wallpapers fetched from Basecamp's Omarchy
+  repo, cached under `~/.local/share/omacase`, and rendered into local app
+  fragments during install/theme application.
 - npm-backed tools managed by mise at `latest`; set
   `OMACASE_SKIP_MISE_UPGRADE=1` during `omacase update` to avoid upgrading them.
 
 > **One switch, themed everywhere.** `omacase theme <name>` repoints Ghostty,
 > SketchyBar, JankyBorders, btop, Neovim, and Starship — and also flips macOS
 > Light/Dark, the Claude Code CLI theme, and the desktop wallpaper to match.
-> Pick from 19 Omarchy themes (run `omacase theme` to list).
+> Pick from 21 themes (run `omacase theme` to list).
+> Omarchy-derived theme data is downloaded and cached at runtime; see
+> `THIRD_PARTY_NOTICES.md`.
 
 > **Tune a palette without the reload loop.** `omacase palette [name]` opens a
 > TUI over a theme's Ghostty ANSI slots (0–15 + background/foreground/cursor).
@@ -216,5 +219,19 @@ installs the system also lets an agent retheme, diagnose, and reconfigure it.
 
 > Status: **0.1.0** — the CLI engine, AeroSpace (Super-key WASD tiling),
 > SketchyBar, Ghostty, JankyBorders, the Karabiner Super key, Neovim/LazyVim, and
-> all 19 Omarchy themes (terminal + bar + borders + btop + nvim + prompt) are real.
+> all 21 themes (terminal + bar + borders + btop + nvim + prompt) are real.
 > Spotlight is the launcher (no setup — `⌘Space`); Raycast is no longer used.
+
+## License
+Omacase is released under the MIT License. Copyright (c) 2026 Sean Plaice and
+Omacase contributors.
+
+Unless otherwise noted, the license covers Omacase's original code,
+documentation, configuration, website files, generated project assets, and local
+custom theme files. Third-party applications, Homebrew formulae/casks/taps,
+Neovim plugins, npm-backed tools, and runtime-downloaded artifacts retain their
+own upstream licenses.
+
+Omacase is inspired by Omarchy and downloads Omarchy theme metadata and
+wallpapers at runtime for Omarchy-derived themes. See
+[`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md) for attribution and scope.

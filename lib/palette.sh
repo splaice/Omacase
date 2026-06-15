@@ -8,14 +8,16 @@ omacase_palette() {
   [ -n "$theme" ] || theme="$(cat "$OMACASE_STATE/theme" 2>/dev/null || echo)"
   [ -n "$theme" ] || abort "no theme given and no active theme — usage: omacase palette [name]"
 
-  local f="$OMACASE_ROOT/themes/$theme/ghostty"
-  [ -f "$f" ] || abort "unknown theme '$theme' (themes/$theme/ghostty not found)."
+  source "$OMACASE_ROOT/lib/theme.sh"
+  _theme_known "$theme" || abort "unknown theme '$theme'"
+  local dir f
+  dir="$(_theme_materialize "$theme")"
+  f="$dir/ghostty"
+  [ -f "$f" ] || abort "theme '$theme' has no generated Ghostty palette."
 
-  # Only inline-palette themes are editable slot-by-slot. The few that just
-  # select a Ghostty built-in (e.g. catppuccin-mocha, tokyo-night) have no
-  # palette lines to tweak.
+  # Only inline-palette themes are editable slot-by-slot.
   if ! grep -q '^palette = 0=' "$f"; then
-    abort "theme '$theme' uses a Ghostty built-in (\`$(grep -i '^theme' "$f" | head -1 | sed 's/theme *= *//')\`), so it has no inline palette to edit."
+    abort "theme '$theme' has no inline Ghostty palette to edit."
   fi
 
   have python3 || abort "python3 is required for \`omacase palette\` (install Xcode CLT or \`brew install python\`)."
@@ -27,5 +29,7 @@ omacase_palette() {
   local active; active="$(cat "$OMACASE_STATE/theme" 2>/dev/null || echo)"
   if [ "$theme" != "$active" ]; then
     info "Edited '$theme'. Run \`omacase theme $theme\` to switch to it and see the result."
+  elif [ "$dir" != "$OMACASE_ROOT/themes/$theme" ]; then
+    info "Edited the generated palette cache for '$theme'. Set OMACASE_THEME_REFRESH=1 to reset it from upstream."
   fi
 }

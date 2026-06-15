@@ -1,19 +1,23 @@
 # shellcheck shell=bash
-# `omacase theme [name]` — apply one theme to every app at once. A theme is a
-# directory under themes/<name>/ containing per-app fragments that get symlinked
-# or rendered into the live config locations.
+# `omacase theme [name]` — apply one theme to every app at once.
+#
+# Omarchy-derived themes are not vendored as per-app fragments. We download the
+# upstream MIT-licensed colors.toml into OMACASE_DATA and render the Ghostty,
+# SketchyBar, JankyBorders, btop, Neovim, and Starship fragments locally.
+
+_THEME_MANIFEST="$OMACASE_ROOT/themes/manifest"
 
 omacase_theme() {
   local name="${1:-}"
-  local themes_dir="$OMACASE_ROOT/themes"
 
   if [ -z "$name" ]; then
     name="$(gum_choose "Pick a theme" $(_theme_list))" || return
   fi
-  local src="$themes_dir/$name"
-  [ -d "$src" ] || abort "Unknown theme '$name'. Available: $(_theme_list | tr '\n' ' ')"
+  _theme_known "$name" || abort "Unknown theme '$name'. Available: $(_theme_list | tr '\n' ' ')"
 
   info "Applying theme: $name"
+  local src; src="$(_theme_materialize "$name")"
+
   # Each app reads a single 'current' file that we point at the chosen theme.
   # Apps include this file from their main config (see home/dot_config/*).
   local cfg="$HOME/.config"
@@ -44,60 +48,312 @@ omacase_theme() {
   fi
 }
 
-# Our theme dirs mostly match Omarchy's, except the Catppuccin flavor naming.
-_omarchy_name() { case "$1" in catppuccin-mocha) echo catppuccin ;; *) echo "$1" ;; esac; }
+_theme_field() {
+  local name="$1" col="$2"
+  awk -F'|' -v n="$name" -v c="$col" '
+    $0 !~ /^#/ && $1 == n { print $c; found = 1; exit }
+    END { exit found ? 0 : 1 }
+  ' "$_THEME_MANIFEST"
+}
 
-# Set the desktop wallpaper for the theme. Priority: (1) a wallpaper bundled with
-# the theme (themes/<name>/background.*) — lets custom themes that have no Omarchy
-# source ship their own bg; (2) a previously-fetched image cached in
-# $OMACASE_DATA/backgrounds/<theme>/; (3) fetch the theme's default Omarchy bg into
-# that cache and reuse it (offline after that). Failures degrade to a warning.
-_theme_wallpaper() {
-  local name="$1" cache="$OMACASE_DATA/backgrounds/$1" img=""
-  # NB: under `set -euo pipefail`, a command substitution whose pipeline fails
-  # (find on a missing dir, gh on a 404) aborts the script — so guard both and
-  # swallow their status with `|| true`.
-  # (1) Theme-bundled wallpaper wins. Honor a chosen alternative (`omacase
-  #     wallpaper`) when this theme has it; else the primary (first `background.*`).
-  local chosen; chosen="$(cat "$OMACASE_STATE/wallpaper" 2>/dev/null || echo)"
-  if [ -n "$chosen" ] && [ -f "$OMACASE_ROOT/themes/$name/$chosen" ]; then
-    img="$OMACASE_ROOT/themes/$name/$chosen"
+_theme_known() { _theme_field "$1" 1 >/dev/null 2>&1; }
+_theme_title() { _theme_field "$1" 2; }
+_theme_source() { _theme_field "$1" 3; }
+_omarchy_name() { _theme_field "$1" 4; }
+_theme_nvim() { _theme_field "$1" 5; }
+_theme_generated_dir() { printf '%s/generated/themes/%s\n' "$OMACASE_DATA" "$1"; }
+
+_theme_materialize() {
+  local name="$1" source
+  source="$(_theme_source "$name")" || return 1
+
+  if [ "$source" = local ]; then
+    local local_dir="$OMACASE_ROOT/themes/$name"
+    [ -d "$local_dir" ] || abort "local theme '$name' is missing: $local_dir"
+    printf '%s\n' "$local_dir"
+    return 0
+  fi
+
+  local out colors upstream title nvim
+  out="$(_theme_generated_dir "$name")"
+  if [ -z "${OMACASE_THEME_REFRESH:-}" ] &&
+     [ -s "$out/ghostty" ] && [ -s "$out/sketchybar" ] && [ -s "$out/borders" ] &&
+     [ -s "$out/btop" ] && [ -s "$out/nvim.lua" ] && [ -s "$out/starship" ]; then
+    printf '%s\n' "$out"
+    return 0
+  fi
+
+  if is_dryrun; then
+    printf '%s\n' "$out"
+    return 0
+  fi
+
+  upstream="$(_omarchy_name "$name")"
+  title="$(_theme_title "$name")"
+  nvim="$(_theme_nvim "$name")"
+  colors="$OMACASE_DATA/upstream/omarchy/themes/$upstream/colors.toml"
+  _theme_download_omarchy_colors "$upstream" "$colors" ||
+    abort "could not download Omarchy colors for '$name' ($upstream), and no cache exists."
+  _theme_render_from_colors "$name" "$title" "$nvim" "$colors" "$out"
+  printf '%s\n' "$out"
+}
+
+_theme_download_omarchy_colors() {
+  local upstream="$1" dest="$2" ref="${OMACASE_OMARCHY_REF:-master}" tmp
+  if [ -z "${OMACASE_THEME_REFRESH:-}" ] && [ -s "$dest" ]; then return 0; fi
+  have curl || { [ -s "$dest" ]; return; }
+  mkdir -p "$(dirname "$dest")"
+  tmp="$dest.tmp.$$"
+  if curl -fsSL "https://raw.githubusercontent.com/basecamp/omarchy/$ref/themes/$upstream/colors.toml" \
+      -o "$tmp" 2>/dev/null && [ -s "$tmp" ]; then
+    mv "$tmp" "$dest"
+    return 0
+  fi
+  rm -f "$tmp"
+  [ -s "$dest" ]
+}
+
+_theme_color() {
+  local file="$1" key="$2"
+  sed -nE "s/^[[:space:]]*$key[[:space:]]*=[[:space:]]*\"#?([0-9A-Fa-f]{6})\".*/\1/p" "$file" |
+    head -1 | tr 'A-F' 'a-f'
+}
+
+_theme_render_from_colors() {
+  local name="$1" title="$2" nvim="$3" colors="$4" out="$5"
+  local accent cursor fg bg sel_fg sel_bg tmp palette arrow
+  local -a pal
+
+  accent="$(_theme_color "$colors" accent)"
+  cursor="$(_theme_color "$colors" cursor)"
+  fg="$(_theme_color "$colors" foreground)"
+  bg="$(_theme_color "$colors" background)"
+  sel_fg="$(_theme_color "$colors" selection_foreground)"
+  sel_bg="$(_theme_color "$colors" selection_background)"
+  for i in {0..15}; do
+    pal[$i]="$(_theme_color "$colors" "color$i")"
+  done
+
+  [ -n "$accent" ] && [ -n "$cursor" ] && [ -n "$fg" ] && [ -n "$bg" ] &&
+    [ -n "$sel_fg" ] && [ -n "$sel_bg" ] || abort "incomplete colors.toml for '$name'"
+  for i in {0..15}; do
+    [ -n "${pal[$i]}" ] || abort "incomplete colors.toml for '$name' (missing color$i)"
+  done
+
+  tmp="$out.tmp.$$"
+  rm -rf "$tmp"
+  mkdir -p "$tmp"
+
+  {
+    printf '# %s - Ghostty colors generated from Omarchy colors.toml.\n' "$title"
+    printf 'background = %s\n' "$bg"
+    printf 'foreground = %s\n' "$fg"
+    printf 'cursor-color = %s\n' "$cursor"
+    printf 'selection-background = %s\n' "$sel_bg"
+    printf 'selection-foreground = %s\n' "$sel_fg"
+    for i in {0..15}; do printf 'palette = %s=#%s\n' "$i" "${pal[$i]}"; done
+  } > "$tmp/ghostty"
+
+  cat > "$tmp/sketchybar" <<EOF
+# $title - SketchyBar palette generated from Omarchy colors.toml.
+export BAR_COLOR=0xff$bg
+export LABEL_COLOR=0xff$fg
+export ACCENT=0xff$accent
+export MUTED=0xff${pal[8]}   # dimmed inactive workspace numbers
+EOF
+
+  cat > "$tmp/borders" <<EOF
+# $title - JankyBorders palette generated from Omarchy colors.toml.
+export ACTIVE_BORDER=0xff$accent
+export INACTIVE_BORDER=0xff$sel_bg
+EOF
+
+  palette="${name//-/_}"
+  arrow="$(printf '\342\236\234')"
+  cat > "$tmp/starship" <<EOF
+# $title - Starship prompt generated from Omarchy colors.toml.
+"\$schema" = 'https://starship.rs/config-schema.json'
+add_newline = true
+palette = '$palette'
+format = '\$directory\$git_branch\$git_status\$nodejs\$python\$character'
+
+[palettes.$palette]
+blue = '#${pal[4]}'
+green = '#${pal[2]}'
+red = '#${pal[1]}'
+mauve = '#${pal[5]}'
+yellow = '#${pal[3]}'
+
+[directory]
+style = 'bold blue'
+truncation_length = 3
+truncate_to_repo = true
+
+[git_branch]
+symbol = ' '
+style = 'bold mauve'
+
+[git_status]
+style = 'bold red'
+
+[nodejs]
+symbol = ' '
+style = 'green'
+
+[python]
+symbol = ' '
+style = 'yellow'
+
+[character]
+success_symbol = '[$arrow](bold green)'
+error_symbol = '[$arrow](bold red)'
+EOF
+
+  cat > "$tmp/btop" <<EOF
+# $title - btop theme generated from Omarchy colors.toml.
+theme[main_bg]="#$bg"
+theme[main_fg]="#$fg"
+theme[title]="#$fg"
+theme[hi_fg]="#$accent"
+theme[selected_bg]="#$sel_bg"
+theme[selected_fg]="#$accent"
+theme[inactive_fg]="#${pal[8]}"
+theme[graph_text]="#${pal[8]}"
+theme[meter_bg]="#$sel_bg"
+theme[proc_misc]="#${pal[13]}"
+theme[cpu_box]="#$accent"
+theme[mem_box]="#${pal[2]}"
+theme[net_box]="#${pal[3]}"
+theme[proc_box]="#${pal[4]}"
+theme[div_line]="#${pal[8]}"
+theme[temp_start]="#${pal[2]}"
+theme[temp_mid]="#${pal[3]}"
+theme[temp_end]="#${pal[1]}"
+theme[cpu_start]="#${pal[2]}"
+theme[cpu_mid]="#${pal[3]}"
+theme[cpu_end]="#${pal[1]}"
+theme[free_start]="#${pal[4]}"
+theme[free_mid]="#${pal[6]}"
+theme[free_end]="#${pal[14]}"
+theme[cached_start]="#${pal[6]}"
+theme[cached_mid]="#${pal[12]}"
+theme[cached_end]="#${pal[4]}"
+theme[available_start]="#${pal[3]}"
+theme[available_mid]="#${pal[9]}"
+theme[available_end]="#${pal[1]}"
+theme[used_start]="#${pal[2]}"
+theme[used_mid]="#${pal[10]}"
+theme[used_end]="#${pal[6]}"
+theme[download_start]="#$accent"
+theme[download_mid]="#${pal[13]}"
+theme[download_end]="#${pal[5]}"
+theme[upload_start]="#${pal[2]}"
+theme[upload_mid]="#${pal[10]}"
+theme[upload_end]="#${pal[4]}"
+theme[process_start]="#$accent"
+theme[process_mid]="#${pal[13]}"
+theme[process_end]="#${pal[5]}"
+EOF
+
+  cat > "$tmp/nvim.lua" <<EOF
+-- $title - Neovim colorscheme generated from the Omacase theme manifest.
+return "$nvim"
+EOF
+
+  rm -rf "$out"
+  mv "$tmp" "$out"
+}
+
+_theme_background_dir() {
+  local name="$1"
+  if [ "$(_theme_source "$name")" = local ]; then
+    printf '%s/themes/%s\n' "$OMACASE_ROOT" "$name"
   else
-    img="$(find "$OMACASE_ROOT/themes/$name" -maxdepth 1 -type f -iname 'background.*' 2>/dev/null | sort | head -1)" || true
+    printf '%s/backgrounds/%s\n' "$OMACASE_DATA" "$name"
   fi
-  # (2) else a fetched/cached image.
-  if [ -z "$img" ] && [ -d "$cache" ]; then
-    img="$(find "$cache" -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' \) 2>/dev/null | sort | head -1)" || true
+}
+
+_theme_backgrounds() {
+  local dir="$1"
+  [ -d "$dir" ] || return 0
+  find "$dir" -maxdepth 1 -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' \) 2>/dev/null | sort
+}
+
+_theme_fetch_omarchy_backgrounds() {
+  local name="$1" mode="${2:-first}" upstream cache ref files file tmp downloaded=0
+  [ "$(_theme_source "$name")" = omarchy ] || return 1
+  have curl || return 1
+  upstream="$(_omarchy_name "$name")"
+  cache="$OMACASE_DATA/backgrounds/$name"
+  ref="${OMACASE_OMARCHY_REF:-master}"
+  mkdir -p "$cache"
+
+  files="$(curl -fsSL "https://api.github.com/repos/basecamp/omarchy/contents/themes/$upstream/backgrounds?ref=$ref" 2>/dev/null \
+    | grep -oE '"name"[[:space:]]*:[[:space:]]*"[^"]+"' | sed -E 's/.*"([^"]+)"$/\1/' \
+    | grep -iE '\.(jpg|jpeg|png)$' | grep -ivE '^omarchy\.' | sort)" || true
+  [ -n "$files" ] || return 1
+
+  while IFS= read -r file; do
+    [ -n "$file" ] || continue
+    [ -s "$cache/$file" ] && { downloaded=1; [ "$mode" = first ] && break; continue; }
+    tmp="$cache/$file.tmp.$$"
+    if curl -fsSL "https://raw.githubusercontent.com/basecamp/omarchy/$ref/themes/$upstream/backgrounds/$file" \
+        -o "$tmp" 2>/dev/null && [ -s "$tmp" ]; then
+      mv "$tmp" "$cache/$file"
+      downloaded=1
+      [ "$mode" = first ] && break
+    else
+      rm -f "$tmp"
+    fi
+  done <<< "$files"
+  [ "$downloaded" -eq 1 ]
+}
+
+_theme_ensure_backgrounds() {
+  local name="$1" dir
+  dir="$(_theme_background_dir "$name")"
+  [ -n "$(_theme_backgrounds "$dir")" ] && return 0
+  [ "$(_theme_source "$name")" = omarchy ] || return 1
+  is_dryrun && { printf '\033[2m[dry-run]\033[0m fetch wallpapers for %s\n' "$name"; return 0; }
+  _theme_fetch_omarchy_backgrounds "$name" all
+}
+
+# Set the desktop wallpaper for the theme. Cached Omarchy backgrounds live under
+# $OMACASE_DATA/backgrounds/<theme>/; custom local themes may still ship their
+# own backgrounds. Failures degrade to a warning.
+_theme_wallpaper() {
+  local name="$1" dir img="" chosen
+  dir="$(_theme_background_dir "$name")"
+  chosen="$(cat "$OMACASE_STATE/wallpaper" 2>/dev/null || echo)"
+
+  if [ -n "$chosen" ] && [ -f "$dir/$chosen" ]; then
+    img="$dir/$chosen"
+  else
+    img="$(_theme_backgrounds "$dir" | head -1)" || true
   fi
 
-  if [ -z "$img" ]; then
-    is_dryrun && { printf '\033[2m[dry-run]\033[0m fetch+set wallpaper for %s\n' "$name"; return 0; }
-    have curl || return 0
-    local on file=""
-    on="$(_omarchy_name "$name")"
-    # List the theme's backgrounds via the public GitHub contents API (no auth,
-    # plain curl) and pick the default: first real image, skipping the logo.
-    file="$(curl -fsSL "https://api.github.com/repos/basecamp/omarchy/contents/themes/$on/backgrounds" 2>/dev/null \
-            | grep -oE '"name"[[:space:]]*:[[:space:]]*"[^"]+"' | sed -E 's/.*"([^"]+)"$/\1/' \
-            | grep -iE '\.(jpg|jpeg|png)$' | grep -ivE '^omarchy\.' | sort | head -1)" || true
-    [ -n "$file" ] || { info "No wallpaper available for $name (skipped)."; return 0; }
-    mkdir -p "$cache"
-    if curl -fsSL "https://raw.githubusercontent.com/basecamp/omarchy/master/themes/$on/backgrounds/$file" \
-         -o "$cache/$file" 2>/dev/null && [ -s "$cache/$file" ]; then
-      img="$cache/$file"
+  if [ -z "$img" ] && [ "$(_theme_source "$name")" = omarchy ]; then
+    if is_dryrun; then
+      printf '\033[2m[dry-run]\033[0m fetch+set wallpaper for %s\n' "$name"
+      return 0
+    fi
+    if _theme_fetch_omarchy_backgrounds "$name" first; then
+      img="$(_theme_backgrounds "$dir" | head -1)" || true
     else
-      rm -f "$cache/$file"; warn "Couldn't download wallpaper for $name (offline?) — skipped."; return 0
+      info "No wallpaper available for $name (skipped)."
+      return 0
     fi
   fi
 
+  [ -n "$img" ] || return 0
   _set_desktop_picture "$img" "$name"
 }
 
 # Set the desktop picture to $1 (per-theme subdir $2 for staging). macOS caches
 # the desktop picture by PATH: setting a path it already shows won't refresh even
 # after the file's bytes change. Stage a copy named by source stem + mtime, so
-# any content change OR a switch to a different bundled image is a NEW path macOS
-# picks up. Best-effort; dry-run safe.
+# any content change OR a switch to a different image is a NEW path macOS picks
+# up. Best-effort; dry-run safe.
 _set_desktop_picture() {
   local img="$1" name="$2"
   [ -n "$img" ] || return 0
@@ -118,33 +374,34 @@ _set_desktop_picture() {
 }
 
 # `omacase wallpaper [list|next|prev|<n>]` — choose among the active theme's
-# bundled backgrounds (themes/<theme>/background*). The choice persists in
-# $OMACASE_STATE/wallpaper and carries to any theme that has a same-named file
-# (so e.g. the 2nd background follows you between techno-viking and -light).
+# backgrounds. The choice persists in $OMACASE_STATE/wallpaper by basename.
 omacase_wallpaper() {
   ensure_brew_env
-  local theme dir; theme="$(cat "$OMACASE_STATE/theme" 2>/dev/null || echo)"
+  local theme dir bgs count cur idx chosen=""
+  theme="$(cat "$OMACASE_STATE/theme" 2>/dev/null || echo)"
   [ -n "$theme" ] || abort "no active theme — run \`omacase theme\` first."
-  dir="$OMACASE_ROOT/themes/$theme"
-  local bgs; bgs="$(cd "$dir" 2>/dev/null && ls -1 background* 2>/dev/null | sort)"
-  [ -n "$bgs" ] || abort "theme '$theme' has no bundled backgrounds."
-  local count; count="$(printf '%s\n' "$bgs" | grep -c .)"
+  _theme_known "$theme" || abort "unknown active theme '$theme'"
 
-  local cur; cur="$(cat "$OMACASE_STATE/wallpaper" 2>/dev/null || echo)"
+  _theme_ensure_backgrounds "$theme" || true
+  dir="$(_theme_background_dir "$theme")"
+  bgs="$(_theme_backgrounds "$dir" | sed "s#^$dir/##")"
+  [ -n "$bgs" ] || abort "theme '$theme' has no backgrounds."
+  count="$(printf '%s\n' "$bgs" | grep -c .)"
+
+  cur="$(cat "$OMACASE_STATE/wallpaper" 2>/dev/null || echo)"
   printf '%s\n' "$bgs" | grep -qxF "$cur" || cur="$(printf '%s\n' "$bgs" | head -1)"
-  local idx; idx="$(printf '%s\n' "$bgs" | grep -nxF "$cur" | head -1 | cut -d: -f1)"; idx=$((idx - 1))
+  idx="$(printf '%s\n' "$bgs" | grep -nxF "$cur" | head -1 | cut -d: -f1)"; idx=$((idx - 1))
 
-  local chosen=""
   case "${1:-list}" in
     list|"")
       info "Backgrounds for '$theme' (● = current):"
       printf '%s\n' "$bgs" | awk -v c="$cur" '{printf "  %s %s\n", ($0==c?"\xe2\x97\x8f":" "), $0}'
       return 0 ;;
-    pick)   # gum-pick (used by `omacase menu`)
-      [ "$count" -gt 1 ] || { info "Only one background bundled for '$theme'."; return 0; }
+    pick)
+      [ "$count" -gt 1 ] || { info "Only one background available for '$theme'."; return 0; }
       chosen="$(gum_choose "Wallpaper · $theme" $bgs)" || return 0 ;;
-    next)   chosen="$(printf '%s\n' "$bgs" | sed -n "$(( (idx + 1) % count + 1 ))p")" ;;
-    prev)   chosen="$(printf '%s\n' "$bgs" | sed -n "$(( (idx - 1 + count) % count + 1 ))p")" ;;
+    next) chosen="$(printf '%s\n' "$bgs" | sed -n "$(( (idx + 1) % count + 1 ))p")" ;;
+    prev) chosen="$(printf '%s\n' "$bgs" | sed -n "$(( (idx - 1 + count) % count + 1 ))p")" ;;
     [1-9]*) local n=$(( $1 - 1 )); { [ "$n" -ge 0 ] && [ "$n" -lt "$count" ]; } || abort "pick 1-$count"
             chosen="$(printf '%s\n' "$bgs" | sed -n "$((n + 1))p")" ;;
     *) abort "usage: omacase wallpaper [list|next|prev|pick|<n>]" ;;
@@ -184,13 +441,17 @@ _theme_claudecode() {
   fi
 }
 
-_theme_list() { ls -1 "$OMACASE_ROOT/themes" 2>/dev/null; }
+_theme_list() {
+  awk -F'|' '$0 !~ /^#/ && NF >= 5 { print $1 }' "$_THEME_MANIFEST" 2>/dev/null
+}
 
 # Light vs dark is derived from the theme's SketchyBar BAR_COLOR (0xffRRGGBB)
 # using perceived luminance, so it stays correct for every theme with no
 # per-theme flag to maintain. Returns 0 (true) when the background is light.
 _theme_is_light() {
-  local f="$OMACASE_ROOT/themes/$1/sketchybar" hex
+  local dir f hex
+  dir="$(_theme_materialize "$1" 2>/dev/null)" || return 1
+  f="$dir/sketchybar"
   hex="$(sed -n 's/.*BAR_COLOR=0[xX][fF][fF]\([0-9a-fA-F]\{6\}\).*/\1/p' "$f" 2>/dev/null | head -1)"
   [ -n "$hex" ] || return 1   # unknown/empty background → treat as dark
   local r=$((16#${hex:0:2})) g=$((16#${hex:2:2})) b=$((16#${hex:4:2}))
@@ -217,15 +478,15 @@ _link() { # _link <src> <dest>  (only if src exists)
 
 _theme_reload() {
   # Live-reload anything already running; ignore if not.
-  pgrep -x sketchybar >/dev/null && run sketchybar --reload || true
-  pgrep -x borders   >/dev/null && run brew services restart splaice/formulae/borders 2>/dev/null || true
+  pgrep -x sketchybar >/dev/null 2>&1 && run sketchybar --reload || true
+  pgrep -x borders   >/dev/null 2>&1 && run brew services restart splaice/formulae/borders 2>/dev/null || true
   # Ghostty reloads its config (and the theme include) on SIGUSR2 since 1.2,
   # which also refreshes ANSI-palette CLIs like eza/ls. CAUTION: any OTHER
   # signal makes Ghostty quit. macOS truncates `comm` and hides GUI argv from
   # pgrep, so find the GUI process precisely via ps: args is exactly the binary
   # path with no extra args (NF==2), which excludes `ghostty +cmd` CLI runs.
   local gpid
-  gpid="$(ps -Axo pid=,args= | awk '$2=="/Applications/Ghostty.app/Contents/MacOS/ghostty" && NF==2 {print $1}')"
+  gpid="$(ps -Axo pid=,args= 2>/dev/null | awk '$2=="/Applications/Ghostty.app/Contents/MacOS/ghostty" && NF==2 {print $1}' || true)"
   [ -n "$gpid" ] && run kill -USR2 $gpid || true
   # nvim picks up the theme on next launch or via its own reload bind.
 }
