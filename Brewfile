@@ -54,6 +54,15 @@ cask "ollama-app"        # Ollama — local LLM runner (menu-bar app, auto-updat
 tap  "finbarr/tap"
 brew "finbarr/tap/yolobox" # run AI coding agents in a sandboxed container
 
+# --- Overlay apps -----------------------------------------------------------
+# Centered floating overlays toggled by Super-key chords (see `omacase`
+# music/obsidian/1password/todoist and aerospace.toml). Bundled so the keybinds
+# work out of the box; AeroSpace floats each via its on-window-detected rule.
+cask "spotify"           # Super+M music overlay (Apple Music is stock)
+cask "obsidian"          # Super+O notes overlay
+cask "1password"         # Super+P password overlay
+cask "todoist-app"       # Super+T tasks overlay
+
 # --- Tooling ----------------------------------------------------------------
 brew "gum"               # TUI for `omacase menu`
 brew "terminal-notifier" # reliable native notifications for `omacase notify` (osascript's are flaky)
