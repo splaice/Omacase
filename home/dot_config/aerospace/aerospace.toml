@@ -117,6 +117,7 @@ cmd-ctrl-alt-m             = 'exec-and-forget /opt/homebrew/bin/omacase music'  
 cmd-ctrl-alt-o             = 'exec-and-forget /opt/homebrew/bin/omacase obsidian'    # Super+O → Obsidian overlay
 cmd-ctrl-alt-p             = 'exec-and-forget /opt/homebrew/bin/omacase 1password'   # Super+P → 1Password overlay
 cmd-ctrl-alt-g             = 'exec-and-forget /opt/homebrew/bin/omacase message'     # Super+G → iMessage overlay (80%)
+cmd-ctrl-alt-t             = 'exec-and-forget /opt/homebrew/bin/omacase todoist'     # Super+T → Todoist overlay
 
 # Service mode hosts the functions Omarchy puts on Super+Ctrl / Super+Shift+Alt —
 # chords we can't express, since Super (⌃⌥⌘) already consumes Ctrl and Alt.
@@ -156,6 +157,9 @@ if.app-id = 'com.1password.1password'
 run = 'layout floating'
 [[on-window-detected]]
 if.app-id = 'com.apple.MobileSMS'
+run = 'layout floating'
+[[on-window-detected]]
+if.app-id = 'com.todoist.mac.Todoist'
 run = 'layout floating'
 
 # --- macOS system utilities & dialog-style apps: small/single-window, tile badly.

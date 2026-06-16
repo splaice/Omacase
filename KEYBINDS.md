@@ -103,8 +103,9 @@ browser, else the default browser.
 | `Super + O` | Toggle a centered Obsidian overlay |
 | `Super + P` | Toggle a centered 1Password overlay |
 | `Super + G` | Toggle a centered iMessage overlay (80% of the screen) |
+| `Super + T` | Toggle a centered Todoist overlay |
 
-> **Overlay pattern.** `Super + Shift+F / M / O / P / G` reveal a centered,
+> **Overlay pattern.** `Super + Shift+F / M / O / P / G / T` reveal a centered,
 > floating window *above* everything; press again to hide it — one keystroke
 > flips it on/off.
 

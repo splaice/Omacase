@@ -441,6 +441,9 @@ omacase_obsidian() { _app_toggle "Obsidian"; }
 # `omacase 1password` — toggle the 1Password overlay (Super+P).
 omacase_1password() { _app_toggle "1Password"; }
 
+# `omacase todoist` — toggle the Todoist overlay (Super+T).
+omacase_todoist() { _app_toggle "Todoist"; }
+
 # `omacase message` — toggle the messaging overlay (Super+G). iMessage for now,
 # sized to 80% of the screen (chat needs more room than the other overlays);
 # multiple-app support can come later (cf. `omacase music`).

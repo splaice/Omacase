@@ -42,6 +42,7 @@ usage: omacase <command> [args]
   obsidian           Toggle a centered Obsidian overlay (Super+O)
   1password          Toggle a centered 1Password overlay (Super+P; alias: 1pw)
   message            Toggle a centered iMessage overlay at 80% (Super+G; alias: messages)
+  todoist            Toggle a centered Todoist overlay (Super+T)
   doctor             Check permissions and missing grants
   backup [label]     Snapshot current dotfiles & macOS defaults
   restore [id]       Roll back to a snapshot (--list to see them)
@@ -82,6 +83,7 @@ case "$cmd" in
   obsidian)       source "$OMACASE_ROOT/lib/wm.sh";       omacase_obsidian  "$@" ;;
   1password|1pw)  source "$OMACASE_ROOT/lib/wm.sh";       omacase_1password "$@" ;;
   message|messages) source "$OMACASE_ROOT/lib/wm.sh";     omacase_message   "$@" ;;
+  todoist)        source "$OMACASE_ROOT/lib/wm.sh";       omacase_todoist   "$@" ;;
   doctor)         source "$OMACASE_ROOT/lib/doctor.sh";   omacase_doctor  "$@" ;;
   backup)         source "$OMACASE_ROOT/lib/backup.sh";   omacase_backup  "$@" ;;
   restore)        source "$OMACASE_ROOT/lib/backup.sh";   omacase_restore "$@" ;;

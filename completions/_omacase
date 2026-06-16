@@ -46,6 +46,7 @@ _omacase() {
         '1pw:toggle a centered 1Password overlay'
         'message:toggle a centered iMessage overlay'
         'messages:toggle a centered iMessage overlay'
+        'todoist:toggle a centered Todoist overlay'
         'doctor:check permissions and missing grants'
         'backup:snapshot current dotfiles & macOS defaults'
         'restore:roll back to a snapshot (--list to see them)'
