@@ -122,6 +122,13 @@ _launch_apps() {
   for app in "Karabiner-Elements"; do
     [ -d "/Applications/$app.app" ] && run open -a "$app" || true
   done
+  # Karabiner 15+ ships its virtual HID as a DriverKit system extension. Merely
+  # opening the app does NOT surface the approval prompt — explicitly asking the
+  # bundled VirtualHIDDevice-Manager to `activate` does (macOS then shows the
+  # system-extension prompt → Login Items & Extensions). The user still approves
+  # by hand, but at least the dialog now appears during install.
+  local km="/Applications/.Karabiner-VirtualHIDDevice-Manager.app/Contents/MacOS/Karabiner-VirtualHIDDevice-Manager"
+  [ -x "$km" ] && run "$km" activate || true
   warn "Karabiner needs Input Monitoring + its driver extension enabled — a by-hand"
   warn "grant. \`omacase doctor\` lists what's left."
 }

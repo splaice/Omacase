@@ -31,8 +31,23 @@ _wm_use_aerospace() {
   # it's down, launch it. It also starts at login via its own config.
   if pgrep -x AeroSpace >/dev/null; then
     run aerospace reload-config 2>/dev/null || true
+  elif [ -d "/Applications/AeroSpace.app" ]; then
+    run open -a AeroSpace 2>/dev/null || true
+    # `open -a` returns immediately, so a launch race or the first-run
+    # Accessibility gate would otherwise leave the WM silently DOWN. Wait for the
+    # process so the outcome is visible here (and so its Accessibility prompt has
+    # actually fired before install moves on).
+    if ! is_dryrun; then
+      local n=0
+      until pgrep -x AeroSpace >/dev/null || [ "$n" -ge 20 ]; do sleep 0.25; n=$((n + 1)); done
+      if pgrep -x AeroSpace >/dev/null; then
+        success "AeroSpace launched."
+      else
+        warn "AeroSpace did not come up — grant it Accessibility, then re-run \`omacase wm\`."
+      fi
+    fi
   else
-    run open -a AeroSpace 2>/dev/null || warn "AeroSpace not installed — check Brewfile/brew bundle."
+    warn "AeroSpace not installed — \`brew bundle\` likely failed; re-run \`omacase install\`."
   fi
   _wm_start_shared
   run sketchybar --reload 2>/dev/null || true   # repopulate the workspace list against current WM state
