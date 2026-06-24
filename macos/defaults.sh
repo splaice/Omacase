@@ -48,11 +48,14 @@ info "Trackpad: 4-finger horizontal swipe → cycle AeroSpace workspaces (via Sw
 # SwipeAeroSpace owns the 4-finger horizontal swipe; preset before first launch.
 run defaults write club.mediosz.SwipeAeroSpace fingers -string "Four"
 run defaults write club.mediosz.SwipeAeroSpace wrap -bool true
-# Free up 4-finger by disabling macOS's native "swipe between full-screen apps"
-# for 4 fingers (0=off) in both trackpad domains. 3-finger stays on (2) for
-# macOS Spaces, so the two gestures don't both fire on one swipe.
+# Reserve all 4-finger swipes for AeroSpace by disabling macOS's native
+# 4-finger gestures (0=off) in both trackpad domains: Horiz is "swipe between
+# full-screen apps", Vert is Mission Control (up) / App Exposé (down) — one key
+# covers both directions. 3-finger stays on (2) for macOS Spaces & Mission
+# Control, so the native and AeroSpace gestures don't both fire on one swipe.
 for dom in com.apple.AppleMultitouchTrackpad com.apple.driver.AppleBluetoothMultitouch.trackpad; do
   run defaults write "$dom" TrackpadFourFingerHorizSwipeGesture -int 0
+  run defaults write "$dom" TrackpadFourFingerVertSwipeGesture -int 0
 done
 
 info "Misc: expanded save/print panels, no auto-correct/period-substitution"
