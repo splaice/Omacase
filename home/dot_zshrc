@@ -55,3 +55,21 @@ command -v direnv   >/dev/null && eval "$(direnv hook zsh)"
 # Starship reads a omacase-managed theme fragment if present.
 export STARSHIP_CONFIG="$HOME/.config/starship/theme.toml"
 [ -f "$STARSHIP_CONFIG" ] || unset STARSHIP_CONFIG
+
+# Greeting: print the Omacase MOTD on each new interactive terminal. The asset
+# is resolved relative to THIS file (%x → :A follows the ~/.zshrc symlink to the
+# payload, :h:h climbs to the repo root), so it works whether the payload lives
+# in the dev checkout or ~/.local/share/omacase — no hardcoded path. `command
+# cat` skips the bat alias above (which would add line numbers / a header to the
+# ASCII art); the `-t 1` guard keeps it out of non-tty sourcing.
+if [[ -o interactive ]] && [ -t 1 ]; then
+  _omacase_motd="${${(%):-%x}:A:h:h}/assets/motd.txt"
+  [ -f "$_omacase_motd" ] && command cat -- "$_omacase_motd"
+  unset _omacase_motd
+fi
+
+# >>> grok installer >>>
+export PATH="$HOME/.grok/bin:$PATH"
+fpath=(~/.grok/completions/zsh $fpath)
+autoload -Uz compinit && compinit -C
+# <<< grok installer <<<

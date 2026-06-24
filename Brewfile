@@ -49,7 +49,8 @@ brew "just"              # command runner (justfiles)
 # --- AI coding & local LLM --------------------------------------------------
 # Native binaries → Homebrew. (Fast-moving npm AI CLIs — gemini, mermaid, pi —
 # are mise `npm:` tools instead; see home/dot_config/mise/config.toml. Claude
-# Code self-manages via its own installer, so it's not declared here.)
+# Code and the Grok CLI self-manage via their own installers — Grok is installed
+# into ~/.grok by install.sh's `_grok_install`, so neither is declared here.)
 cask "codex"             # OpenAI Codex CLI (official Rust binary; depends on ripgrep)
 brew "opencode"          # opencode — terminal AI coding agent (homebrew-core)
 cask "ollama-app"        # Ollama — local LLM runner (menu-bar app, auto-updates)

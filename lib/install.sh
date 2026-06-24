@@ -24,8 +24,9 @@ omacase_install() {
   step "4/10  Dotfiles (symlinks)"
   _link_dotfiles
 
-  step "5/10  Tool runtimes (mise: node + fast-moving npm CLIs)"
+  step "5/10  Tool runtimes & AI CLIs (mise + grok)"
   _mise_install
+  _grok_install
 
   step "6/10  macOS defaults"
   bash "$OMACASE_ROOT/macos/defaults.sh"   # honors OMACASE_DRYRUN itself
@@ -64,6 +65,21 @@ omacase_install() {
 _mise_install() {
   have mise || { warn "mise not found (brew bundle should install it) — skipping npm CLIs."; return 0; }
   run mise install -y || warn "mise install had issues — re-run \`mise install\` later."
+}
+
+# Grok CLI (xAI) ships as a self-updating native binary that installs into
+# ~/.grok rather than Homebrew — the same model as Claude Code, so it lives here
+# instead of the Brewfile. Install from xAI's official script only when missing;
+# it self-updates thereafter, and the managed dot_zshrc puts ~/.grok/bin on PATH
+# and loads its zsh completions.
+_grok_install() {
+  if have grok || [ -x "$HOME/.grok/bin/grok" ]; then
+    is_dryrun || success "grok already installed — it self-updates."
+    return 0
+  fi
+  have curl || { warn "curl not found — skipping grok CLI install."; return 0; }
+  run bash -c 'curl -fsSL https://x.ai/cli/install.sh | bash' \
+    || warn "grok install failed; re-run \`omacase update\` or install from https://x.ai/cli."
 }
 
 # Omacase ships a patched JankyBorders (adds `square_apps=` for square-cornered
