@@ -4,11 +4,9 @@
 # --- Window management & desktop -------------------------------------------
 tap "nikitabobko/tap"
 tap "FelixKratz/formulae"
-tap "mediosz/tap"
 cask "nikitabobko/tap/aerospace"     # tiling WM (no SIP disable, i3-style)
 brew "FelixKratz/formulae/sketchybar" # status bar (Waybar analog)
 brew "splaice/formulae/borders"       # JankyBorders fork (+square_apps); local tap synced by install.sh
-cask "mediosz/tap/swipeaerospace"    # 4-finger trackpad swipe → cycle AeroSpace workspaces (configured in macos/defaults.sh)
 
 # --- The "make Mac behave" set ---------------------------------------------
 # Launcher is macOS Spotlight (⌘Space) — Tahoe's Spotlight has actions,

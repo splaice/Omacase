@@ -44,18 +44,14 @@ info "Trackpad: tap to click, three-finger drag"
 run defaults write com.apple.AppleMultitouchTrackpad Clicking -bool true
 run defaults write com.apple.AppleMultitouchTrackpad TrackpadThreeFingerDrag -bool true
 
-info "Trackpad: 4-finger horizontal swipe → cycle AeroSpace workspaces (via SwipeAeroSpace)"
-# SwipeAeroSpace owns the 4-finger horizontal swipe; preset before first launch.
-run defaults write club.mediosz.SwipeAeroSpace fingers -string "Four"
-run defaults write club.mediosz.SwipeAeroSpace wrap -bool true
-# Reserve all 4-finger swipes for AeroSpace by disabling macOS's native
-# 4-finger gestures (0=off) in both trackpad domains: Horiz is "swipe between
-# full-screen apps", Vert is Mission Control (up) / App Exposé (down) — one key
-# covers both directions. 3-finger stays on (2) for macOS Spaces & Mission
-# Control, so the native and AeroSpace gestures don't both fire on one swipe.
+info "Trackpad: restore native 4-finger gestures (full-screen app swipe, Mission Control)"
+# Restore macOS's stock 4-finger gestures (2=on) in both trackpad domains:
+# Horiz is "swipe between full-screen apps", Vert is Mission Control (up) /
+# App Exposé (down). Omacase no longer reserves the 4-finger swipe for a window
+# manager, so hand it back to macOS.
 for dom in com.apple.AppleMultitouchTrackpad com.apple.driver.AppleBluetoothMultitouch.trackpad; do
-  run defaults write "$dom" TrackpadFourFingerHorizSwipeGesture -int 0
-  run defaults write "$dom" TrackpadFourFingerVertSwipeGesture -int 0
+  run defaults write "$dom" TrackpadFourFingerHorizSwipeGesture -int 2
+  run defaults write "$dom" TrackpadFourFingerVertSwipeGesture -int 2
 done
 
 info "Misc: expanded save/print panels, no auto-correct/period-substitution"

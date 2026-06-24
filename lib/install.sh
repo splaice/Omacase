@@ -147,15 +147,6 @@ _launch_apps() {
   [ -x "$km" ] && run "$km" activate || true
   warn "Karabiner needs Input Monitoring + its driver extension enabled — a by-hand"
   warn "grant. \`omacase doctor\` lists what's left."
-
-  # SwipeAeroSpace: 4-finger swipe → cycle workspaces. It's unsigned/unnotarized,
-  # so Gatekeeper blocks the first `open -a` until approved — strip the quarantine
-  # attribute (the project's own documented workaround) so it can launch.
-  if [ -d "/Applications/SwipeAeroSpace.app" ]; then
-    run xattr -dr com.apple.quarantine "/Applications/SwipeAeroSpace.app" 2>/dev/null || true
-    run open -a SwipeAeroSpace 2>/dev/null || true
-    warn "SwipeAeroSpace needs Accessibility (to read trackpad swipes) — a by-hand grant."
-  fi
 }
 
 # Symlink every file under home/ into $HOME, translating chezmoi-style dot_

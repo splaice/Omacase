@@ -82,18 +82,6 @@ omacase_doctor() {
     warn "Karabiner-Elements not running — \`open -a Karabiner-Elements\`"; issues=$((issues + 1))
   fi
 
-  # SwipeAeroSpace drives the 4-finger workspace swipe; it only works once it's
-  # running AND has Accessibility (to read trackpad events).
-  if [ ! -d "/Applications/SwipeAeroSpace.app" ]; then
-    warn "SwipeAeroSpace not installed (4-finger workspace swipe) — \`omacase install\`"; issues=$((issues + 1))
-  elif pgrep -x SwipeAeroSpace >/dev/null; then
-    success "SwipeAeroSpace running (4-finger swipe → cycle workspaces; needs Accessibility granted)"
-  else
-    warn "SwipeAeroSpace not running — \`open -a SwipeAeroSpace\` (unsigned: approve via"
-    warn "  Privacy & Security → Open Anyway), then grant it Accessibility."
-    issues=$((issues + 1))
-  fi
-
   step "Appearance sync (theme ⇄ macOS Light/Dark)"
   if can_set_appearance; then
     success "Terminal can drive macOS appearance — theme switches will flip Light/Dark."

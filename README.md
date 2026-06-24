@@ -170,11 +170,6 @@ Workspaces & monitors:
 | `Super + Tab` | Next workspace (wraps around) |
 | `Super + Shift + Tab` | Previous workspace (wraps around) |
 
-Trackpad: **4-finger swipe left / right** cycles workspaces (wraps around) — via
-SwipeAeroSpace, which needs Accessibility. Omacase frees the 4-finger gesture by
-turning off the native 4-finger "swipe between full-screen apps" (3-finger still
-switches macOS Spaces).
-
 Config & service mode:
 | Keys | Action |
 |---|---|
