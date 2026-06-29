@@ -64,6 +64,9 @@ cask "obsidian"          # Super+O notes overlay
 cask "1password"         # Super+P password overlay
 cask "todoist-app"       # Super+T tasks overlay
 
+# --- Dictation --------------------------------------------------------------
+cask "fluidvoice"        # offline voice-to-text (local model); needs Mic + Accessibility
+
 # --- Tooling ----------------------------------------------------------------
 brew "gum"               # TUI for `omacase menu`
 brew "terminal-notifier" # reliable native notifications for `omacase notify` (osascript's are flaky)
