@@ -93,7 +93,8 @@ Install/update then trusts:
 > Light/Dark, the Claude Code CLI theme, and the desktop wallpaper to match.
 > Pick from 21 themes (run `omacase theme` to list).
 > Omarchy-derived theme data is downloaded and cached at runtime; see
-> `THIRD_PARTY_NOTICES.md`.
+> `THIRD_PARTY_NOTICES.md`. Want your own? See
+> [`docs/ADDING_A_THEME.md`](docs/ADDING_A_THEME.md).
 
 > **Tune a palette without the reload loop.** `omacase palette [name]` opens a
 > TUI over a theme's Ghostty ANSI slots (0–15 + background/foreground/cursor).

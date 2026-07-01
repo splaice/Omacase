@@ -7,7 +7,6 @@ OMACASE_STATE="${OMACASE_STATE:-$HOME/.local/state/omacase}"
 OMACASE_DATA="${OMACASE_DATA:-$HOME/.local/share/omacase}"
 
 # --- logging -----------------------------------------------------------------
-_c()      { printf '\033[%sm' "$1"; }
 log()     { printf '%s\n' "$*"; }
 info()    { printf '\033[34m➜\033[0m %s\n' "$*"; }
 success() { printf '\033[32m✓\033[0m %s\n' "$*"; }
@@ -115,22 +114,6 @@ applescript_string() {
 dryrun_banner() {
   # NOTE: must return 0 — called as a bare statement under `set -e`.
   if is_dryrun; then printf '\033[1;33m▒▒ DRY RUN — no changes will be made ▒▒\033[0m\n'; fi
-}
-
-# --- idempotency -------------------------------------------------------------
-# once <key> <command...> : run command only the first time, record a marker.
-# Use for genuinely one-shot actions (e.g. changing login shell). Most steps
-# should instead be naturally idempotent (brew bundle, symlinking, defaults).
-once() {
-  local key="$1"; shift
-  local marker="$OMACASE_STATE/once.$key"
-  if [ -f "$marker" ]; then return 0; fi
-  if is_dryrun; then
-    printf '\033[2m[dry-run]\033[0m once %s: %s\n' "$key" "$*"
-    return 0
-  fi
-  ensure_state_dir
-  "$@" && touch "$marker"
 }
 
 # --- macOS appearance automation ---------------------------------------------

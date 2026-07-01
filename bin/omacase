@@ -89,7 +89,7 @@ case "$cmd" in
   backup)         source "$OMACASE_ROOT/lib/backup.sh";   omacase_backup  "$@" ;;
   restore)        source "$OMACASE_ROOT/lib/backup.sh";   omacase_restore "$@" ;;
   menu)           source "$OMACASE_ROOT/lib/menu.sh";     omacase_menu    "$@" ;;
-  config)         exec "${EDITOR:-open}" "$OMACASE_ROOT/home" ;;
+  config)         exec sh -c 'exec ${EDITOR:-open} "$1"' sh "$OMACASE_ROOT/home" ;;   # sh splits multi-word EDITORs like "code -w"
   version|-v|--version) cat "$OMACASE_ROOT/VERSION" ;;
   uninstall)      source "$OMACASE_ROOT/lib/install.sh";  omacase_uninstall "$@" ;;
   help|-h|--help) usage ;;

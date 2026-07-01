@@ -112,7 +112,13 @@ _sync_local_tap() {
   local tap_dir; tap_dir="$(brew --repository)/Library/Taps/splaice/homebrew-formulae"
   [ -d "$tap_dir/Formula" ] || run brew tap-new splaice/formulae --no-git
   run cp "$OMACASE_ROOT/formula/borders.rb" "$tap_dir/Formula/borders.rb"
-  run brew trust splaice/formulae >/dev/null 2>&1 || true  # newer brews gate taps
+  # Newer brews gate taps behind `brew trust`. Silence its chatter only on the
+  # real run — redirecting `run` itself would also swallow the [dry-run] echo.
+  if is_dryrun; then
+    run brew trust splaice/formulae || true
+  else
+    brew trust splaice/formulae >/dev/null 2>&1 || true
+  fi
 
   # Converge to the formula's pinned version. HOMEBREW_NO_REQUIRE_TAP_TRUST is
   # scoped to this one command: brew's tap-trust check (as of mid-2026) aborts

@@ -20,6 +20,7 @@ _theme_links() {
 }
 
 omacase_theme() {
+  ensure_brew_env   # may run from a keybind/menu popup whose PATH lacks Homebrew (brew services, sketchybar)
   local name="${1:-}"
 
   if [ -z "$name" ]; then
@@ -56,8 +57,10 @@ omacase_theme() {
 
 _theme_field() {
   local name="$1" col="$2"
+  # NF >= 5 matches _theme_list's guard, so a malformed manifest row can't be
+  # "known" to one path and invisible to the other.
   awk -F'|' -v n="$name" -v c="$col" '
-    $0 !~ /^#/ && $1 == n { print $c; found = 1; exit }
+    $0 !~ /^#/ && NF >= 5 && $1 == n { print $c; found = 1; exit }
     END { exit found ? 0 : 1 }
   ' "$_THEME_MANIFEST"
 }
@@ -478,7 +481,11 @@ _theme_appearance() {
 }
 
 _link() { # _link <src> <dest>  (only if src exists)
-  [ -e "$1" ] || return 0
+  if [ ! -e "$1" ]; then
+    # Silent in dry-run: generated fragments legitimately don't exist yet there.
+    is_dryrun || warn "theme fragment missing: $1 — leaving the previous link in place."
+    return 0
+  fi
   run mkdir -p "$(dirname "$2")"
   run ln -sfn "$1" "$2"
 }

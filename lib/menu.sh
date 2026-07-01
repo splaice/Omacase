@@ -23,7 +23,7 @@ omacase_menu() {
     "Restart window manager") source "$OMACASE_ROOT/lib/wm.sh";    omacase_wm ;;
     "Run doctor")            source "$OMACASE_ROOT/lib/doctor.sh"; omacase_doctor ;;
     "Restore a backup")      source "$OMACASE_ROOT/lib/backup.sh"; omacase_restore ;;
-    "Edit config")           exec "${EDITOR:-open}" "$OMACASE_ROOT/home" ;;
+    "Edit config")           exec sh -c 'exec ${EDITOR:-open} "$1"' sh "$OMACASE_ROOT/home" ;;   # sh splits multi-word EDITORs like "code -w"
     "Quit"|"")               return ;;
   esac
 }

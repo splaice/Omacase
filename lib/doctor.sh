@@ -47,14 +47,16 @@ omacase_doctor() {
     insecure="$(find "$share" "$share/zsh" "$zfunc" "$share/zsh-completions" -maxdepth 0 -perm +022 2>/dev/null)"
     if [ -n "$insecure" ]; then
       warn "group/world-writable completion dirs (compinit will nag) — fixing: $insecure"
-      run chmod go-w $insecure 2>/dev/null || true
+      local d
+      while IFS= read -r d; do
+        [ -n "$d" ] && run chmod go-w "$d" || true
+      done <<< "$insecure"
     else
       success "completion dirs pass compaudit (no group-writable parents)"
     fi
   fi
 
   step "Backups"
-  source "$OMACASE_ROOT/lib/backup.sh"
   local last; last="$(cat "$OMACASE_STATE/last-backup" 2>/dev/null)"
   if [ -n "$last" ]; then success "latest snapshot: $last  (omacase restore to roll back)"
   else info "no backups yet (created automatically on first install)"; fi
