@@ -366,7 +366,7 @@ _set_desktop_picture() {
   live="$livedir/bg-$stem-$stamp.$ext"
   [ -f "$live" ] || cp "$img" "$live"
   find "$livedir" -type f ! -name "bg-$stem-$stamp.$ext" -delete 2>/dev/null || true
-  if osascript -e "tell application \"System Events\" to set picture of every desktop to \"$live\"" >/dev/null 2>&1; then
+  if osascript -e "tell application \"System Events\" to set picture of every desktop to $(applescript_string "$live")" >/dev/null 2>&1; then
     info "Wallpaper → $(basename "$live")"
   else
     warn "Couldn't set wallpaper (grant Automation → System Events to your terminal)."

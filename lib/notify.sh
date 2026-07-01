@@ -14,14 +14,17 @@
 # Notification permission for its owning app — that's macOS, not us. Best-effort:
 # never fails the caller (a missing banner shouldn't break a script).
 omacase_notify() {
-  ensure_brew_env   # may run from a keybind whose PATH lacks Homebrew (→ terminal-notifier)
+  brew_env_if_available   # keybind PATH lacks Homebrew (→ terminal-notifier); the osascript fallback needs no brew
   local title="Omacase" subtitle="" sound="" image=""
+  # An option with a missing value would make `shift 2` fail — a silent set -e
+  # death instead of the usage error below, so check before consuming.
+  _notify_optval() { [ "$1" -ge 2 ] || abort "notify: '$2' needs a value"; }
   while [ $# -gt 0 ]; do
     case "$1" in
-      -t|--title)    title="${2:-}";    shift 2 ;;
-      --subtitle)    subtitle="${2:-}"; shift 2 ;;
-      -s|--sound)    sound="${2:-}";    shift 2 ;;  # e.g. Glass, Ping, Hero (see /System/Library/Sounds)
-      -i|--image)    image="${2:-}";    shift 2 ;;  # path to an image shown on the banner's right (terminal-notifier only)
+      -t|--title)    _notify_optval $# "$1"; title="$2";    shift 2 ;;
+      --subtitle)    _notify_optval $# "$1"; subtitle="$2"; shift 2 ;;
+      -s|--sound)    _notify_optval $# "$1"; sound="$2";    shift 2 ;;  # e.g. Glass, Ping, Hero (see /System/Library/Sounds)
+      -i|--image)    _notify_optval $# "$1"; image="$2";    shift 2 ;;  # path to an image shown on the banner's right (terminal-notifier only)
       --)            shift; break ;;
       -*)            abort "notify: unknown option '$1' (use --title/--subtitle/--sound/--image)" ;;
       *)             break ;;

@@ -115,7 +115,8 @@ omacase_launchers() {
   local entries=("${_LAUNCHERS[@]}") i
   for i in 1 2 3 4 5 6 7 8 9; do entries+=("Oma $i|workspace $i"); done
 
-  local entry name args app tmp
+  local entry name args app tmpdir="" tmp
+  is_dryrun || tmpdir="$(mktemp -d)"
   for entry in "${entries[@]}"; do
     name="${entry%%|*}"; args="${entry#*|}"
     app="$dir/$name.app"
@@ -125,7 +126,7 @@ omacase_launchers() {
     # `quit` makes the applet terminate after running, so each launch re-runs the
     # command — otherwise it stays resident and a relaunch just reactivates the
     # idle instance (the script never fires again).
-    tmp="$(mktemp).applescript"
+    tmp="$tmpdir/launcher.applescript"
     {
       printf 'set omacase_bin to %s\n' "$(applescript_string "$bin")"
       printf 'set omacase_args to %s\n' "$(applescript_string "$args")"
@@ -144,8 +145,8 @@ omacase_launchers() {
     else
       warn "failed to build $name"
     fi
-    rm -f "$tmp"
   done
+  [ -n "$tmpdir" ] && rm -rf "$tmpdir" || true
   info "Created in $dir — open from Spotlight (⌘Space, type the name)."
   info "First launch of an action may prompt for permission; \`omacase launchers remove\` deletes them."
 }
@@ -214,7 +215,7 @@ _caffeinate_paint() {
 }
 
 omacase_caffeinate() {
-  ensure_brew_env   # invoked from the SketchyBar click env, whose PATH lacks Homebrew (sketchybar)
+  brew_env_if_available   # SketchyBar click env lacks Homebrew on PATH; /usr/bin/caffeinate itself needs no brew
   local before; _caffeinate_awake && before=on || before=off
   case "${1:-paint}" in
     toggle) if _caffeinate_awake; then _caffeinate_stop; else _caffeinate_start; fi ;;

@@ -42,6 +42,13 @@ ensure_brew_env() {
   fi
 }
 
+# Like ensure_brew_env, but for commands that have a brew-free fallback
+# (notify's osascript backend, /usr/bin/caffeinate): wire up Homebrew when
+# present, carry on without it otherwise — never abort the caller.
+brew_env_if_available() {
+  if [ -x /opt/homebrew/bin/brew ]; then eval "$(/opt/homebrew/bin/brew shellenv)"; fi
+}
+
 have() { command -v "$1" >/dev/null 2>&1; }
 
 # The directory the `omacase` command is symlinked into so it lands on PATH.

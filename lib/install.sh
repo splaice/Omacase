@@ -33,7 +33,10 @@ omacase_install() {
 
   step "7/10  Theme"
   source "$OMACASE_ROOT/lib/theme.sh"
-  omacase_theme "$(cat "$OMACASE_STATE/theme" 2>/dev/null || echo catppuccin-mocha)"
+  # ${:-} (not `|| echo`): an existing-but-empty state file would otherwise
+  # yield "" and drop a non-interactive install into the theme picker.
+  local saved_theme; saved_theme="$(cat "$OMACASE_STATE/theme" 2>/dev/null || true)"
+  omacase_theme "${saved_theme:-catppuccin-mocha}"
   # Theme switching flips macOS Light/Dark; that needs Automation consent, which
   # the line above just prompted for on a fresh machine. Flag it if still blocked.
   is_dryrun || can_set_appearance || \
@@ -190,7 +193,7 @@ _link_dotfiles() {
     target="$HOME/$(printf '%s' "$rel" | sed -e 's#^dot_#.#' -e 's#/dot_#/.#g')"
     run mkdir -p "$(dirname "$target")"
     run ln -sfn "$f" "$target"
-  done < <(find "$src" -type f ! -name '.DS_Store')
+  done < <(find "$src" -type f ! -name '.DS_Store' ! -name '*.pyc' ! -path '*/__pycache__/*')
 }
 
 omacase_uninstall() {
@@ -206,7 +209,7 @@ omacase_uninstall() {
     rel="${f#"$src"/}"
     target="$HOME/$(printf '%s' "$rel" | sed -e 's#^dot_#.#' -e 's#/dot_#/.#g')"
     _is_omacase_link "$target" && run rm -f "$target"
-  done < <(find "$src" -type f ! -name '.DS_Store')
+  done < <(find "$src" -type f ! -name '.DS_Store' ! -name '*.pyc' ! -path '*/__pycache__/*')
 
   # Theme symlinks are created by `omacase theme`, not from home/.
   local themed

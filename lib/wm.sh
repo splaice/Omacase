@@ -335,7 +335,7 @@ _app_toggle() {
   fi
   front="$(osascript -e 'tell application "System Events" to get name of first process whose frontmost is true' 2>/dev/null || true)"
   if [ "$front" = "$app" ]; then
-    osascript -e "tell application \"System Events\" to set visible of process \"$app\" to false" 2>/dev/null
+    osascript -e "tell application \"System Events\" to set visible of process $(applescript_string "$app") to false" 2>/dev/null
     return 0
   fi
   # Workspace we're on now — the overlay should land here, not follow the app.
@@ -406,7 +406,7 @@ BTOPCONF
 omacase_files() {
   _ghostty_popup_toggle "omacase-files" \
     "printf '\033]0;omacase-files\007'; exec ranger --confdir='$HOME/.config/ranger'" \
-    "ranger --confdir"
+    "ranger --confdir=$HOME/.config/ranger"
 }
 
 # `omacase sysmenu` — toggle the global system menu (Super+Space): a centered,
@@ -446,13 +446,13 @@ PY
 omacase_music() {
   local statef="$OMACASE_STATE/music-app" app
   case "${1:-}" in
-    spotify)     echo "Spotify" > "$statef" ;;
-    apple|music) echo "Music"   > "$statef" ;;
+    spotify)     is_dryrun || { ensure_state_dir; echo "Spotify" > "$statef"; } ;;
+    apple|music) is_dryrun || { ensure_state_dir; echo "Music"   > "$statef"; } ;;
     "")          : ;;
     *)           abort "usage: omacase music [spotify|apple]" ;;
   esac
   app="$(cat "$statef" 2>/dev/null || echo Spotify)"
-  if ! osascript -e "id of app \"$app\"" >/dev/null 2>&1; then
+  if ! osascript -e "id of app $(applescript_string "$app")" >/dev/null 2>&1; then
     if osascript -e 'id of app "Spotify"' >/dev/null 2>&1; then app="Spotify"
     elif osascript -e 'id of app "Music"' >/dev/null 2>&1; then app="Music"; fi
   fi
