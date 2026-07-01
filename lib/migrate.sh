@@ -33,7 +33,7 @@ omacase_migrate() {
 
   local marker; marker="$(_migrations_marker)"
   local last;   last="$(cat "$marker" 2>/dev/null || echo)"
-  run mkdir -p "$OMACASE_STATE"
+  ensure_state_dir
 
   local f id ran=0
   for f in "$dir"/*.sh; do

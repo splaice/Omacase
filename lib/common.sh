@@ -42,6 +42,25 @@ ensure_brew_env() {
   fi
 }
 
+# Best-effort branded desktop notification for keybind-driven commands (which
+# have no terminal to print to). Thin wrapper over lib/notify.sh with the
+# Omacase title + icon preset; pass extra omacase_notify options to override
+# (later options win, so `notify --title X msg` re-titles the banner).
+notify() {
+  source "$OMACASE_ROOT/lib/notify.sh"
+  omacase_notify --title "Omacase" --image "$OMACASE_ROOT/assets/omacase-icon.png" "$@"
+}
+
+# Load the live SketchyBar theme vars (ACCENT, LABEL_COLOR, MUTED, …), falling
+# back to the Catppuccin Mocha values when no theme fragment is linked yet —
+# the one place those fallback hexes live.
+sketchybar_theme_env() {
+  source "$HOME/.config/sketchybar/theme.sh" 2>/dev/null || true
+  ACCENT="${ACCENT:-0xff89b4fa}"
+  LABEL_COLOR="${LABEL_COLOR:-0xffcdd6f4}"
+  MUTED="${MUTED:-0xff6c7086}"
+}
+
 # Like ensure_brew_env, but for commands that have a brew-free fallback
 # (notify's osascript backend, /usr/bin/caffeinate): wire up Homebrew when
 # present, carry on without it otherwise — never abort the caller.

@@ -206,11 +206,11 @@ _caffeinate_stop() {
 # bar isn't running). Colors come from the live theme.
 _caffeinate_paint() {
   have sketchybar || return 0
-  source "$HOME/.config/sketchybar/theme.sh" 2>/dev/null || true
+  sketchybar_theme_env
   if _caffeinate_awake; then
-    sketchybar --set caffeine icon.color="${ACCENT:-0xff89b4fa}" 2>/dev/null || true
+    sketchybar --set caffeine icon.color="$ACCENT" 2>/dev/null || true
   else
-    sketchybar --set caffeine icon.color="${MUTED:-0xff6c7086}" 2>/dev/null || true
+    sketchybar --set caffeine icon.color="$MUTED" 2>/dev/null || true
   fi
 }
 
@@ -231,12 +231,10 @@ omacase_caffeinate() {
   # Notify only on a real on↔off transition (so paint/status/no-op on|off stay quiet).
   local after; _caffeinate_awake && after=on || after=off
   if [ "$before" != "$after" ]; then
-    source "$OMACASE_ROOT/lib/notify.sh"
-    local img="$OMACASE_ROOT/assets/omacase-icon.png"
     if [ "$after" = on ]; then
-      omacase_notify --title "Omacase" --subtitle "Caffeinate" --sound Glass --image "$img" "Caffeinated — your Mac will stay awake"
+      notify --subtitle "Caffeinate" --sound Glass "Caffeinated — your Mac will stay awake"
     else
-      omacase_notify --title "Omacase" --subtitle "Caffeinate" --sound Glass --image "$img" "Decaffeinated — normal sleep restored"
+      notify --subtitle "Caffeinate" --sound Glass "Decaffeinated — normal sleep restored"
     fi
   fi
 }

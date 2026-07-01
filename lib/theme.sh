@@ -7,6 +7,18 @@
 
 _THEME_MANIFEST="$OMACASE_ROOT/themes/manifest"
 
+# "fragment|live target" pairs — the single source of truth for the symlinks
+# `omacase theme` creates; uninstall walks the same list to remove them.
+_theme_links() {
+  printf '%s\n' \
+    "ghostty|$HOME/.config/ghostty/theme" \
+    "sketchybar|$HOME/.config/sketchybar/theme.sh" \
+    "borders|$HOME/.config/borders/theme.conf" \
+    "btop|$HOME/.config/btop/themes/current.theme" \
+    "nvim.lua|$HOME/.config/nvim/lua/theme.lua" \
+    "starship|$HOME/.config/starship/theme.toml"
+}
+
 omacase_theme() {
   local name="${1:-}"
 
@@ -20,13 +32,10 @@ omacase_theme() {
 
   # Each app reads a single 'current' file that we point at the chosen theme.
   # Apps include this file from their main config (see home/dot_config/*).
-  local cfg="$HOME/.config"
-  _link "$src/ghostty"    "$cfg/ghostty/theme"
-  _link "$src/sketchybar" "$cfg/sketchybar/theme.sh"
-  _link "$src/borders"    "$cfg/borders/theme.conf"
-  _link "$src/btop"       "$cfg/btop/themes/current.theme"
-  _link "$src/nvim.lua"   "$cfg/nvim/lua/theme.lua"
-  _link "$src/starship"   "$cfg/starship/theme.toml"
+  local frag target
+  while IFS='|' read -r frag target; do
+    _link "$src/$frag" "$target"
+  done < <(_theme_links)
   # NB: eza (ls), ranger, and glow are NOT linked per theme. Their colors are
   # ANSI palette indices (configured once in zshrc / their dotfiles), so they
   # track whichever theme is active automatically — Ghostty swaps the 16 ANSI
@@ -41,11 +50,7 @@ omacase_theme() {
   _theme_reload
   _theme_wallpaper "$name"
   success "Theme '$name' applied."
-  if ! is_dryrun; then
-    source "$OMACASE_ROOT/lib/notify.sh"
-    omacase_notify --title "Omacase" --subtitle "Theme" --sound Glass \
-      --image "$OMACASE_ROOT/assets/omacase-icon.png" "Switched to $name"
-  fi
+  is_dryrun || notify --subtitle "Theme" --sound Glass "Switched to $name"
 }
 
 _theme_field() {

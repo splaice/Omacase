@@ -54,10 +54,10 @@ omacase_outdated() {
   # (compare VERSION to the latest tag) and fold into the count.
 
   if have sketchybar; then
-    source "$HOME/.config/sketchybar/theme.sh" 2>/dev/null || true
+    sketchybar_theme_env
     if [ "$n" -gt 0 ]; then
-      sketchybar --set update drawing=on icon.color="${ACCENT:-0xff89b4fa}" \
-        label="$n" label.color="${LABEL_COLOR:-0xffcdd6f4}" 2>/dev/null || true
+      sketchybar --set update drawing=on icon.color="$ACCENT" \
+        label="$n" label.color="$LABEL_COLOR" 2>/dev/null || true
     else
       sketchybar --set update drawing=off 2>/dev/null || true
     fi

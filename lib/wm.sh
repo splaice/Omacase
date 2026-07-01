@@ -149,8 +149,7 @@ omacase_grid() {
 # Best-effort desktop notification (grid runs from a keybinding, so there's no
 # terminal to print to). Silent if Automation/notification consent is missing.
 _grid_notify() {
-  source "$OMACASE_ROOT/lib/notify.sh"
-  omacase_notify --title "omacase grid" "$1"
+  notify --title "omacase grid" "$1"
 }
 
 # `omacase terminal [command...]` — open a new Ghostty window in the *running*

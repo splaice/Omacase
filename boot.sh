@@ -1,7 +1,10 @@
 #!/bin/bash
 # omacase bootstrap — the curl|bash entry point.
 #
-#   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/splaice/omacase/main/boot.sh)"
+#   /bin/bash -c "$(curl -fsSL https://omacase.org/install)"
+#
+# site/install (served at omacase.org/install) is an exact copy of this file —
+# edit HERE and run `cp boot.sh site/install`; tests/run.sh fails on drift.
 #
 # Installs the prerequisites (Xcode CLT, Homebrew), clones the payload to
 # ~/.local/share/omacase, and hands off to `omacase install`.

@@ -1,5 +1,13 @@
 #!/bin/bash
-# omacase bootstrap - the omacase.org/install entry point.
+# omacase bootstrap — the curl|bash entry point.
+#
+#   /bin/bash -c "$(curl -fsSL https://omacase.org/install)"
+#
+# site/install (served at omacase.org/install) is an exact copy of this file —
+# edit HERE and run `cp boot.sh site/install`; tests/run.sh fails on drift.
+#
+# Installs the prerequisites (Xcode CLT, Homebrew), clones the payload to
+# ~/.local/share/omacase, and hands off to `omacase install`.
 set -euo pipefail
 
 REPO="${OMACASE_REPO:-https://github.com/splaice/omacase.git}"
@@ -11,32 +19,36 @@ info()  { printf '\033[34m➜ %s\033[0m\n' "$*"; }
 [ "$(uname -s)" = "Darwin" ] || abort "omacase only runs on macOS."
 [ "$(uname -m)" = "arm64" ] || abort "omacase supports Apple Silicon Macs only."
 
+# 1. Xcode Command Line Tools (provides git + compilers Homebrew needs).
 if ! xcode-select -p >/dev/null 2>&1; then
-  info "Installing Xcode Command Line Tools - accept the GUI prompt, then re-run this."
+  info "Installing Xcode Command Line Tools — accept the GUI prompt, then re-run this."
   xcode-select --install || true
-  abort "Re-run the install command once the Command Line Tools finish installing."
+  abort "Re-run boot.sh once the Command Line Tools finish installing."
 fi
 
+# 2. Homebrew.
 if ! command -v brew >/dev/null 2>&1; then
-  info "Installing Homebrew..."
+  info "Installing Homebrew…"
   NONINTERACTIVE=1 /bin/bash -c \
     "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 fi
-
+# Put Apple Silicon Homebrew on PATH for this process.
 if [ -x /opt/homebrew/bin/brew ]; then
   eval "$(/opt/homebrew/bin/brew shellenv)"
 else
-  abort "Homebrew was not installed at /opt/homebrew; re-run the install command after Homebrew finishes."
+  abort "Homebrew was not installed at /opt/homebrew; re-run boot.sh after Homebrew finishes."
 fi
 
+# 3. Clone or update the payload.
 if [ -d "$PREFIX/.git" ]; then
-  info "Updating existing omacase payload at $PREFIX..."
+  info "Updating existing omacase payload at $PREFIX…"
   git -C "$PREFIX" pull --ff-only
 else
-  info "Cloning omacase -> $PREFIX..."
+  info "Cloning omacase → $PREFIX…"
   mkdir -p "$(dirname "$PREFIX")"
   git clone --depth 1 "$REPO" "$PREFIX"
 fi
 
-info "Running omacase install..."
+# 4. Hand off.
+info "Running omacase install…"
 exec "$PREFIX/bin/omacase" install

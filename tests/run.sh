@@ -137,6 +137,12 @@ test_update_fails_when_self_pull_fails() {
   [ $? -ne 0 ] && grep -q "git pull failed" "$out"
 }
 
+test_bootstrap_copies_are_identical() {
+  # Both are live curl|bash entry points; boot.sh is the source of truth and
+  # site/install must be an exact copy (see boot.sh header).
+  cmp -s "$ROOT/boot.sh" "$ROOT/site/install"
+}
+
 test_backup_domains_cover_defaults_sh() {
   OMACASE_ROOT="$ROOT"
   # shellcheck source=/dev/null
@@ -224,6 +230,7 @@ run_test "dry-run launchers do not create files" test_dry_run_launchers_do_not_c
 run_test "caffeinate pid ownership is verified" test_caffeinate_rejects_unowned_pid
 run_test "update fails on self-update failure" test_update_fails_when_self_pull_fails
 run_test "backup domains cover macos/defaults.sh" test_backup_domains_cover_defaults_sh
+run_test "site/install matches boot.sh" test_bootstrap_copies_are_identical
 run_test "theme manifest lists all themes" test_theme_manifest_lists_all_themes
 run_test "theme renderer creates generated fragments" test_theme_renderer_creates_fragments
 
