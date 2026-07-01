@@ -4,9 +4,15 @@
 omacase_update() {
   ensure_brew_env
   dryrun_banner
-  if [ -d "$OMACASE_ROOT/.git" ]; then
+  if [ -d "$OMACASE_ROOT/.git" ] && [ -z "${OMACASE_UPDATE_REEXECED:-}" ]; then
     step "Pulling latest omacase"
     run git -C "$OMACASE_ROOT" pull --ff-only || abort "git pull failed (local changes?). Resolve it before updating."
+    # Everything sourced so far (common.sh, this file) came from the pre-pull
+    # checkout; re-exec into the fresh tree so the rest of the update runs a
+    # single, consistent version instead of a mix of old and new lib files.
+    if ! is_dryrun; then
+      OMACASE_UPDATE_REEXECED=1 exec "$OMACASE_ROOT/bin/omacase" update "$@"
+    fi
   fi
   step "Updating Homebrew"
   run brew update || true
@@ -39,7 +45,10 @@ omacase_update() {
 omacase_outdated() {
   ensure_brew_env
   local n
-  n="$(/bin/zsh -lc 'HOMEBREW_NO_AUTO_UPDATE=1 brew outdated --quiet 2>/dev/null | grep -c "."' 2>/dev/null)"
+  # `grep -c` exits 1 on zero matches; without the `|| true` that status would
+  # propagate out of the substitution and set -e would kill us before the
+  # drawing=off branch — leaving the bar's update indicator stuck on.
+  n="$(/bin/zsh -lc 'HOMEBREW_NO_AUTO_UPDATE=1 brew outdated --quiet 2>/dev/null | grep -c "." || true' 2>/dev/null)"
   n="${n//[^0-9]/}"; n="${n:-0}"
   # Future: add omacase self-updates here once omacase ships versioned releases
   # (compare VERSION to the latest tag) and fold into the count.

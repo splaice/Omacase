@@ -22,6 +22,7 @@ OMACASE_DEFAULTS_DOMAINS=(
   com.apple.dock
   com.apple.screencapture
   com.apple.AppleMultitouchTrackpad
+  com.apple.driver.AppleBluetoothMultitouch.trackpad
 )
 
 # Top-level paths Omacase manages, derived from the home/ source tree.

@@ -82,9 +82,12 @@ omacase_grid() {
 
   # Tiled windows only: "<id> <parent-layout> <root-layout>" per line.
   local tiled root
+  # `|| true` on the aerospace substitutions: with the daemon down the pipeline
+  # fails, and under set -e a failing assignment would kill us silently instead
+  # of falling through to the friendly "need 4 windows" notice.
   tiled="$(aerospace list-windows --workspace "$ws" \
              --format '%{window-id} %{window-parent-container-layout} %{workspace-root-container-layout}' \
-             2>/dev/null | awk '$2 != "floating"')"
+             2>/dev/null | awk '$2 != "floating"' || true)"
   root="$(printf '%s\n' "$tiled" | awk 'NR==1 {print $3}')"
 
   # Toggle off: any tiled window nested deeper than the root → flatten back.
@@ -98,8 +101,8 @@ omacase_grid() {
   local ids count
   ids="$(aerospace list-windows --workspace "$ws" \
            --format '%{window-id} %{window-parent-container-layout}' \
-           2>/dev/null | awk '$2 != "floating" {print $1}')"
-  count="$(printf '%s\n' "$ids" | grep -c .)"
+           2>/dev/null | awk '$2 != "floating" {print $1}' || true)"
+  count="$(printf '%s\n' "$ids" | grep -c . || true)"
   if [ "$count" -lt 4 ]; then
     _grid_notify "Need 4 tiled windows for a 2x2 grid (this workspace has $count)."
     return 0
@@ -115,10 +118,10 @@ omacase_grid() {
   # on-screen order: walk dfs indices and read back each focused window,
   # skipping floating ones.
   local ordered="" prev_focus line id parent i=0
-  prev_focus="$(aerospace list-windows --focused --format '%{window-id}' 2>/dev/null)"
+  prev_focus="$(aerospace list-windows --focused --format '%{window-id}' 2>/dev/null || true)"
   while [ "$i" -lt 32 ]; do
     aerospace focus --dfs-index "$i" 2>/dev/null || break
-    line="$(aerospace list-windows --focused --format '%{window-id} %{window-parent-container-layout}' 2>/dev/null)"
+    line="$(aerospace list-windows --focused --format '%{window-id} %{window-parent-container-layout}' 2>/dev/null || true)"
     id="${line%% *}"; parent="${line#* }"
     [ "$parent" = floating ] || ordered="$ordered$id"$'\n'
     i=$((i + 1))
@@ -131,10 +134,16 @@ omacase_grid() {
   local b d
   b="$(printf '%s' "$ordered" | sed -n 2p)"
   d="$(printf '%s' "$ordered" | sed -n 4p)"
-  aerospace focus --window-id "$b" && aerospace join-with left
-  aerospace focus --window-id "$d" && aerospace join-with left
-  [ -n "$prev_focus" ] && aerospace focus --window-id "$prev_focus" 2>/dev/null
-  [ "$count" -gt 4 ] && _grid_notify "Gridded the first 4 of $count tiled windows; the rest stay alongside."
+  # The focus-walk can come up short (window closed mid-walk, Accessibility
+  # missing) — bail with a notice rather than joining against empty ids.
+  if [ -z "$b" ] || [ -z "$d" ]; then
+    _grid_notify "Couldn't read the window order (is Accessibility granted?) — left the workspace as-is."
+    return 0
+  fi
+  { aerospace focus --window-id "$b" && aerospace join-with left; } 2>/dev/null || true
+  { aerospace focus --window-id "$d" && aerospace join-with left; } 2>/dev/null || true
+  [ -n "$prev_focus" ] && aerospace focus --window-id "$prev_focus" 2>/dev/null || true
+  [ "$count" -gt 4 ] && _grid_notify "Gridded the first 4 of $count tiled windows; the rest stay alongside." || true
   return 0
 }
 
@@ -170,7 +179,7 @@ omacase_terminal() {
   local cur before
   cur="$(aerospace list-workspaces --focused 2>/dev/null || echo)"
   before="$(aerospace list-windows --all --format '%{window-id}|%{app-name}' 2>/dev/null \
-            | awk -F'|' '$2=="Ghostty"{print $1}' | sort)"
+            | awk -F'|' '$2=="Ghostty"{print $1}' | sort || true)"
 
   # Pass the command as an argv item so its spaces/flags need no shell-escaping
   # inside the AppleScript; empty string means "plain window, type nothing".
@@ -228,7 +237,7 @@ omacase_workspace() {
 # main display once it appears.
 _popup_center() {
   local match="$1" bounds sw sh w h px py
-  bounds="$(osascript -e 'tell application "Finder" to get bounds of window of desktop' 2>/dev/null | tr ',' ' ')"
+  bounds="$(osascript -e 'tell application "Finder" to get bounds of window of desktop' 2>/dev/null | tr ',' ' ' || true)"
   set -- $bounds; sw="${3:-1440}"; sh="${4:-900}"
   w=$(( sw * 65 / 100 )); h=$(( sh * 65 / 100 )); px=$(( (sw - w) / 2 )); py=$(( (sh - h) / 2 ))
   osascript - "$match" "$px" "$py" "$w" "$h" >/dev/null 2>&1 <<'OSA' || true
@@ -324,7 +333,7 @@ _app_toggle() {
     printf '\033[2m[dry-run]\033[0m toggle app %s\n' "$app"
     return 0
   fi
-  front="$(osascript -e 'tell application "System Events" to get name of first process whose frontmost is true' 2>/dev/null)"
+  front="$(osascript -e 'tell application "System Events" to get name of first process whose frontmost is true' 2>/dev/null || true)"
   if [ "$front" = "$app" ]; then
     osascript -e "tell application \"System Events\" to set visible of process \"$app\" to false" 2>/dev/null
     return 0

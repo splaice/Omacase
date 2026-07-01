@@ -11,6 +11,12 @@ export PATH="$HOME/.local/bin:$PATH"   # user bins (`omacase` itself is linked i
 # day; otherwise trust the cache (-C) for fast startup.
 [ -d "${HOMEBREW_PREFIX:-/opt/homebrew}/share/zsh-completions" ] && \
   fpath=("${HOMEBREW_PREFIX:-/opt/homebrew}/share/zsh-completions" $fpath)
+# Grok CLI (xAI) lives in ~/.grok (installed by `omacase install`, self-updates);
+# its bin + completions must be wired before the single compinit below.
+if [ -d "$HOME/.grok" ]; then
+  export PATH="$HOME/.grok/bin:$PATH"
+  fpath=("$HOME/.grok/completions/zsh" $fpath)
+fi
 autoload -Uz compinit
 if [ -n "$(command find "${ZDOTDIR:-$HOME}/.zcompdump" -mmin -1440 2>/dev/null)" ]; then
   compinit -C
@@ -67,9 +73,3 @@ if [[ -o interactive ]] && [ -t 1 ]; then
   [ -f "$_omacase_motd" ] && command cat -- "$_omacase_motd"
   unset _omacase_motd
 fi
-
-# >>> grok installer >>>
-export PATH="$HOME/.grok/bin:$PATH"
-fpath=(~/.grok/completions/zsh $fpath)
-autoload -Uz compinit && compinit -C
-# <<< grok installer <<<

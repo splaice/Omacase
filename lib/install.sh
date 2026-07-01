@@ -80,6 +80,24 @@ _grok_install() {
   have curl || { warn "curl not found — skipping grok CLI install."; return 0; }
   run bash -c 'curl -fsSL https://x.ai/cli/install.sh | bash' \
     || warn "grok install failed; re-run \`omacase update\` or install from https://x.ai/cli."
+  _grok_strip_zshrc_block
+}
+
+# xAI's installer appends its own PATH/compinit block to ~/.zshrc between
+# `# >>> grok installer >>>` markers. Our managed dot_zshrc already wires
+# ~/.grok (guarded, before the single daily compinit), and ~/.zshrc is a
+# symlink into the repo — so the appended block would run compinit twice per
+# shell AND dirty the checkout. Strip it, writing through the symlink so the
+# link itself survives.
+_grok_strip_zshrc_block() {
+  local zshrc="$HOME/.zshrc" tmp
+  if is_dryrun; then return 0; fi
+  [ -f "$zshrc" ] || return 0
+  grep -q '^# >>> grok installer >>>' "$zshrc" 2>/dev/null || return 0
+  tmp="$(mktemp)"
+  sed '/^# >>> grok installer >>>/,/^# <<< grok installer <<</d' "$zshrc" > "$tmp" \
+    && cat "$tmp" > "$zshrc"
+  rm -f "$tmp"
 }
 
 # Omacase ships a patched JankyBorders (adds `square_apps=` for square-cornered

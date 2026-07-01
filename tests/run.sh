@@ -137,6 +137,25 @@ test_update_fails_when_self_pull_fails() {
   [ $? -ne 0 ] && grep -q "git pull failed" "$out"
 }
 
+test_backup_domains_cover_defaults_sh() {
+  OMACASE_ROOT="$ROOT"
+  # shellcheck source=/dev/null
+  source "$ROOT/lib/common.sh"
+  # shellcheck source=/dev/null
+  source "$ROOT/lib/backup.sh"
+  # Every com.apple.* domain macos/defaults.sh touches must be restorable,
+  # i.e. present in OMACASE_DEFAULTS_DOMAINS (NSGlobalDomain covers -g).
+  local dom d found missing=""
+  while IFS= read -r dom; do
+    found=0
+    for d in "${OMACASE_DEFAULTS_DOMAINS[@]}"; do
+      [ "$d" = "$dom" ] && { found=1; break; }
+    done
+    [ "$found" -eq 1 ] || missing="$missing $dom"
+  done < <(grep -oE 'com\.apple\.[A-Za-z0-9._]+[A-Za-z0-9]' "$ROOT/macos/defaults.sh" | sort -u)
+  [ -z "$missing" ] || { printf 'not covered by OMACASE_DEFAULTS_DOMAINS:%s\n' "$missing" >&2; return 1; }
+}
+
 test_theme_manifest_lists_all_themes() {
   OMACASE_ROOT="$ROOT"
   # shellcheck source=/dev/null
@@ -204,6 +223,7 @@ run_test "generated theme symlinks are owned" test_generated_theme_symlinks_are_
 run_test "dry-run launchers do not create files" test_dry_run_launchers_do_not_create_applications_dir
 run_test "caffeinate pid ownership is verified" test_caffeinate_rejects_unowned_pid
 run_test "update fails on self-update failure" test_update_fails_when_self_pull_fails
+run_test "backup domains cover macos/defaults.sh" test_backup_domains_cover_defaults_sh
 run_test "theme manifest lists all themes" test_theme_manifest_lists_all_themes
 run_test "theme renderer creates generated fragments" test_theme_renderer_creates_fragments
 
