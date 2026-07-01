@@ -23,6 +23,7 @@ omacase_theme() {
   local name="${1:-}"
 
   if [ -z "$name" ]; then
+    # shellcheck disable=SC2046  # theme names are one-word by construction; splitting is the point
     name="$(gum_choose "Pick a theme" $(_theme_list))" || return
   fi
   _theme_known "$name" || abort "Unknown theme '$name'. Available: $(_theme_list | tr '\n' ' ')"
@@ -120,6 +121,7 @@ _theme_download_omarchy_colors() {
 
 _theme_color() {
   local file="$1" key="$2"
+  # shellcheck disable=SC1087  # $key is followed by a sed bracket class, not an array index
   sed -nE "s/^[[:space:]]*$key[[:space:]]*=[[:space:]]*\"#?([0-9A-Fa-f]{6})\".*/\1/p" "$file" |
     head -1 | tr 'A-F' 'a-f'
 }

@@ -133,7 +133,7 @@ _rel_is_managed_target() {
 _valid_restore_rel() {
   local rel="$1"
   [ -n "$rel" ] || return 1
-  case "$rel" in /*|*"/../"*|../*|*/..|..|*"/."|.*"/../"*) return 1 ;; esac
+  case "$rel" in /*|*"/../"*|../*|*/..|..|*"/.") return 1 ;; esac
   _rel_is_managed_target "$rel"
 }
 

@@ -94,6 +94,7 @@ test_dry_run_launchers_do_not_create_applications_dir() {
   HOME="$tmp/home"
   OMACASE_STATE="$tmp/state"
   OMACASE_ROOT="$ROOT"
+  # shellcheck disable=SC2034  # consumed by the sourced lib/common.sh below
   OMACASE_DRYRUN=1
   mkdir -p "$HOME"
   # shellcheck source=/dev/null
@@ -120,6 +121,12 @@ test_caffeinate_rejects_unowned_pid() {
 }
 
 test_update_fails_when_self_pull_fails() {
+  # omacase_update's ensure_brew_env aborts before the pull on anything but
+  # Apple Silicon + /opt/homebrew — the abort message would satisfy the
+  # negative check for the wrong reason, so skip elsewhere.
+  if [ "$(uname -m)" != "arm64" ] || [ ! -x /opt/homebrew/bin/brew ]; then
+    return 0
+  fi
   local tmp out
   tmp="$(mktemp -d)"
   OMACASE_ROOT="$tmp/repo"
@@ -168,11 +175,26 @@ test_theme_manifest_lists_all_themes() {
   source "$ROOT/lib/common.sh"
   # shellcheck source=/dev/null
   source "$ROOT/lib/theme.sh"
-  local themes
+  local themes expected
   themes="$(_theme_list)"
-  [ "$(printf '%s\n' "$themes" | grep -c .)" -eq 21 ] &&
+  # Derive the count from the manifest so adding a theme doesn't break the suite.
+  expected="$(awk -F'|' '$0 !~ /^#/ && NF >= 5' "$ROOT/themes/manifest" | grep -c .)"
+  [ "$expected" -ge 2 ] &&
+    [ "$(printf '%s\n' "$themes" | grep -c .)" -eq "$expected" ] &&
     printf '%s\n' "$themes" | grep -qx catppuccin-mocha &&
     printf '%s\n' "$themes" | grep -qx techno-viking
+}
+
+test_cli_unknown_command_fails() {
+  local out
+  out="$(mktemp)"
+  ! "$ROOT/bin/omacase" no-such-command >"$out" 2>&1 &&
+    grep -q "unknown command" "$out"
+}
+
+test_cli_help_and_version() {
+  "$ROOT/bin/omacase" help | grep -q "usage: omacase" &&
+    [ "$("$ROOT/bin/omacase" version)" = "$(cat "$ROOT/VERSION")" ]
 }
 
 test_theme_renderer_creates_fragments() {
@@ -232,6 +254,8 @@ run_test "update fails on self-update failure" test_update_fails_when_self_pull_
 run_test "backup domains cover macos/defaults.sh" test_backup_domains_cover_defaults_sh
 run_test "site/install matches boot.sh" test_bootstrap_copies_are_identical
 run_test "theme manifest lists all themes" test_theme_manifest_lists_all_themes
+run_test "cli rejects unknown commands" test_cli_unknown_command_fails
+run_test "cli help and version work" test_cli_help_and_version
 run_test "theme renderer creates generated fragments" test_theme_renderer_creates_fragments
 
 if [ "$FAILURES" -gt 0 ]; then

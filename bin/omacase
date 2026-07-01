@@ -10,7 +10,8 @@ while [ -h "$SOURCE" ]; do
   SOURCE="$(readlink "$SOURCE")"
   [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE"
 done
-export OMACASE_ROOT="$(cd -P "$(dirname "$SOURCE")/.." && pwd)"
+OMACASE_ROOT="$(cd -P "$(dirname "$SOURCE")/.." && pwd)"
+export OMACASE_ROOT
 
 source "$OMACASE_ROOT/lib/common.sh"
 

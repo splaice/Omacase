@@ -46,6 +46,7 @@ omacase_migrate() {
     step "migration: $id"
     # Run in a subshell so a migration's `set -e`/exit can't kill the runner, and
     # its migrate() definition can't leak. common.sh helpers are inherited.
+    # shellcheck source=/dev/null
     if ( set -e; unset -f migrate 2>/dev/null; source "$f"; migrate ); then
       is_dryrun || echo "$id" > "$marker"      # don't advance the marker in dry-run
       ran=$((ran + 1))

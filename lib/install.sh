@@ -156,6 +156,7 @@ _link_command() {
 # service, nothing to launch). open -a is a no-op if already running.
 _launch_apps() {
   local app
+  # shellcheck disable=SC2043  # one entry today; the loop is the extension point
   for app in "Karabiner-Elements"; do
     [ -d "/Applications/$app.app" ] && run open -a "$app" || true
   done

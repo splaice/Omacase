@@ -1,0 +1,30 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  lint:
+    name: shellcheck + zsh parse
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install shellcheck + zsh
+        run: sudo apt-get update -q && sudo apt-get install -y -q shellcheck zsh
+      - name: shellcheck (bash sources)
+        run: |
+          shellcheck --severity=warning -x \
+            bin/omacase lib/*.sh boot.sh site/install \
+            macos/defaults.sh migrations/*.sh tests/run.sh
+      - name: zsh parses the completion
+        run: zsh -n completions/_omacase
+
+  test:
+    name: test suite (macOS)
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run tests
+        run: bash tests/run.sh
