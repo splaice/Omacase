@@ -45,7 +45,7 @@ omacase_install() {
   step "8/10  Window manager + services"
   check_loop_conflict || true   # Loop fights AeroSpace; offer to quit it first
   source "$OMACASE_ROOT/lib/wm.sh"
-  omacase_wm "$(cat "$OMACASE_STATE/wm" 2>/dev/null || echo aerospace)"
+  omacase_wm
 
   step "9/10  Spotlight launchers (web apps + appearance toggle)"
   source "$OMACASE_ROOT/lib/actions.sh"

@@ -18,7 +18,7 @@ polish for ease of maintenance.
 - The second rule of Omacase is that it uninstalls just as easily as it installs.
 
 ```bash
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/splaice/omacase/main/boot.sh)"
+/bin/bash -c "$(curl -fsSL https://omacase.org/install)"
 ```
 
 This installs Xcode CLT + Homebrew, clones to `~/.local/share/omacase`, and runs
@@ -50,7 +50,7 @@ omacase update             # pull + brew bundle + re-apply everything
 OMACASE_SKIP_MISE_UPGRADE=1 omacase update  # skip npm-backed mise tool upgrades
 omacase theme [name]       # retheme everything: apps + macOS Light/Dark + wallpaper
 omacase palette [name]     # TUI to edit a theme's Ghostty ANSI palette with a live eza preview
-omacase wallpaper [...]     # pick the active theme's background (list|next|prev|<n>; alias wp)
+omacase wallpaper [...]    # pick the active theme's background (list|next|prev|pick|<n>; alias wp)
 omacase webapp [name]      # open an Omarchy web app (for a Spotlight Shortcut)
 omacase appearance [...]   # toggle/set macOS Light/Dark (toggle|dark|light)
 omacase launchers [...]    # build Spotlight "Oma …" launchers: web apps + workspaces (build|remove)
@@ -64,6 +64,7 @@ omacase menu               # gum TUI (wrap in a Shortcut to launch from Spotligh
 omacase sysmenu            # the global system menu popup (also bound to Super + Space)
 omacase notify [...]       # native macOS notification (for scripts & keybinds)
 omacase migrate            # apply pending one-time migrations (also run by update)
+omacase uninstall          # remove omacase-managed config & services (keeps your apps)
 ```
 
 > **Reversible by design.** `install` auto-snapshots any pre-existing dotfiles
@@ -104,7 +105,7 @@ Install/update then trusts:
 
 > **Tab-complete everything.** `omacase <Tab>` completes subcommands, and the
 > arguments complete from live data — theme names, web apps, snapshot IDs,
-> `wm`/`appearance`/`launchers` options. The managed zshrc also switches on
+> `appearance`/`launchers`/`wallpaper` options. The managed zshrc also switches on
 > zsh's completion system itself (`compinit`), so git, brew, aerospace, and
 > every Homebrew tool that ships completions Tab-complete too.
 
@@ -144,6 +145,7 @@ Apps & overlays (reveal/hide a centered float):
 | `Super + O` | Toggle an Obsidian overlay |
 | `Super + P` | Toggle a 1Password overlay |
 | `Super + G` | Toggle an iMessage overlay (80% of the screen) |
+| `Super + T` | Toggle a Todoist overlay |
 
 Focus & move (WASD — W up, A left, S down, D right):
 | Keys | Action |

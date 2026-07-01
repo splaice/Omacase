@@ -1,5 +1,0 @@
-The install.sh script completed but didn't bring up any of the systems permissions
-dialogs
-Running doctor brought up the permissions
-Driver approval for Karabiner didn't come up automatically
-Aerospace wasn't started with install.

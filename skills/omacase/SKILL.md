@@ -12,16 +12,38 @@ config by hand — the CLI keeps state and re-applies themes/WM consistently.
 Supported target: Apple Silicon macOS with Homebrew at `/opt/homebrew`.
 
 ## Command surface
+
+Setup & lifecycle:
 - `omacase install` — full idempotent setup (re-runnable; same engine as update)
-- `omacase update` — git pull + `brew bundle` + re-apply dotfiles, defaults, theme, WM (`OMACASE_SKIP_MISE_UPGRADE=1` skips npm-backed mise upgrades)
-- `omacase theme [name]` — apply a theme everywhere at once; theme names come from `themes/manifest` (run `omacase theme` to pick from the list). Omarchy-derived colors are downloaded from Basecamp's Omarchy repo into `~/.local/share/omacase/upstream/` and rendered into app fragments under `~/.local/share/omacase/generated/themes/`. Light/dark is derived from the theme background and also flips macOS appearance and the Claude Code CLI theme. The desktop wallpaper is fetched on first use into `~/.local/share/omacase/backgrounds/`, then cached.
-- `omacase webapp [name]` — open an Omarchy web app (no name = list); meant to be wrapped in a Spotlight Shortcut
-- `omacase appearance [toggle|dark|light]` — flip/set macOS system Light/Dark
-- `omacase launchers [build|remove]` — generate/remove Spotlight `.app` launchers (in `~/Applications`) for each web app + appearance toggle, via `osacompile`
-- `omacase wm` — (re)start the AeroSpace window manager + its shared services
+- `omacase update` — git pull + `brew bundle` + re-apply dotfiles, defaults, theme, WM, migrations (`OMACASE_SKIP_MISE_UPGRADE=1` skips npm-backed mise upgrades)
+- `omacase migrate` — apply pending one-time migrations (also run by update)
+- `omacase outdated` — count of outdated brew packages (drives the bar's update indicator)
 - `omacase doctor` — check tooling, WM, and missing permission grants
 - `omacase backup [label]` / `omacase restore [id]` — snapshot & roll back dotfiles + defaults
-- `omacase menu` — gum TUI (wrap in a Shortcut to launch from Spotlight)
+- `omacase uninstall` — remove omacase-managed symlinks & services (keeps apps)
+- `omacase version` / `omacase help`
+
+Theming:
+- `omacase theme [name]` — apply a theme everywhere at once; theme names come from `themes/manifest` (run `omacase theme` to pick from the list). Omarchy-derived colors are downloaded from Basecamp's Omarchy repo into `~/.local/share/omacase/upstream/` and rendered into app fragments under `~/.local/share/omacase/generated/themes/`. Light/dark is derived from the theme background and also flips macOS appearance and the Claude Code CLI theme. The desktop wallpaper is fetched on first use into `~/.local/share/omacase/backgrounds/`, then cached.
+- `omacase palette [name]` — TUI editor over a theme's Ghostty ANSI palette with a live truecolor eza preview
+- `omacase wallpaper [list|next|prev|pick|<n>]` (alias `wp`) — choose among the active theme's backgrounds
+- `omacase appearance [toggle|dark|light]` — flip/set macOS system Light/Dark
+
+Window manager & desktop:
+- `omacase wm` — (re)start the AeroSpace window manager + its shared services (SketchyBar, JankyBorders)
+- `omacase grid [1-9]` — toggle a workspace into/out of a 2×2 grid (bound to Super+q)
+- `omacase workspace <1-9>` (alias `ws`) — switch AeroSpace workspace
+- `omacase terminal [cmd...]` (alias `term`) — new Ghostty window in the running instance, optionally running cmd
+- Overlay toggles (centered floats above the tiles, each bound to a Super chord): `btop`, `files` (ranger), `browser`, `music [spotify|apple]`, `obsidian`, `1password` (alias `1pw`), `message` (alias `messages`), `todoist`, `sysmenu` (the Super+Space menu popup)
+- `omacase webapp [name]` — open an Omarchy web app (no name = list); meant to be wrapped in a Spotlight Shortcut
+- `omacase launchers [build|remove]` — generate/remove Spotlight `.app` launchers (in `~/Applications`) for web apps + workspaces + appearance toggle, via `osacompile`
+- `omacase caffeinate [toggle|on|off|status]` (alias `caffeine`) — stay-awake power assertion (the bar's coffee cup)
+- `omacase notify [--title|--subtitle|--sound|--image] <msg>` — native macOS notification for scripts/keybinds
+- `omacase menu` — gum TUI (wrap in a Shortcut to launch from Spotlight); `omacase config` opens the config dir
+
+**House rule — completion parity is a feature.** Any change to subcommands or
+aliases MUST update `completions/_omacase` and `usage()` in `bin/omacase` in the
+same commit.
 
 ## Reversibility (important)
 - Omacase owns its dotfiles via **symlinks** from `home/` into `$HOME` — it does NOT
@@ -47,6 +69,8 @@ Supported target: Apple Silicon macOS with Homebrew at `/opt/homebrew`.
   `home/dot_config/aerospace/aerospace.toml` holds the Hyprland-style keybinds on
   the Super key (right ⌘ → ⌃⌥⌘ via Karabiner): Super+WASD focus, Super+Shift+WASD
   move, Super+[1-9] workspaces.
+- `completions/_omacase` — zsh tab completion; keep in sync with every CLI change (see house rule above).
+- `tests/run.sh` — pure-helper test suite; run it before committing `lib/` changes.
 - `themes/manifest` — theme catalog and upstream/local source map.
 - `themes/techno-viking*/` — local custom theme fragments and backgrounds.
 - `~/.local/share/omacase/generated/themes/<name>/` — generated per-app fragments for Omarchy-derived themes; `omacase theme` symlinks these into `~/.config`.

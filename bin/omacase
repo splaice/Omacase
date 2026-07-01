@@ -35,7 +35,7 @@ usage: omacase <command> [args]
   workspace <1-9>    Switch to an AeroSpace workspace (alias: ws)
   terminal [cmd...]  Open a new Ghostty window in the running instance, optionally running cmd (alias: term)
   btop               Toggle a centered, chromeless btop popup (SketchyBar CPU/mem click)
-  caffeinate [...]   Toggle a stay-awake power assertion (toggle|on|off|status)
+  caffeinate [...]   Toggle a stay-awake power assertion (toggle|on|off|status; alias: caffeine)
   files              Toggle a centered ranger file-manager popup (Super+Shift+F)
   browser            Open/focus the system default browser (Super+B)
   music [spotify|apple]  Toggle a centered music overlay (Super+M)

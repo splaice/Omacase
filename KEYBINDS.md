@@ -38,7 +38,8 @@ omacase launchers remove   # delete them again (only the ones omacase made)
 
 All launchers are named with an **`Oma ` prefix**, so typing "Oma" in
 Spotlight (`⌘Space`) lists them all: **Oma ChatGPT, Oma Grok, Oma Mail**
-(Gmail), **Oma Cal** (Google Calendar), **Oma YouTube, Oma WhatsApp,
+(Gmail), **Oma Cal** (Google Calendar), **Oma Hey Mail, Oma Hey Calendar**
+(hey.com), **Oma YouTube, Oma WhatsApp,
 Oma Messages, Oma Photos, Oma X, Oma X Post, Oma Appearance**,
 plus **Oma 1 … 9** (switch to AeroSpace workspace N — the Spotlight equivalent
 of `Super + 1…9`). First launch of *Oma Appearance* prompts once for Automation.
@@ -74,6 +75,8 @@ browser, else the default browser.
 | Grok | `webapp grok` | `Super Shift Alt A` |
 | Mail (Gmail) | `webapp email` | `Super Shift E` |
 | Cal (Google) | `webapp calendar` | `Super Shift C` |
+| Hey Mail | `webapp hey-mail` | — |
+| Hey Cal | `webapp hey-cal` | — |
 | YouTube | `webapp youtube` | `Super Shift Y` |
 | WhatsApp | `webapp whatsapp` | `Super Shift Alt G` |
 | Messages | `webapp messages` | `Super Shift Ctrl G` |
@@ -158,7 +161,7 @@ can't express because **Super** (`⌃⌥⌘`) already uses Ctrl and Alt.
 ## Why windows "keep shrinking"
 AeroSpace tiles **every** window in a workspace, so each new window you open in
 that space shrinks the others to make room. `Super + f` fullscreen is a per-window
-*toggle* — it does **not** stop new/!other windows from re-tiling the space, so it
+*toggle* — it does **not** stop new/other windows from re-tiling the space, so it
 looks like things "un-fullscreen."
 
 The fix is to give busy apps their own space instead of cramming one workspace:

@@ -5,7 +5,6 @@
 
 omacase_wm() {
   _wm_use_aerospace
-  is_dryrun || echo "aerospace" > "$OMACASE_STATE/wm"
 }
 
 _wm_start_shared() {
@@ -71,7 +70,7 @@ _wm_use_aerospace() {
 # nested — pressing again flattens back.
 omacase_grid() {
   ensure_brew_env   # invoked from AeroSpace bindings, whose PATH lacks Homebrew (and thus `aerospace`)
-  have aerospace || abort "grid needs AeroSpace (active profile: $(cat "$OMACASE_STATE/wm" 2>/dev/null || echo unknown))."
+  have aerospace || abort "grid needs AeroSpace — \`omacase wm\` (re)starts it."
   local ws="${1:-focused}"
 
   # join-with is direction-based, and directions only exist on the visible
@@ -222,7 +221,7 @@ omacase_workspace() {
   ensure_brew_env   # invoked from Spotlight launchers, whose PATH lacks Homebrew (and thus `aerospace`)
   local n="${1:-}"
   [ -n "$n" ] || abort "usage: omacase workspace <1-9>"
-  have aerospace || abort "workspace switching needs AeroSpace (active profile: $(cat "$OMACASE_STATE/wm" 2>/dev/null || echo unknown))."
+  have aerospace || abort "workspace switching needs AeroSpace — \`omacase wm\` (re)starts it."
   run aerospace workspace "$n"
 }
 

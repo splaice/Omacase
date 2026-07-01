@@ -62,3 +62,19 @@ operate casually, but less convenient for a repeatable clone/delete loop.
   Accessibility, Input Monitoring, Automation, and Screen Recording.
 - GitHub-hosted macOS runners are useful for shell/unit checks, but not enough
   for Omacase's GUI, TCC, window-manager, and restore behavior.
+
+## Known first-boot issues (from cold-start testing)
+
+Observed on earlier fresh-VM installs — re-verify each on the next cold start
+and fix in `lib/install.sh` / `lib/doctor.sh` where possible:
+
+- `omacase install` completed without surfacing the system permission dialogs;
+  they only appeared after running `omacase doctor`. Install now launches
+  Karabiner and prints a doctor reminder, but the ideal is prompts firing
+  during install itself.
+- Karabiner's DriverKit driver-approval prompt did not appear automatically.
+  Install now runs the bundled `VirtualHIDDevice-Manager activate` to force
+  the dialog — confirm it actually appears on a clean VM.
+- AeroSpace was not started by install on a cold machine. Install step 8
+  launches it (and waits for the process) now — confirm on a fresh VM,
+  including the first-run Accessibility gate.
