@@ -24,33 +24,69 @@ _wm_stop_all() {
 _wm_use_aerospace() {
   ensure_brew_env   # may be invoked from the menu/popup, whose PATH lacks Homebrew
   info "Profile: AeroSpace (no SIP disable required)"
-  # NEVER quit-then-relaunch: `open -a` can fire while the quit is still in
-  # flight, the relaunch gets dropped, and AeroSpace is left DOWN (which breaks
-  # the SketchyBar workspace list). Instead: if it's up, reload its config; if
-  # it's down, launch it. It also starts at login via its own config.
+  # NEVER quit-then-relaunch blindly: `open -a` can fire while the quit is still
+  # in flight, the relaunch gets dropped, and AeroSpace is left DOWN (which
+  # breaks the SketchyBar workspace list). Instead: if it's up, reload its
+  # config; if it's down, launch it. It also starts at login via its own config.
+  # Exception: a stale app (binary upgraded underneath it) can't even be
+  # reached by the CLI, so reload-config is a no-op — only a restart helps.
   if pgrep -x AeroSpace >/dev/null; then
-    run aerospace reload-config 2>/dev/null || true
+    if _wm_aerospace_stale; then
+      warn "AeroSpace was upgraded on disk under the running app — restarting it."
+      _wm_restart_aerospace
+    else
+      run aerospace reload-config 2>/dev/null || true
+    fi
   elif [ -d "/Applications/AeroSpace.app" ]; then
     run open -a AeroSpace 2>/dev/null || true
-    # `open -a` returns immediately, so a launch race or the first-run
-    # Accessibility gate would otherwise leave the WM silently DOWN. Wait for the
-    # process so the outcome is visible here (and so its Accessibility prompt has
-    # actually fired before install moves on).
-    if ! is_dryrun; then
-      local n=0
-      until pgrep -x AeroSpace >/dev/null || [ "$n" -ge 20 ]; do sleep 0.25; n=$((n + 1)); done
-      if pgrep -x AeroSpace >/dev/null; then
-        success "AeroSpace launched."
-      else
-        warn "AeroSpace did not come up — grant it Accessibility, then re-run \`omacase wm\`."
-      fi
-    fi
+    _wm_wait_for_aerospace
   else
     warn "AeroSpace not installed — \`brew bundle\` likely failed; re-run \`omacase install\`."
   fi
   _wm_start_shared
   run sketchybar --reload 2>/dev/null || true   # repopulate the workspace list against current WM state
   success "AeroSpace active. Super+WASD focus, Super+Shift+WASD move, Super+[1-9] workspaces."
+}
+
+# A `brew upgrade` of the AeroSpace cask swaps the app + CLI on disk while the
+# old app keeps running. The two then speak different socket protocols: every
+# CLI call fails, keybinds and tiling die, and reload-config can't recover it —
+# only a relaunch does. True when the running app rejects the on-disk CLI.
+_wm_aerospace_stale() {
+  pgrep -x AeroSpace >/dev/null 2>&1 || return 1
+  have aerospace || return 1
+  local out
+  out="$(aerospace list-workspaces --focused 2>&1)" && return 1
+  printf '%s' "$out" | grep -q 'SOCKET_PROTOCOL_VERSION'
+}
+
+# `open -a` returns immediately, so a launch race or the first-run
+# Accessibility gate would otherwise leave the WM silently DOWN. Wait for the
+# process so the outcome is visible here (and so its Accessibility prompt has
+# actually fired before install moves on).
+_wm_wait_for_aerospace() {
+  is_dryrun && return 0
+  local n=0
+  until pgrep -x AeroSpace >/dev/null || [ "$n" -ge 20 ]; do sleep 0.25; n=$((n + 1)); done
+  if pgrep -x AeroSpace >/dev/null; then
+    success "AeroSpace launched."
+  else
+    warn "AeroSpace did not come up — grant it Accessibility, then re-run \`omacase wm\`."
+  fi
+}
+
+# The one case where quit-then-relaunch is right (stale app, see above) — but
+# WAIT for the quit to land before `open -a`, or the relaunch gets dropped and
+# the WM stays down (the race _wm_use_aerospace's comment warns about).
+_wm_restart_aerospace() {
+  run osascript -e 'tell application "AeroSpace" to quit' >/dev/null 2>&1 || true
+  if ! is_dryrun; then
+    local n=0
+    while pgrep -x AeroSpace >/dev/null && [ "$n" -lt 20 ]; do sleep 0.25; n=$((n + 1)); done
+    pgrep -x AeroSpace >/dev/null && { pkill -x AeroSpace 2>/dev/null || true; sleep 1; } || true
+  fi
+  run open -a AeroSpace 2>/dev/null || true
+  _wm_wait_for_aerospace
 }
 
 # `omacase grid [workspace]` — toggle a workspace (default: the focused one)

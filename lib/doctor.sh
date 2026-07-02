@@ -62,7 +62,18 @@ omacase_doctor() {
   else info "no backups yet (created automatically on first install)"; fi
 
   step "Window manager"
-  pgrep -x AeroSpace >/dev/null && success "AeroSpace running" || { warn "AeroSpace not running — \`omacase wm\`"; issues=$((issues + 1)); }
+  # shellcheck source=/dev/null
+  source "$OMACASE_ROOT/lib/wm.sh"
+  if ! pgrep -x AeroSpace >/dev/null; then
+    warn "AeroSpace not running — \`omacase wm\`"; issues=$((issues + 1))
+  elif _wm_aerospace_stale; then
+    # brew upgraded the cask under the running app — keybinds/tiling are dead
+    # until relaunch (CLI/server socket protocol mismatch).
+    warn "AeroSpace binary was upgraded under the running app — repairing: restarting it."
+    _wm_restart_aerospace
+  else
+    success "AeroSpace running (app and CLI in sync)"
+  fi
   check_loop_conflict || issues=$((issues + 1))
 
   step "Desktop apps"
