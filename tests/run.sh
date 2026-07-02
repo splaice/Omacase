@@ -185,6 +185,20 @@ test_theme_manifest_lists_all_themes() {
     printf '%s\n' "$themes" | grep -qx techno-viking
 }
 
+test_aerospace_persistent_workspaces_cover_bindings() {
+  # config-version 2 no longer infers workspaces from keybindings — any
+  # workspace a binding targets but persistent-workspaces omits silently
+  # disappears when its last window closes.
+  local toml="$ROOT/home/dot_config/aerospace/aerospace.toml" persistent ws missing=""
+  grep -q '^config-version = 2$' "$toml" || { echo "config-version = 2 missing" >&2; return 1; }
+  persistent="$(sed -n 's/^persistent-workspaces = \[\(.*\)\]/\1/p' "$toml")"
+  [ -n "$persistent" ] || { echo "persistent-workspaces missing" >&2; return 1; }
+  while IFS= read -r ws; do
+    printf '%s' "$persistent" | grep -q "'$ws'" || missing="$missing $ws"
+  done < <(grep -oE "'(move-node-to-)?workspace [0-9]+'" "$toml" | grep -oE '[0-9]+' | sort -u)
+  [ -z "$missing" ] || { printf 'not in persistent-workspaces:%s\n' "$missing" >&2; return 1; }
+}
+
 test_cli_unknown_command_fails() {
   local out
   out="$(mktemp)"
@@ -254,6 +268,7 @@ run_test "update fails on self-update failure" test_update_fails_when_self_pull_
 run_test "backup domains cover macos/defaults.sh" test_backup_domains_cover_defaults_sh
 run_test "site/install matches boot.sh" test_bootstrap_copies_are_identical
 run_test "theme manifest lists all themes" test_theme_manifest_lists_all_themes
+run_test "aerospace persistent-workspaces cover bindings" test_aerospace_persistent_workspaces_cover_bindings
 run_test "cli rejects unknown commands" test_cli_unknown_command_fails
 run_test "cli help and version work" test_cli_help_and_version
 run_test "theme renderer creates generated fragments" test_theme_renderer_creates_fragments

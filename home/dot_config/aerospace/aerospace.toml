@@ -6,6 +6,11 @@
 
 start-at-login = true
 
+# config-version 2 stops inferring workspaces from keybindings, so the nine
+# Super+number workspaces must be declared here to stay alive while empty.
+config-version = 2
+persistent-workspaces = ['1', '2', '3', '4', '5', '6', '7', '8', '9']
+
 # Tiling defaults (Hyprland-ish: gaps + accordion fallback).
 default-root-container-layout = 'tiles'
 default-root-container-orientation = 'auto'
