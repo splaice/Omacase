@@ -87,6 +87,10 @@ _wm_restart_aerospace() {
   fi
   run open -a AeroSpace 2>/dev/null || true
   _wm_wait_for_aerospace
+  # sketchybarrc builds its space.* items from `aerospace list-workspaces` at
+  # load time — if the bar (re)loaded while the CLI was unreachable, the
+  # workspace list is empty until a reload against the healthy app.
+  run sketchybar --reload 2>/dev/null || true
 }
 
 # `omacase grid [workspace]` — toggle a workspace (default: the focused one)
