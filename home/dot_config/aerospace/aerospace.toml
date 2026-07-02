@@ -267,3 +267,13 @@ run = 'layout floating'
 [[on-window-detected]]
 if.app-id = 'com.sindresorhus.HEIC-Converter'
 run = 'layout floating'
+
+# --- Apps that misbehave when tiled resizes them.
+# FluidVoice's settings window fights external resizing when it shares a
+# workspace with tiled windows.
+[[on-window-detected]]
+if.app-id = 'com.FluidApp.app'
+run = 'layout floating'
+[[on-window-detected]]
+if.app-id = 'app.soulver.appstore.mac'
+run = 'layout floating'
