@@ -204,6 +204,10 @@ run = 'layout floating'
 [[on-window-detected]]
 if.app-id = 'com.apple.ScreenSharing'
 run = 'layout floating'
+# iPhone Mirroring — fixed phone-shaped aspect ratio, can't be tiled sensibly.
+[[on-window-detected]]
+if.app-id = 'com.apple.ScreenContinuity'
+run = 'layout floating'
 [[on-window-detected]]
 if.app-id = 'com.apple.Image_Capture'
 run = 'layout floating'
