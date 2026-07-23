@@ -141,6 +141,16 @@ else
 fi
 
 update_icons "$WID"
+
+# Auto-reflow (`omacase retile --auto`): every handler invocation is a window
+# or workspace event, so this is the hook for display-aware column layout.
+# Only the focused workspace's own item fires it — one retile per event, not
+# one per pill — and retile itself no-ops unless the workspace's tiled-window
+# membership actually changed, so focus churn and repaints stay cheap.
+# Backgrounded: the bar repaint must never wait on window rearrangement.
+if [ "$WID" = "$FOCUSED" ]; then
+  /opt/homebrew/bin/omacase retile --auto >/dev/null 2>&1 &
+fi
 HANDLER
 chmod +x "$HOME/.config/sketchybar/space_handler.sh"
 

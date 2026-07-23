@@ -192,6 +192,108 @@ _grid_notify() {
   notify --title "omacase grid" "$1"
 }
 
+# `omacase retile [--auto]` — reflow the focused workspace into per-display
+# columns: 2 full-height columns on the built-in laptop panel, 3 on anything
+# bigger (Pro Display XDR etc. — the case below is the tuning point). Windows
+# beyond the cap stack vertically, filling the rightmost columns first: 4
+# windows on the XDR = two full columns + a stacked pair; 3 on the laptop =
+# one full column + a stacked pair. Applies to every tiled window regardless
+# of app; floating windows never participate.
+#
+# --auto (fired by the SketchyBar space handler on window open/close) reflows
+# only when the workspace's tiled-window MEMBERSHIP changed since the last
+# run — manual resizes and joins survive until a window comes or goes. A lock
+# dir guards against overlapping runs; join-with itself never changes
+# membership, so the reflow can't retrigger itself.
+omacase_retile() {
+  ensure_brew_env   # invoked from AeroSpace bindings / the bar daemon, whose PATH lacks Homebrew
+  have aerospace || abort "retile needs AeroSpace — \`omacase wm\` (re)starts it."
+  local auto=""
+  [ "${1:-}" = "--auto" ] && auto=1
+
+  local ws; ws="$(aerospace list-workspaces --focused 2>/dev/null || true)"
+  [ -n "$ws" ] || return 0
+
+  # Tiled membership, sorted for a stable signature (list-windows sorts by
+  # app name, so raw order isn't stable across renames/refocuses anyway).
+  local ids count sig
+  ids="$(aerospace list-windows --workspace "$ws" \
+           --format '%{window-id} %{window-parent-container-layout}' \
+           2>/dev/null | awk '$2 != "floating" {print $1}' | sort -n || true)"
+  count="$(printf '%s\n' "$ids" | grep -c . || true)"
+  sig="$(printf '%s' "$ids" | tr '\n' ',')"
+
+  local state="${TMPDIR:-/tmp}/omacase-retile-$USER-ws$ws"
+  if [ -n "$auto" ]; then
+    [ "$(cat "$state" 2>/dev/null || true)" = "$sig" ] && return 0
+    local lock="${TMPDIR:-/tmp}/omacase-retile-$USER.lock"
+    if ! mkdir "$lock" 2>/dev/null; then
+      # Another retile is mid-flight — unless it died hard (kill -9 skips the
+      # EXIT trap); a lock older than a minute is a corpse, not a run.
+      find "$lock" -maxdepth 0 -mmin +1 -exec rmdir {} \; 2>/dev/null || true
+      mkdir "$lock" 2>/dev/null || return 0
+    fi
+    # shellcheck disable=SC2064  # expand $lock now; it's local
+    trap "rmdir '$lock' 2>/dev/null || true" EXIT
+  fi
+  # Record membership in manual mode too, so the next --auto sees no change
+  # and leaves the fresh manual layout alone.
+  printf '%s' "$sig" > "$state" 2>/dev/null || true
+  [ "$count" -ge 2 ] || return 0
+
+  # Column cap by display. AeroSpace exposes no resolution, but the monitor
+  # name cleanly splits the laptop panel from externals.
+  local mon cap
+  mon="$(aerospace list-monitors --focused --format '%{monitor-name}' 2>/dev/null || true)"
+  case "$mon" in
+    "Built-in"*) cap=2 ;;
+    *)           cap=3 ;;
+  esac
+
+  # One flat row of columns; that alone is the target state at or under cap.
+  aerospace flatten-workspace-tree --workspace "$ws" 2>/dev/null || true
+  [ "$count" -le "$cap" ] && return 0
+
+  # Force plain horizontal tiles at the root (any window's parent IS the root
+  # after flattening) so the stacks below form as vertical splits.
+  aerospace layout h_tiles --window-id "$(printf '%s\n' "$ids" | sed -n 1p)" 2>/dev/null || true
+
+  # On-screen left-to-right order via the dfs-index focus walk (same dance as
+  # omacase_grid: list-windows can't report tree position).
+  local ordered="" prev_focus line id parent i=0
+  prev_focus="$(aerospace list-windows --focused --format '%{window-id}' 2>/dev/null || true)"
+  while [ "$i" -lt 32 ]; do
+    aerospace focus --dfs-index "$i" 2>/dev/null || break
+    line="$(aerospace list-windows --focused --format '%{window-id} %{window-parent-container-layout}' 2>/dev/null || true)"
+    id="${line%% *}"; parent="${line#* }"
+    [ "$parent" = floating ] || ordered="$ordered$id"$'\n'
+    i=$((i + 1))
+  done
+
+  # Distribute: every column holds base windows; the remainder goes to the
+  # rightmost columns (stacks grow from the right, keeping left columns full
+  # height as long as possible). Join each column's 2nd..nth member onto its
+  # left neighbor — the column's own head (or growing stack, which opposite-
+  # orientation + flatten normalization folds into one vertical container).
+  local base rem pos=1 c=1 j size
+  base=$((count / cap)); rem=$((count % cap))
+  while [ "$c" -le "$cap" ]; do
+    size=$base
+    [ "$c" -gt $((cap - rem)) ] && size=$((base + 1))
+    j=1
+    while [ "$j" -le "$size" ]; do
+      if [ "$j" -gt 1 ]; then
+        id="$(printf '%s' "$ordered" | sed -n "${pos}p")"
+        [ -n "$id" ] && { aerospace focus --window-id "$id" && aerospace join-with left; } 2>/dev/null || true
+      fi
+      pos=$((pos + 1)); j=$((j + 1))
+    done
+    c=$((c + 1))
+  done
+  [ -n "$prev_focus" ] && aerospace focus --window-id "$prev_focus" 2>/dev/null || true
+  return 0
+}
+
 # `omacase terminal [command...]` — open a new Ghostty window in the *running*
 # instance, optionally running a command in it.
 #

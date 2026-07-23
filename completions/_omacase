@@ -32,6 +32,7 @@ _omacase() {
         'launchers:generate Spotlight .app launchers for web apps'
         'wm:(re)start the AeroSpace window manager + services'
         'grid:toggle an AeroSpace workspace (default focused) into a 2x2 grid'
+        'retile:reflow the focused workspace into per-display columns'
         'workspace:switch to an AeroSpace workspace (1-9)'
         'ws:switch to an AeroSpace workspace (1-9)'
         'terminal:open a new Ghostty window in the running instance'
@@ -80,6 +81,9 @@ _omacase() {
           ;;
         workspace|ws|grid)
           _values 'workspace' 1 2 3 4 5 6 7 8 9 && ret=0
+          ;;
+        retile)
+          _values 'flag' '--auto[reflow only if window membership changed]' && ret=0
           ;;
         wallpaper|wp)
           _values 'wallpaper' list next prev pick && ret=0

@@ -56,6 +56,7 @@ omacase appearance [...]   # toggle/set macOS Light/Dark (toggle|dark|light)
 omacase launchers [...]    # build Spotlight "Oma …" launchers: web apps + workspaces (build|remove)
 omacase wm                 # (re)start the AeroSpace window manager + services
 omacase grid [1-9]         # toggle an AeroSpace workspace (default: focused) into a 2x2 grid
+omacase retile [--auto]    # reflow the workspace into per-display columns (2 laptop / 3 XDR); extras stack right
 omacase workspace <1-9>    # switch AeroSpace workspace (alias: ws)
 omacase doctor             # check perms + missing grants
 omacase backup [label]     # snapshot current dotfiles & macOS defaults
@@ -162,6 +163,7 @@ Layout & size:
 | `Super + = / -` | Grow / shrink focused window |
 | `Super + e` | Tiles layout — flip split orientation (side-by-side ↔ stacked) |
 | `Super + q` | Quad — toggle the workspace into / out of a 2×2 grid |
+| `Super + r` | Retile — per-display columns (2 laptop / 3 XDR), extras stack right; also runs automatically when windows open/close |
 | `Super + z` | Accordion layout — focused window stays large, rest tuck aside |
 | `Super + Shift + Space` | Float / unfloat the window |
 

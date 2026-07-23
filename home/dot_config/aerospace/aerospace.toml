@@ -79,6 +79,7 @@ cmd-ctrl-alt-e           = 'layout tiles horizontal vertical'
 # Absolute path: exec-and-forget's PATH has no Homebrew until AeroSpace
 # restarts and picks up [exec.env-vars], and reload-config doesn't apply it.
 cmd-ctrl-alt-q           = 'exec-and-forget /opt/homebrew/bin/omacase grid'   # Super+q → toggle 2x2 grid ("quad")
+cmd-ctrl-alt-r           = 'exec-and-forget /opt/homebrew/bin/omacase retile' # Super+r → reflow into per-display columns (2 laptop / 3 XDR)
 cmd-ctrl-alt-z           = 'layout accordion horizontal vertical'   # Super+z → accordion
 cmd-ctrl-alt-f           = 'fullscreen'
 

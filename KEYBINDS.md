@@ -132,6 +132,7 @@ browser, else the default browser.
 | `Super + -` | Shrink focused window |
 | `Super + e` | Tiles layout — flip split orientation (side-by-side ↔ stacked) |
 | `Super + q` | **Quad** — toggle the workspace into / out of a 2×2 grid (`omacase grid`) |
+| `Super + r` | **Retile** — reflow into per-display columns: 2 on the laptop panel, 3 on the XDR; extra windows stack in the rightmost columns (`omacase retile`) |
 | `Super + z` | Accordion layout — windows stack, focused one expands |
 | `Super + Shift + Space` | Float / unfloat the window (escape tiling) |
 
