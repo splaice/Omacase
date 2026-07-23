@@ -23,6 +23,10 @@ from fontTools.pens.ttGlyphPen import TTGlyphPen
 FAMILY = "Omacase Icons"
 UPM = 1000
 ADVANCE = 1050
+# JetBrainsMono Nerd Font's MDI icons and digits all center on y=360 (e.g.
+# md-console spans -15..735, digit three -10..730). Matching that keeps the
+# crab on the same optical line as its neighbors in a label string.
+ICON_CENTER_Y = 360
 
 # (x0, y0, x1, y1) in source-PNG pixels, y down; eyes knock out of the body.
 CLAWD = {
@@ -41,7 +45,8 @@ BBOX = (12, 91, 389, 344)  # content bounds in source pixels
 
 def clawd_glyph():
     scale = UPM / (BBOX[2] - BBOX[0])
-    oy = (UPM - (BBOX[3] - BBOX[1]) * scale) / 2
+    # oy positions the content so its vertical center lands on ICON_CENTER_Y
+    oy = UPM - ICON_CENTER_Y - (BBOX[3] - BBOX[1]) * scale / 2
     pen = TTGlyphPen(None)
     for name, (x0, y0, x1, y1) in CLAWD.items():
         # source y is down, font y is up: top edge maps to the larger font y
