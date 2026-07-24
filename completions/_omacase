@@ -34,6 +34,7 @@ _omacase() {
         'grid:toggle an AeroSpace workspace (default focused) into a 2x2 grid'
         'retile:reflow the focused workspace into per-display columns'
         'center:center the focused floating window on its display'
+        'follow:pull floating windows onto the focused workspace (sticky floats)'
         'workspace:switch to an AeroSpace workspace (1-9)'
         'ws:switch to an AeroSpace workspace (1-9)'
         'terminal:open a new Ghostty window in the running instance'

@@ -294,6 +294,32 @@ omacase_retile() {
   return 0
 }
 
+# `omacase follow` — make floating windows omnipresent: pull every float
+# parked on a NON-visible workspace onto the focused one, so overlays like
+# Messages follow you from desktop to desktop. AeroSpace has no native sticky/
+# pin (workspaces hide windows by parking them in a corner, so macOS's own
+# join-all-Spaces behavior can't help); instead aerospace.toml's
+# exec-on-workspace-change fires this after every switch. Floats visible on
+# ANOTHER monitor stay put — they're already on-screen, and yanking them across
+# displays is exactly what "omnipresent" shouldn't do. Focus is never stolen
+# (no --focus-follows-window), and moving a float doesn't disturb tiling, so
+# the retile/center hooks this indirectly triggers both no-op.
+omacase_follow() {
+  ensure_brew_env   # invoked from AeroSpace's exec env, whose PATH lacks Homebrew
+  have aerospace || abort "follow needs AeroSpace — \`omacase wm\` (re)starts it."
+  local focused visible id ws
+  focused="$(aerospace list-workspaces --focused 2>/dev/null || true)"
+  [ -n "$focused" ] || return 0
+  visible="$(aerospace list-workspaces --monitor all --visible 2>/dev/null || echo "$focused")"
+  while IFS='|' read -r id ws; do
+    [ -n "$id" ] || continue
+    printf '%s\n' "$visible" | grep -qxF "$ws" && continue
+    run aerospace move-node-to-workspace "$focused" --window-id "$id" 2>/dev/null || true
+  done < <(aerospace list-windows --all --format '%{window-id}|%{workspace}|%{window-parent-container-layout}' \
+             2>/dev/null | awk -F'|' '$3 == "floating" {print $1 "|" $2}' || true)
+  return 0
+}
+
 # `omacase center [--auto]` — center a floating window on the display it
 # occupies. AeroSpace's on-window-detected can float a window but can't size or
 # position it (see aerospace.toml), so newly floated windows land wherever

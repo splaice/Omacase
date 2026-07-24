@@ -35,6 +35,7 @@ usage: omacase <command> [args]
   grid [1-9]         Toggle an AeroSpace workspace (default: focused) into a 2x2 grid
   retile [--auto]    Reflow the focused workspace into per-display columns (2 laptop / 3 XDR); extras stack right
   center [--auto]    Center the focused floating window on its display (--auto: bar-driven, new floats only)
+  follow             Pull floating windows onto the focused workspace (fired on every workspace switch)
   workspace <1-9>    Switch to an AeroSpace workspace (alias: ws)
   terminal [cmd...]  Open a new Ghostty window in the running instance, optionally running cmd (alias: term)
   btop               Toggle a centered, chromeless btop popup (SketchyBar CPU/mem click)
@@ -77,6 +78,7 @@ case "$cmd" in
   grid)           source "$OMACASE_ROOT/lib/wm.sh";       omacase_grid    "$@" ;;   # optional workspace arg
   retile)         source "$OMACASE_ROOT/lib/wm.sh";       omacase_retile  "$@" ;;   # optional --auto (bar-driven)
   center)         source "$OMACASE_ROOT/lib/wm.sh";       omacase_center  "$@" ;;   # optional --auto (bar-driven)
+  follow)         source "$OMACASE_ROOT/lib/wm.sh";       omacase_follow  "$@" ;;   # fired by exec-on-workspace-change
   workspace|ws)   source "$OMACASE_ROOT/lib/wm.sh";       omacase_workspace "$@" ;;
   terminal|term)  source "$OMACASE_ROOT/lib/wm.sh";       omacase_terminal  "$@" ;;
   btop)           source "$OMACASE_ROOT/lib/wm.sh";       omacase_btop      "$@" ;;

@@ -25,9 +25,12 @@ after-startup-command = [
   'exec-and-forget brew services start splaice/formulae/borders',
   'exec-and-forget brew services start sketchybar',
 ]
-# Tell SketchyBar which workspace is focused.
+# Tell SketchyBar which workspace is focused, then pull floating windows along
+# (`omacase follow` makes floats omnipresent — Messages on desktop 1 follows
+# you to desktop 2). Backgrounded so the bar repaint never waits on it;
+# absolute path because this runs before [exec.env-vars] is applied.
 exec-on-workspace-change = ['/bin/bash', '-c',
-  'sketchybar --trigger aerospace_workspace_change FOCUSED_WORKSPACE=$AEROSPACE_FOCUSED_WORKSPACE']
+  'sketchybar --trigger aerospace_workspace_change FOCUSED_WORKSPACE=$AEROSPACE_FOCUSED_WORKSPACE; /opt/homebrew/bin/omacase follow >/dev/null 2>&1 &']
 
 # Gaps (the Hyprland look). Keep this table AFTER all top-level keys above.
 [gaps]
