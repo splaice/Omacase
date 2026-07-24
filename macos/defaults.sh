@@ -26,12 +26,12 @@ run defaults write com.apple.finder _FXShowPosixPathInTitle -bool true
 run defaults write com.apple.finder FXDefaultSearchScope -string "SCcf" # search current folder
 run defaults write com.apple.desktopservices DSDontWriteNetworkStores -bool true
 
-info "Dock: autohide fast, no recents, smaller icons (out of the WM's way)"
-run defaults write com.apple.dock autohide -bool true
-run defaults write com.apple.dock autohide-delay -float 0
-run defaults write com.apple.dock autohide-time-modifier -float 0.15
+info "Dock: pinned right, always visible, small tiles, no magnification, no recents"
+run defaults write com.apple.dock orientation -string "right"
+run defaults write com.apple.dock autohide -bool false
 run defaults write com.apple.dock show-recents -bool false
-run defaults write com.apple.dock tilesize -int 40
+run defaults write com.apple.dock tilesize -int 32 # slider floor is 16; 32 keeps icons clickable
+run defaults write com.apple.dock magnification -bool false
 run defaults write com.apple.dock mru-spaces -bool false # don't auto-rearrange Spaces
 
 info "Screenshots: PNG into ~/Screenshots, no drop shadow"
