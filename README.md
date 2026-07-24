@@ -57,6 +57,7 @@ omacase launchers [...]    # build Spotlight "Oma …" launchers: web apps + wor
 omacase wm                 # (re)start the AeroSpace window manager + services
 omacase grid [1-9]         # toggle an AeroSpace workspace (default: focused) into a 2x2 grid
 omacase retile [--auto]    # reflow the workspace into per-display columns (2 laptop / 3 XDR); extras stack right
+omacase center [--auto]    # center the focused floating window on its display (--auto: new floats only)
 omacase workspace <1-9>    # switch AeroSpace workspace (alias: ws)
 omacase doctor             # check perms + missing grants
 omacase backup [label]     # snapshot current dotfiles & macOS defaults

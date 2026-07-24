@@ -294,6 +294,100 @@ omacase_retile() {
   return 0
 }
 
+# `omacase center [--auto]` — center a floating window on the display it
+# occupies. AeroSpace's on-window-detected can float a window but can't size or
+# position it (see aerospace.toml), so newly floated windows land wherever
+# macOS drops them; this puts them front and center.
+#
+# No arg: center the focused window (floating only). --auto (fired by the
+# SketchyBar space handler on window events, like retile) sweeps the focused
+# workspace for floating windows never seen before and centers only those — a
+# float the user has since dragged aside stays put. The seen-ledger lives in
+# TMPDIR; on its very first run (fresh boot) it baselines the floats already
+# on screen instead of centering them all at once. Needs Accessibility.
+omacase_center() {
+  ensure_brew_env   # invoked from the bar daemon / keybinds, whose PATH lacks Homebrew
+  have aerospace || abort "center needs AeroSpace — \`omacase wm\` (re)starts it."
+
+  if [ "${1:-}" != "--auto" ]; then
+    local line id parent app
+    line="$(aerospace list-windows --focused --format '%{window-id}|%{window-parent-container-layout}|%{app-name}' 2>/dev/null || true)"
+    IFS='|' read -r id parent app <<< "$line"
+    [ -n "$id" ] || abort "no focused window."
+    [ "$parent" = floating ] || { info "Focused window is tiled — only floating windows center."; return 0; }
+    if is_dryrun; then printf '\033[2m[dry-run]\033[0m center %s window %s\n' "$app" "$id"; return 0; fi
+    _center_window "$app" ""
+    return 0
+  fi
+
+  # "<id>|<app>|<title>" per floating window on the visible workspace.
+  local seen="${TMPDIR:-/tmp}/omacase-centered-$USER" floats
+  floats="$(aerospace list-windows --workspace focused \
+              --format '%{window-id}|%{window-parent-container-layout}|%{app-name}|%{window-title}' \
+              2>/dev/null | awk -F'|' '$2 == "floating" {print $1 "|" $3 "|" $4}' || true)"
+  [ -n "$floats" ] || return 0
+  if [ ! -f "$seen" ]; then
+    # First run since boot: baseline every float that already exists (all
+    # workspaces) so session-restored windows don't stampede to center.
+    aerospace list-windows --all --format '%{window-id}|%{window-parent-container-layout}' 2>/dev/null |
+      awk -F'|' '$2 == "floating" {print $1}' > "$seen" || true
+    return 0
+  fi
+  local id app title
+  while IFS='|' read -r id app title; do
+    [ -n "$id" ] || continue
+    grep -qx "$id" "$seen" 2>/dev/null && continue
+    echo "$id" >> "$seen"
+    is_dryrun || _center_window "$app" "$title"
+  done <<< "$floats"
+  # The ledger only ever grows (ids are never reused within a boot); keep it tidy.
+  tail -n 500 "$seen" > "$seen.tmp.$$" 2>/dev/null && mv "$seen.tmp.$$" "$seen" || rm -f "$seen.tmp.$$"
+  return 0
+}
+
+# Center a window of process $1 on whichever display contains it. $2 picks the
+# window: a title to match ("" = the front window). JXA rather than AppleScript
+# because only the ObjC bridge can enumerate NSScreen frames for multi-display
+# math. AX coordinates are top-left-origin while Cocoa frames are bottom-left,
+# so y flips around the primary display's frame height. The title match guards
+# the --auto sweep against moving the wrong window of a multi-window app (e.g.
+# a tiled Ghostty terminal in front of a Ghostty popup); when the title has
+# already drifted, a single-window app is still unambiguous — otherwise skip.
+_center_window() {
+  osascript -l JavaScript - "$1" "$2" >/dev/null 2>&1 <<'JXA' || true
+function run(argv) {
+  ObjC.import('AppKit');
+  const se = Application('System Events');
+  const proc = se.processes.byName(argv[0]);
+  if (!proc.exists()) return;
+  const wins = proc.windows();
+  if (wins.length === 0) return;
+  let win = null;
+  if (argv[1] === '') {
+    win = wins[0];
+  } else {
+    for (const w of wins) {
+      try { if (w.name() === argv[1]) { win = w; break; } } catch (e) {}
+    }
+    if (win === null && wins.length === 1) win = wins[0];
+  }
+  if (win === null) return;
+  const pos = win.position(), size = win.size();
+  const screens = $.NSScreen.screens;
+  const ph = screens.objectAtIndex(0).frame.size.height;
+  const cx = pos[0] + size[0] / 2, cy = pos[1] + size[1] / 2;
+  let r = null;
+  for (let i = 0; i < screens.count; i++) {
+    const vf = screens.objectAtIndex(i).visibleFrame;
+    const s = { x: vf.origin.x, y: ph - (vf.origin.y + vf.size.height), w: vf.size.width, h: vf.size.height };
+    if (r === null) r = s;  // primary display fallback
+    if (cx >= s.x && cx < s.x + s.w && cy >= s.y && cy < s.y + s.h) { r = s; break; }
+  }
+  win.position = [Math.round(r.x + (r.w - size[0]) / 2), Math.round(r.y + (r.h - size[1]) / 2)];
+}
+JXA
+}
+
 # `omacase terminal [command...]` — open a new Ghostty window in the *running*
 # instance, optionally running a command in it.
 #

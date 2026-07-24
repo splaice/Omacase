@@ -140,7 +140,9 @@ m            = ['move-workspace-to-monitor --wrap-around next', 'mode main']    
 #
 # AeroSpace's on-window-detected can only float/tile (or assign a workspace) —
 # it can't size or position, so these just keep windows OUT of the tiling.
-# (Centered/sized overlays are done by the `omacase` commands at invoke time.)
+# Positioning happens elsewhere: the `omacase` overlay commands center+size at
+# invoke time, and `omacase center --auto` (fired by the SketchyBar space
+# handler) centers any OTHER newly floated window on its display.
 #
 # To add an app: find its bundle id with  `osascript -e 'id of app "Name"'`
 # (or `mdls -name kMDItemCFBundleIdentifier /Applications/Name.app`), then copy

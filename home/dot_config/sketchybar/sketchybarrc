@@ -142,14 +142,18 @@ fi
 
 update_icons "$WID"
 
-# Auto-reflow (`omacase retile --auto`): every handler invocation is a window
-# or workspace event, so this is the hook for display-aware column layout.
-# Only the focused workspace's own item fires it — one retile per event, not
-# one per pill — and retile itself no-ops unless the workspace's tiled-window
-# membership actually changed, so focus churn and repaints stay cheap.
+# Auto-reflow (`omacase retile --auto`) + float centering (`omacase center
+# --auto`): every handler invocation is a window or workspace event, so this
+# is the hook for display-aware column layout and for centering newly floated
+# windows (AeroSpace's on-window-detected can float but not position them).
+# Only the focused workspace's own item fires them — once per event, not once
+# per pill — and both no-op unless something actually changed (retile keys on
+# tiled-window membership, center on never-seen floating window ids), so focus
+# churn and repaints stay cheap.
 # Backgrounded: the bar repaint must never wait on window rearrangement.
 if [ "$WID" = "$FOCUSED" ]; then
   /opt/homebrew/bin/omacase retile --auto >/dev/null 2>&1 &
+  /opt/homebrew/bin/omacase center --auto >/dev/null 2>&1 &
 fi
 HANDLER
 chmod +x "$HOME/.config/sketchybar/space_handler.sh"
