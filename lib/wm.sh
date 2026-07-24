@@ -301,9 +301,10 @@ omacase_retile() {
 # join-all-Spaces behavior can't help); instead aerospace.toml's
 # exec-on-workspace-change fires this after every switch. Floats visible on
 # ANOTHER monitor stay put — they're already on-screen, and yanking them across
-# displays is exactly what "omnipresent" shouldn't do. Focus is never stolen
-# (no --focus-follows-window), and moving a float doesn't disturb tiling, so
-# the retile/center hooks this indirectly triggers both no-op.
+# displays is exactly what "omnipresent" shouldn't do. Moving a float doesn't
+# disturb tiling, so the retile/center hooks this indirectly triggers both
+# no-op; the foreground pass below briefly focuses each float but always hands
+# focus straight back.
 omacase_follow() {
   ensure_brew_env   # invoked from AeroSpace's exec env, whose PATH lacks Homebrew
   have aerospace || abort "follow needs AeroSpace — \`omacase wm\` (re)starts it."
@@ -317,6 +318,30 @@ omacase_follow() {
     run aerospace move-node-to-workspace "$focused" --window-id "$id" 2>/dev/null || true
   done < <(aerospace list-windows --all --format '%{window-id}|%{workspace}|%{window-parent-container-layout}' \
              2>/dev/null | awk -F'|' '$3 == "floating" {print $1 "|" $2}' || true)
+
+  # Keep omnipresent floats in the FOREGROUND too: a float that just followed
+  # you (or was already here) otherwise lands behind the workspace's tiles.
+  # macOS refuses to stack an inactive app's window above the active app's
+  # (AXRaise is silently ignored; beating it needs yabai-style SIP hacks), so
+  # briefly focus each float — activation is the only public API that raises
+  # across apps — then hand focus straight back. Net effect: floats sit above
+  # everything except the window you're actually working in. Floats of
+  # macOS-hidden apps are skipped: focusing one would pull an overlay the
+  # user toggled away back on screen.
+  local hidden prev fid app danced=""
+  hidden="$(osascript -e 'tell application "System Events" to get name of every process whose visible is false' \
+              2>/dev/null | tr ',' '\n' | sed 's/^ *//' || true)"
+  prev="$(aerospace list-windows --focused --format '%{window-id}' 2>/dev/null || true)"
+  while IFS='|' read -r fid app; do
+    [ -n "$fid" ] || continue
+    [ "$fid" = "$prev" ] && continue
+    printf '%s\n' "$hidden" | grep -qxF "$app" && continue
+    run aerospace focus --window-id "$fid" 2>/dev/null || true
+    danced=1
+  done < <(aerospace list-windows --workspace focused \
+             --format '%{window-id}|%{window-parent-container-layout}|%{app-name}' \
+             2>/dev/null | awk -F'|' '$2 == "floating" {print $1 "|" $3}' || true)
+  [ -n "$danced" ] && [ -n "$prev" ] && { run aerospace focus --window-id "$prev" 2>/dev/null || true; }
   return 0
 }
 
