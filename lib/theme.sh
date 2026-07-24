@@ -548,6 +548,9 @@ _theme_accent() {
   # Graphite also greys the window controls; every other accent uses variant 1.
   local variant=1; [ "$idx" = "-1" ] && variant=6
   run defaults write -g AppleAquaColorVariant -int "$variant"
+  # System Settings reads these keys once at launch and never refreshes, so an
+  # open instance would keep showing the previous accent; quit it (stateless).
+  pgrep -xq "System Settings" && { run killall "System Settings" 2>/dev/null || true; }
 
   if is_dryrun; then
     printf '\033[2m[dry-run]\033[0m broadcast AppleColorPreferencesChangedNotification\n'
