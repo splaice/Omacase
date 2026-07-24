@@ -30,7 +30,7 @@ info "Dock: pinned left, always visible, small tiles, no magnification, no recen
 run defaults write com.apple.dock orientation -string "left"
 run defaults write com.apple.dock autohide -bool false
 run defaults write com.apple.dock show-recents -bool false
-run defaults write com.apple.dock tilesize -int 32 # slider floor is 16; 32 keeps icons clickable
+run defaults write com.apple.dock tilesize -int 24 # slider floor is 16
 run defaults write com.apple.dock magnification -bool false
 run defaults write com.apple.dock mru-spaces -bool false # don't auto-rearrange Spaces
 
