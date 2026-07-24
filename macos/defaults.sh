@@ -26,8 +26,8 @@ run defaults write com.apple.finder _FXShowPosixPathInTitle -bool true
 run defaults write com.apple.finder FXDefaultSearchScope -string "SCcf" # search current folder
 run defaults write com.apple.desktopservices DSDontWriteNetworkStores -bool true
 
-info "Dock: pinned right, always visible, small tiles, no magnification, no recents"
-run defaults write com.apple.dock orientation -string "right"
+info "Dock: pinned left, always visible, small tiles, no magnification, no recents"
+run defaults write com.apple.dock orientation -string "left"
 run defaults write com.apple.dock autohide -bool false
 run defaults write com.apple.dock show-recents -bool false
 run defaults write com.apple.dock tilesize -int 32 # slider floor is 16; 32 keeps icons clickable
