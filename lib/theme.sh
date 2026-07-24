@@ -474,10 +474,90 @@ _theme_appearance() {
   local dark=true
   _theme_is_light "$1" && dark=false
   info "macOS appearance → $([ "$dark" = true ] && echo Dark || echo Light)"
+  # macOS's sunrise/sunset auto-switching would flip the mode back later and
+  # fight the theme; clear it (absent key = off, so delete may "fail" — fine).
+  run defaults delete -g AppleInterfaceStyleSwitchesAutomatically 2>/dev/null || true
   # System Events drives the global Light/Dark toggle; needs Automation consent
   # for the controlling terminal (granted once, on first prompt).
   run osascript -e "tell application \"System Events\" to tell appearance preferences to set dark mode to $dark" >/dev/null 2>&1 \
     || warn "Couldn't set macOS appearance (grant Automation to your terminal: System Settings → Privacy & Security → Automation)."
+  _theme_accent "$1"
+}
+
+# macOS only offers these eight accents (plus multicolor) — arbitrary hex isn't
+# supported — so themes snap to the closest one by hue. AppleAccentColor
+# index | highlight name | hue (degrees) of the system swatch behind it.
+# Graphite isn't listed: near-grey accents snap to it via the chroma guard.
+_ACCENT_PRESETS='0|Red|3
+1|Orange|35
+2|Yellow|48
+3|Green|129
+4|Blue|211
+5|Purple|280
+6|Pink|349'
+
+_theme_accent_nearest() { # <rrggbb> → "index|Name" (nearest preset by hue)
+  local hex="$1"
+  local r=$((16#${hex:0:2})) g=$((16#${hex:2:2})) b=$((16#${hex:4:2}))
+  local max=$r min=$r
+  [ "$g" -gt "$max" ] && max=$g; [ "$b" -gt "$max" ] && max=$b
+  [ "$g" -lt "$min" ] && min=$g; [ "$b" -lt "$min" ] && min=$b
+  # Near-grey accents (white, vantablack, …) have no meaningful hue → Graphite.
+  local delta=$((max - min))
+  if [ "$delta" -lt 25 ]; then printf '%s\n' '-1|Graphite'; return 0; fi
+  # Integer HSV hue. Matching by hue (not RGB distance) keeps a light mint on
+  # the Green preset instead of drifting to whichever swatch is nearest in RGB;
+  # lightness doesn't matter since macOS renders its own swatch color anyway.
+  local h
+  if [ "$max" -eq "$r" ]; then h=$(( (60 * (g - b) / delta + 360) % 360 ))
+  elif [ "$max" -eq "$g" ]; then h=$(( 60 * (b - r) / delta + 120 ))
+  else h=$(( 60 * (r - g) / delta + 240 )); fi
+  local idx nm ph d best="" best_d=""
+  while IFS='|' read -r idx nm ph; do
+    d=$(( h - ph )); [ "$d" -lt 0 ] && d=$(( -d ))
+    [ "$d" -gt 180 ] && d=$(( 360 - d ))
+    if [ -z "$best_d" ] || [ "$d" -lt "$best_d" ]; then best_d=$d; best="$idx|$nm"; fi
+  done <<< "$_ACCENT_PRESETS"
+  printf '%s\n' "$best"
+}
+
+# Sync the macOS accent + selection-highlight colors to the theme's accent
+# (the ACCENT= line every sketchybar fragment carries). The accent snaps to
+# the nearest system preset; the highlight is the exact theme accent blended
+# 70% toward white — the same pastel treatment macOS gives its own highlight
+# swatches — so selected text stays readable. defaults(1) only reaches newly
+# launched apps; broadcasting the notification System Settings sends makes
+# running AppKit apps repaint live. Best-effort; needs no extra permissions.
+_theme_accent() {
+  local name="$1" dir hex
+  dir="$(_theme_materialize "$name" 2>/dev/null)" || return 0
+  hex="$(sed -n 's/.*ACCENT=0[xX][fF][fF]\([0-9a-fA-F]\{6\}\).*/\1/p' "$dir/sketchybar" 2>/dev/null | head -1)"
+  [ -n "$hex" ] || return 0
+
+  local idx nm
+  IFS='|' read -r idx nm <<< "$(_theme_accent_nearest "$hex")"
+  [ -n "$idx" ] || return 0
+
+  local r=$((16#${hex:0:2})) g=$((16#${hex:2:2})) b=$((16#${hex:4:2})) hl
+  hl="$(LC_ALL=C awk -v r="$r" -v g="$g" -v b="$b" -v n="$nm" \
+    'BEGIN { printf "%.6f %.6f %.6f %s", (r+(255-r)*0.7)/255, (g+(255-g)*0.7)/255, (b+(255-b)*0.7)/255, n }')"
+
+  info "macOS accent → $nm (from #$hex)"
+  run defaults write -g AppleAccentColor -int "$idx"
+  run defaults write -g AppleHighlightColor -string "$hl"
+  # Graphite also greys the window controls; every other accent uses variant 1.
+  local variant=1; [ "$idx" = "-1" ] && variant=6
+  run defaults write -g AppleAquaColorVariant -int "$variant"
+
+  if is_dryrun; then
+    printf '\033[2m[dry-run]\033[0m broadcast AppleColorPreferencesChangedNotification\n'
+    return 0
+  fi
+  osascript >/dev/null 2>&1 <<'OSA' || true
+use framework "Foundation"
+set nc to current application's NSDistributedNotificationCenter's defaultCenter()
+nc's postNotificationName:"AppleColorPreferencesChangedNotification" object:(missing value) userInfo:(missing value) deliverImmediately:true
+OSA
 }
 
 _link() { # _link <src> <dest>  (only if src exists)

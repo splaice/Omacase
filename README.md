@@ -91,7 +91,9 @@ Install/update then trusts:
 
 > **One switch, themed everywhere.** `omacase theme <name>` repoints Ghostty,
 > SketchyBar, JankyBorders, btop, Neovim, and Starship — and also flips macOS
-> Light/Dark, the Claude Code CLI theme, and the desktop wallpaper to match.
+> Light/Dark, snaps the macOS accent color to the nearest system preset (with a
+> selection highlight tinted from the theme's exact accent), and matches the
+> Claude Code CLI theme and desktop wallpaper.
 > Pick from 21 themes (run `omacase theme` to list).
 > Omarchy-derived theme data is downloaded and cached at runtime; see
 > `THIRD_PARTY_NOTICES.md`. Want your own? See

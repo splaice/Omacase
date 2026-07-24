@@ -257,6 +257,22 @@ EOF
     grep -q 'return "sample-nvim"' "$out/nvim.lua"
 }
 
+test_theme_accent_snaps_to_nearest_preset() {
+  OMACASE_ROOT="$ROOT"
+  # shellcheck source=/dev/null
+  source "$ROOT/lib/common.sh"
+  # shellcheck source=/dev/null
+  source "$ROOT/lib/theme.sh"
+  # Exact preset hits, off-lightness hues (mint → Green, magenta → Pink),
+  # and greys of any lightness → Graphite.
+  [ "$(_theme_accent_nearest 007aff)" = "4|Blue" ] &&
+    [ "$(_theme_accent_nearest ff3b30)" = "0|Red" ] &&
+    [ "$(_theme_accent_nearest 82fb9c)" = "3|Green" ] &&
+    [ "$(_theme_accent_nearest f12eaf)" = "6|Pink" ] &&
+    [ "$(_theme_accent_nearest ffffff)" = "-1|Graphite" ] &&
+    [ "$(_theme_accent_nearest 303030)" = "-1|Graphite" ]
+}
+
 run_test "shell_quote round-trips shell paths" test_shell_quote_round_trips
 run_test "applescript_string escapes launcher paths" test_applescript_string_escapes_quotes
 run_test "_auto_backup creates first restore point" test_auto_backup_creates_first_snapshot
@@ -272,6 +288,7 @@ run_test "aerospace persistent-workspaces cover bindings" test_aerospace_persist
 run_test "cli rejects unknown commands" test_cli_unknown_command_fails
 run_test "cli help and version work" test_cli_help_and_version
 run_test "theme renderer creates generated fragments" test_theme_renderer_creates_fragments
+run_test "theme accent snaps to nearest macOS preset" test_theme_accent_snaps_to_nearest_preset
 
 if [ "$FAILURES" -gt 0 ]; then
   printf '%s test(s) failed\n' "$FAILURES" >&2
