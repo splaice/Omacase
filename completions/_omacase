@@ -29,19 +29,10 @@ _omacase() {
         'wp:pick the active theme background (list|next|prev|<n>)'
         'webapp:open an Omarchy web app (no name = list)'
         'appearance:toggle/set macOS Light/Dark'
-        'launchers:generate Spotlight .app launchers for web apps'
-        'wm:(re)start the AeroSpace window manager + services'
-        'grid:toggle an AeroSpace workspace (default focused) into a 2x2 grid'
-        'retile:reflow the focused workspace into per-display columns'
-        'center:center the focused floating window on its display'
-        'follow:pull floating windows onto the focused workspace (sticky floats)'
-        'workspace:switch to an AeroSpace workspace (1-9)'
-        'ws:switch to an AeroSpace workspace (1-9)'
+        'launchers:generate Spotlight .app launchers for web apps and Omacase Menu'
+        'wm:start and verify OmniWM'
         'terminal:open a new Ghostty window in the running instance'
         'term:open a new Ghostty window in the running instance'
-        'btop:toggle a centered, chromeless btop popup'
-        'caffeinate:toggle a stay-awake power assertion'
-        'caffeine:toggle a stay-awake power assertion'
         'files:toggle a centered ranger file-manager popup'
         'browser:open/focus the system default browser'
         'music:toggle a centered music overlay'
@@ -51,12 +42,13 @@ _omacase() {
         'message:toggle a centered iMessage overlay'
         'messages:toggle a centered iMessage overlay'
         'todoist:toggle a centered Todoist overlay'
+        'keybinds:display the OmniWM and Omacase key reference'
         'doctor:check permissions and missing grants'
         'backup:snapshot current dotfiles & macOS defaults'
         'restore:roll back to a snapshot (--list to see them)'
         'config:open the config directory'
         'menu:interactive TUI'
-        'sysmenu:toggle the global system menu popup (Super+Space)'
+        'sysmenu:toggle the Omacase system menu popup'
         'notify:pop a native macOS notification (for scripts/keybinds)'
         'version:print version'
         'uninstall:remove omacase-managed config (keeps your apps)'
@@ -81,20 +73,8 @@ _omacase() {
         launchers)
           _values 'action' build remove && ret=0
           ;;
-        workspace|ws|grid)
-          _values 'workspace' 1 2 3 4 5 6 7 8 9 && ret=0
-          ;;
-        retile)
-          _values 'flag' '--auto[reflow only if window membership changed]' && ret=0
-          ;;
-        center)
-          _values 'flag' '--auto[center only never-seen floating windows]' && ret=0
-          ;;
         wallpaper|wp)
           _values 'wallpaper' list next prev pick && ret=0
-          ;;
-        caffeinate|caffeine)
-          _values 'state' toggle on off status && ret=0
           ;;
         music)
           _values 'music app' spotify apple && ret=0

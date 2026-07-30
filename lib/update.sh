@@ -34,33 +34,15 @@ omacase_update() {
   success "omacase up to date."
 }
 
-# `omacase outdated` — print the number of outdated Homebrew packages, and (best
-# effort) paint the SketchyBar `update` indicator. Drives the bottom-bar
-# update-available icon, but also useful on its own.
-#
-# brew is run inside a fresh login shell on purpose: when the SketchyBar daemon
-# spawns brew directly, brew dies in Hardware::CPU.cores ("undefined method
-# 'success?' for nil"); a login-shell process sidesteps that. NO_AUTO_UPDATE
-# keeps it read-only and fast — `omacase update` does the actual fetch/upgrade.
+# `omacase outdated` — print the number of outdated Homebrew packages.
+# NO_AUTO_UPDATE keeps it read-only and fast; `omacase update` does the fetch.
 omacase_outdated() {
   ensure_brew_env
   local n
-  # `grep -c` exits 1 on zero matches; without the `|| true` that status would
-  # propagate out of the substitution and set -e would kill us before the
-  # drawing=off branch — leaving the bar's update indicator stuck on.
+  # `grep -c` exits 1 on zero matches, hence the guarded pipeline.
   n="$(/bin/zsh -lc 'HOMEBREW_NO_AUTO_UPDATE=1 brew outdated --quiet 2>/dev/null | grep -c "." || true' 2>/dev/null)"
   n="${n//[^0-9]/}"; n="${n:-0}"
   # Future: add omacase self-updates here once omacase ships versioned releases
   # (compare VERSION to the latest tag) and fold into the count.
-
-  if have sketchybar; then
-    sketchybar_theme_env
-    if [ "$n" -gt 0 ]; then
-      sketchybar --set update drawing=on icon.color="$ACCENT" \
-        label="$n" label.color="$LABEL_COLOR" 2>/dev/null || true
-    else
-      sketchybar --set update drawing=off 2>/dev/null || true
-    fi
-  fi
   echo "$n"
 }

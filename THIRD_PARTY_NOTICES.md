@@ -20,6 +20,13 @@ Downloaded Omarchy artifacts are cached under `~/.local/share/omacase/upstream/`
 and `~/.local/share/omacase/backgrounds/`; generated local app fragments are
 written under `~/.local/share/omacase/generated/themes/`.
 
+## OmniWM
+
+Omacase installs and seeds OmniWM as its window environment. OmniWM is an
+independent project distributed under the GNU General Public License v2.0.
+
+https://github.com/BarutSRB/OmniWM
+
 ## Runtime Dependencies
 
 Third-party applications, formulae, casks, taps, Neovim plugins, and npm-backed

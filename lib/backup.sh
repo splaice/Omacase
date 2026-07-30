@@ -1,6 +1,7 @@
 # shellcheck shell=bash
 # Backup & restore — Omacase snapshots any pre-existing state it is about to
-# overwrite (dotfiles + macOS defaults) so a run is always reversible.
+# overwrite (dotfiles + mutable OmniWM settings + macOS defaults) so a run is
+# always reversible.
 #
 #   omacase backup [label]     create a snapshot now
 #   omacase restore [id]       restore a snapshot (default: most recent)
@@ -20,6 +21,8 @@ OMACASE_DEFAULTS_DOMAINS=(
   com.apple.finder
   com.apple.desktopservices
   com.apple.dock
+  com.apple.spaces
+  com.apple.WindowManager
   com.apple.screencapture
   com.apple.AppleMultitouchTrackpad
   com.apple.driver.AppleBluetoothMultitouch.trackpad
@@ -39,6 +42,46 @@ _managed_targets() {
     done )
 }
 
+# Individual file targets linked from home/. Used to tell a real collision from
+# an unrelated file that merely lives beside Omacase config in the same app
+# directory.
+_managed_file_targets() {
+  local src="$OMACASE_ROOT/home" f rel
+  while IFS= read -r f; do
+    rel="${f#"$src"/}"
+    printf '%s/%s\n' "$HOME" \
+      "$(printf '%s' "$rel" | sed -e 's#^dot_#.#' -e 's#/dot_#/.#g')"
+  done < <(find "$src" -type f ! -name '.DS_Store' ! -name '*.pyc' ! -path '*/__pycache__/*')
+}
+
+_managed_theme_targets() {
+  printf '%s\n' \
+    "$HOME/.config/ghostty/theme" \
+    "$HOME/.config/omacase/theme.sh" \
+    "$HOME/.config/btop/themes/current.theme" \
+    "$HOME/.config/nvim/lua/theme.lua" \
+    "$HOME/.config/starship/theme.toml"
+}
+
+# Manual snapshots also capture OmniWM's live, user-editable settings. Omacase
+# seeds this file once but deliberately does not symlink or overwrite it.
+_backup_targets() {
+  _managed_targets
+  echo "$HOME/.config/omniwm/settings.toml"
+}
+
+# Restore manifests created by earlier Omacase releases can contain top-level
+# paths that the current release no longer manages. Keep this exact allowlist
+# separate from _backup_targets: new snapshots should not capture these paths,
+# but old snapshots must remain restorable after an upgrade.
+_legacy_restore_targets() {
+  printf '%s\n' \
+    "$HOME/.config/aerospace" \
+    "$HOME/.config/borders" \
+    "$HOME/.config/karabiner" \
+    "$HOME/.config/sketchybar"
+}
+
 # True if PATH is a symlink that already points inside this repo or Omacase's
 # generated theme cache.
 _is_omacase_link() {
@@ -54,15 +97,28 @@ _is_omacase_link() {
 # --- backup ------------------------------------------------------------------
 omacase_backup() {
   local label="${1:-manual}"
-  local id; id="$(date +%Y%m%d-%H%M%S)"
-  local dest="$OMACASE_BACKUPS/$id"
+  local base id dest suffix=0
+  base="$(date +%Y%m%d-%H%M%S)"
+  id="$base"
+  dest="$OMACASE_BACKUPS/$id"
 
-  info "Creating backup $id ($label)"
   if is_dryrun; then
+    info "Creating backup $id ($label)"
     log "[dry-run] would snapshot dotfiles + defaults into $dest"
     return 0
   fi
-  mkdir -p "$dest/files" "$dest/defaults"
+  local old_umask
+  old_umask="$(umask)"
+  umask 077
+  mkdir -p "$OMACASE_BACKUPS"
+  chmod 700 "$OMACASE_STATE" "$OMACASE_BACKUPS"
+  while ! mkdir "$dest" 2>/dev/null; do
+    suffix=$((suffix + 1))
+    id="$base-$suffix"
+    dest="$OMACASE_BACKUPS/$id"
+  done
+  info "Creating backup $id ($label)"
+  mkdir "$dest/files" "$dest/defaults"
   {
     echo "label=$label"
     echo "version=$(cat "$OMACASE_ROOT/VERSION" 2>/dev/null)"
@@ -84,7 +140,7 @@ omacase_backup() {
     else
       echo "ABSENT $rel" >> "$dest/manifest"    # record so restore can remove what we create
     fi
-  done < <(_managed_targets)
+  done < <(_backup_targets)
 
   local d
   for d in "${OMACASE_DEFAULTS_DOMAINS[@]}"; do
@@ -93,6 +149,7 @@ omacase_backup() {
 
   mkdir -p "$OMACASE_STATE"
   echo "$id" > "$OMACASE_STATE/last-backup"
+  umask "$old_umask"
   success "Backup $id saved ($n existing dotfile target(s) + ${#OMACASE_DEFAULTS_DOMAINS[@]} defaults domains)."
   log    "Restore anytime with:  omacase restore $id"
 }
@@ -107,13 +164,27 @@ _auto_backup() {
   fi
 
   local t
+  # A top-level symlink must be replaced with a real directory before leaf
+  # links are created, so snapshot it even if none of today's leaf names exist.
+  while IFS= read -r t; do
+    [ -n "$t" ] || continue
+    case "$t" in
+      "$HOME/.config/"*)
+        [ -L "$t" ] || continue
+        omacase_backup pre-install
+        return ;;
+    esac
+  done < <(_managed_targets)
+
+  # Real app config directories are safe to keep. Back up only when a specific
+  # file Omacase will replace is not already one of our links.
   while IFS= read -r t; do
     [ -n "$t" ] || continue
     if ! _is_omacase_link "$t" && { [ -e "$t" ] || [ -L "$t" ]; }; then
       omacase_backup pre-install
       return
     fi
-  done < <(_managed_targets)
+  done < <(_managed_file_targets; _managed_theme_targets)
   info "No pre-existing conflicting dotfiles — keeping existing backup."
 }
 
@@ -126,7 +197,7 @@ _rel_is_managed_target() {
   while IFS= read -r target; do
     managed_rel="${target#"$HOME"/}"
     [ "$rel" = "$managed_rel" ] && return 0
-  done < <(_managed_targets)
+  done < <(_backup_targets; _legacy_restore_targets)
   return 1
 }
 
@@ -138,7 +209,7 @@ _valid_restore_rel() {
 }
 
 _validate_restore_manifest() {
-  local manifest="$1" status rel extra line=0
+  local manifest="$1" files_root="$2" status rel extra source line=0
   [ -f "$manifest" ] || return 0
   while read -r status rel extra; do
     line=$((line + 1))
@@ -146,7 +217,21 @@ _validate_restore_manifest() {
     [ -z "${extra:-}" ] || abort "Invalid backup manifest line $line: too many fields."
     case "$status" in PRESENT|ABSENT) ;; *) abort "Invalid backup manifest line $line: unknown status '$status'." ;; esac
     _valid_restore_rel "$rel" || abort "Invalid backup manifest line $line: unsafe path '$rel'."
+    if [ "$status" = "PRESENT" ]; then
+      source="$files_root/$rel"
+      [ -e "$source" ] || [ -L "$source" ] || \
+        abort "Invalid backup manifest line $line: saved file is missing for '$rel'."
+    fi
   done < "$manifest"
+}
+
+_validate_restore_defaults() {
+  local dir="$1" plist
+  for plist in "$dir"/defaults/*.plist; do
+    [ -e "$plist" ] || continue
+    plutil -lint "$plist" >/dev/null 2>&1 || \
+      abort "Invalid defaults snapshot: $(basename "$plist")."
+  done
 }
 
 # --- restore -----------------------------------------------------------------
@@ -157,7 +242,8 @@ omacase_restore() {
   _valid_backup_id "$id" || abort "Invalid backup id '$id'. (omacase restore --list)"
   local dir="$OMACASE_BACKUPS/$id"
   [ -d "$dir" ] || abort "No such backup '$id'. (omacase restore --list)"
-  _validate_restore_manifest "$dir/manifest"
+  _validate_restore_manifest "$dir/manifest" "$dir/files"
+  _validate_restore_defaults "$dir"
 
   warn "Restoring backup $id ($(grep '^label=' "$dir/meta" 2>/dev/null | cut -d= -f2))."
   warn "This overwrites the current Omacase-managed dotfiles & defaults with the snapshot."

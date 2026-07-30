@@ -50,19 +50,8 @@ notify() {
   omacase_notify --title "Omacase" --image "$OMACASE_ROOT/assets/omacase-icon.png" "$@"
 }
 
-# Load the live SketchyBar theme vars (ACCENT, LABEL_COLOR, MUTED, …), falling
-# back to the Catppuccin Mocha values when no theme fragment is linked yet —
-# the one place those fallback hexes live.
-sketchybar_theme_env() {
-  source "$HOME/.config/sketchybar/theme.sh" 2>/dev/null || true
-  ACCENT="${ACCENT:-0xff89b4fa}"
-  LABEL_COLOR="${LABEL_COLOR:-0xffcdd6f4}"
-  MUTED="${MUTED:-0xff6c7086}"
-}
-
-# Like ensure_brew_env, but for commands that have a brew-free fallback
-# (notify's osascript backend, /usr/bin/caffeinate): wire up Homebrew when
-# present, carry on without it otherwise — never abort the caller.
+# Like ensure_brew_env, but for commands that have a brew-free fallback:
+# wire up Homebrew when present, carry on without it otherwise.
 brew_env_if_available() {
   if [ -x /opt/homebrew/bin/brew ]; then eval "$(/opt/homebrew/bin/brew shellenv)"; fi
 }
@@ -101,6 +90,7 @@ run() {
 
 ensure_state_dir() {
   run mkdir -p "$OMACASE_STATE"
+  run chmod 700 "$OMACASE_STATE"
 }
 
 shell_quote() {
@@ -127,39 +117,6 @@ can_set_appearance() {
     true|false) return 0 ;;
     *)          return 1 ;;
   esac
-}
-
-# --- conflicting window managers ---------------------------------------------
-# Loop (com.MrKai77.Loop) is a third-party window manager. Its global drag-to-
-# snap and keyboard shortcuts fight AeroSpace for control of the same
-# windows, producing flicker and lost focus. Detect it and offer to quit it +
-# stop it relaunching at login. Used by both `install` and `doctor`.
-# Returns 0 when there's no live conflict, 1 when Loop is still running after.
-_loop_installed() { [ -d "/Applications/Loop.app" ] || [ -d "$HOME/Applications/Loop.app" ]; }
-_loop_running()   { pgrep -x Loop >/dev/null 2>&1; }
-
-check_loop_conflict() {
-  _loop_installed || return 0
-  if ! _loop_running; then
-    info "Loop is installed but not running — keep it closed to avoid window-manager conflicts."
-    return 0
-  fi
-
-  warn "Loop is running — it conflicts with the Omacase window manager (AeroSpace)."
-  if confirm "Quit Loop now and stop it launching at login?"; then
-    run osascript -e 'tell application "Loop" to quit' >/dev/null 2>&1 || run killall Loop >/dev/null 2>&1 || true
-    # Best-effort: only removes a classic System Events login item. Apps using
-    # SMAppService won't appear here, so we also tell the user to toggle it off.
-    run osascript -e 'tell application "System Events" to delete login item "Loop"' >/dev/null 2>&1 || true
-    if _loop_running; then
-      warn "Loop did not quit — close it manually (menu bar → Quit)."
-      return 1
-    fi
-    success "Loop quit. Also disable 'Launch at login' in Loop → Settings to be sure."
-    return 0
-  fi
-  warn "Leaving Loop running — expect window-management conflicts with Omacase."
-  return 1
 }
 
 # --- gum (optional TUI sugar) ------------------------------------------------

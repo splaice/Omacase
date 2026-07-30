@@ -21,7 +21,7 @@ Rows with fewer than 5 fields are ignored everywhere (picker, `_theme_known`).
 
 Add the manifest row — that's it. `omacase theme <name>` downloads
 `themes/<upstream>/colors.toml` from the Omarchy repo, caches it under
-`~/.local/share/omacase/upstream/`, and renders the six app fragments into
+`~/.local/share/omacase/upstream/`, and renders the five app fragments into
 `~/.local/share/omacase/generated/themes/<name>/`. Wallpapers are fetched on
 first use. Make sure the `nvim` column names a colorscheme LazyVim can load
 (add a plugin spec to `home/dot_config/nvim/lua/plugins/colorscheme.lua` if it
@@ -30,11 +30,10 @@ isn't bundled already).
 ## Local theme
 
 1. Add the manifest row with `source=local`, `upstream=-`.
-2. Create `themes/<name>/` containing the six fragments `omacase theme` links
+2. Create `themes/<name>/` containing the five fragments `omacase theme` links
    (see `_theme_links` in `lib/theme.sh`):
    - `ghostty` — Ghostty color config (background/foreground/cursor + 16 palette slots)
-   - `sketchybar` — exports `BAR_COLOR`, `LABEL_COLOR`, `ACCENT`, `MUTED`
-   - `borders` — exports `ACTIVE_BORDER`, `INACTIVE_BORDER`
+   - `palette` — exports neutral background/foreground/accent/muted colors
    - `btop` — a btop theme file
    - `starship` — a Starship config fragment
    - `nvim.lua` — returns the colorscheme name (string)

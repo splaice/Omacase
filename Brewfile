@@ -1,17 +1,16 @@
+# frozen_string_literal: true
+
 # omacase Brewfile — the opinionated package set. `brew bundle` is idempotent.
 # Edit, then `omacase update` (or `brew bundle`) to converge.
 
 # --- Window management & desktop -------------------------------------------
-tap "nikitabobko/tap"
-tap "FelixKratz/formulae"
-cask "nikitabobko/tap/aerospace"     # tiling WM (no SIP disable, i3-style)
-brew "FelixKratz/formulae/sketchybar" # status bar (Waybar analog)
-brew "splaice/formulae/borders"       # JankyBorders fork (+square_apps); local tap synced by install.sh
+tap "BarutSRB/tap"
+cask "omniwm" # native Niri + Hyprland Dwindle WM, workspace bar, borders, quake terminal
 
 # --- The "make Mac behave" set ---------------------------------------------
 # Launcher is macOS Spotlight (⌘Space) — Tahoe's Spotlight has actions,
 # clipboard history, and Quick Keys built in, so no third-party launcher.
-cask "karabiner-elements" # mints the Super key (right ⌘ → ⌃⌥⌘) for AeroSpace
+# OmniWM owns its keyboard shortcuts directly.
 # Menu bar is stock macOS — no third-party menu-bar manager.
 
 # --- Terminal & shell -------------------------------------------------------
@@ -23,8 +22,8 @@ brew "fd"                # find
 brew "ripgrep"           # grep
 brew "zoxide"            # cd
 brew "fzf"               # fuzzy finder
-brew "btop"              # system monitor
-brew "ranger"            # TUI file manager (Super+Shift+F popup via `omacase files`)
+brew "btop"              # full terminal system monitor (OmniWM also has a compact native stats popup)
+brew "ranger"            # TUI file manager (`omacase files` opens it as an optional popup)
 brew "atuin"             # shell history
 brew "git-delta"         # git diffs
 brew "tmux"              # multiplexer
@@ -47,25 +46,24 @@ brew "just"              # command runner (justfiles)
 # --- AI coding & local LLM --------------------------------------------------
 # Native binaries → Homebrew. (Fast-moving npm AI CLIs — gemini, mermaid, pi —
 # are mise `npm:` tools instead; see home/dot_config/mise/config.toml. Claude
-# Code and the Grok CLI self-manage via their own installers — Grok is installed
-# into ~/.grok by install.sh's `_grok_install`, so neither is declared here.)
+# Code and the Grok CLI self-manage via their own installers — Grok can be
+# explicitly enabled with OMACASE_INSTALL_GROK=1, so neither is declared here.)
 cask "codex"             # OpenAI Codex CLI (official Rust binary; depends on ripgrep)
 brew "opencode"          # opencode — terminal AI coding agent (homebrew-core)
 cask "ollama-app"        # Ollama — local LLM runner (menu-bar app, auto-updates)
 tap  "finbarr/tap"
 brew "finbarr/tap/yolobox" # run AI coding agents in a sandboxed container
 
-# --- Overlay apps -----------------------------------------------------------
-# Centered floating overlays toggled by Super-key chords (see `omacase`
-# music/obsidian/1password/todoist and aerospace.toml). Bundled so the keybinds
-# work out of the box; AeroSpace floats each via its on-window-detected rule.
-cask "spotify"           # Super+M music overlay (Apple Music is stock)
-cask "obsidian"          # Super+O notes overlay
-cask "1password"         # Super+P password overlay
-cask "todoist-app"       # Super+T tasks overlay
+# --- Opinionated applications -----------------------------------------------
+# Omacase installs these and offers optional CLI/menu launch helpers. OmniWM's
+# own shortcuts remain untouched; its app rules decide which windows float.
+cask "spotify"           # music (Apple Music is stock)
+cask "obsidian"          # notes / knowledge base
+cask "1password"         # password manager
+cask "todoist-app"       # tasks
 
 # --- Dictation --------------------------------------------------------------
-cask "fluidvoice"        # offline voice-to-text (local model); needs Mic + Accessibility
+cask "fluidvoice" # offline voice-to-text (local model); needs Mic + Accessibility
 
 # --- Tooling ----------------------------------------------------------------
 brew "gum"               # TUI for `omacase menu`
@@ -78,4 +76,4 @@ cask "font-jetbrains-mono-nerd-font"
 # --- Browser ----------------------------------------------------------------
 # Brave is the dedicated `omacase webapp` browser (signed; opens chromeless
 # app windows) so ⌘Q on a web app never quits your daily/default browser.
-cask "brave-browser"     # Chromium + PWAs; pairs with Safari "Add to Dock"
+cask "brave-browser" # Chromium + PWAs; pairs with Safari "Add to Dock"

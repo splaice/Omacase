@@ -1,7 +1,7 @@
 #!/bin/bash
 # omacase bootstrap — the curl|bash entry point.
 #
-#   /bin/bash -c "$(curl -fsSL https://omacase.org/install)"
+#   /bin/bash -c "$(curl --proto '=https' --tlsv1.2 -fsSL https://omacase.org/install)"
 #
 # site/install (served at omacase.org/install) is an exact copy of this file —
 # edit HERE and run `cp boot.sh site/install`; tests/run.sh fails on drift.
@@ -28,9 +28,15 @@ fi
 
 # 2. Homebrew.
 if ! command -v brew >/dev/null 2>&1; then
+  installer="$(mktemp)"
+  trap 'rm -f "$installer"' EXIT
   info "Installing Homebrew…"
-  NONINTERACTIVE=1 /bin/bash -c \
-    "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+  curl --proto '=https' --tlsv1.2 -fsSL \
+    https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh \
+    -o "$installer"
+  NONINTERACTIVE=1 /bin/bash "$installer"
+  rm -f "$installer"
+  trap - EXIT
 fi
 # Put Apple Silicon Homebrew on PATH for this process.
 if [ -x /opt/homebrew/bin/brew ]; then

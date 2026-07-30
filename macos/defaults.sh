@@ -26,13 +26,19 @@ run defaults write com.apple.finder _FXShowPosixPathInTitle -bool true
 run defaults write com.apple.finder FXDefaultSearchScope -string "SCcf" # search current folder
 run defaults write com.apple.desktopservices DSDontWriteNetworkStores -bool true
 
-info "Dock: pinned left, always visible, small tiles, no magnification, no recents"
+info "Dock: pinned left, auto-hidden, small tiles, no magnification, no recents"
 run defaults write com.apple.dock orientation -string "left"
-run defaults write com.apple.dock autohide -bool false
+run defaults write com.apple.dock autohide -bool true
 run defaults write com.apple.dock show-recents -bool false
 run defaults write com.apple.dock tilesize -int 32 # slider floor is 16; 24 felt too small
 run defaults write com.apple.dock magnification -bool false
 run defaults write com.apple.dock mru-spaces -bool false # don't auto-rearrange Spaces
+
+info "Spaces: give every display its own Spaces (required by OmniWM; logout required)"
+run defaults write com.apple.spaces spans-displays -bool false
+
+info "Window management: disable Stage Manager so all tiled windows remain visible"
+run defaults write com.apple.WindowManager GloballyEnabled -bool false
 
 info "Screenshots: PNG into ~/Screenshots, no drop shadow"
 run mkdir -p "$HOME/Screenshots"
@@ -47,8 +53,7 @@ run defaults write com.apple.AppleMultitouchTrackpad TrackpadThreeFingerDrag -bo
 info "Trackpad: restore native 4-finger gestures (full-screen app swipe, Mission Control)"
 # Restore macOS's stock 4-finger gestures (2=on) in both trackpad domains:
 # Horiz is "swipe between full-screen apps", Vert is Mission Control (up) /
-# App Exposé (down). Omacase no longer reserves the 4-finger swipe for a window
-# manager, so hand it back to macOS.
+# App Exposé (down). Omacase leaves these gestures under macOS control.
 for dom in com.apple.AppleMultitouchTrackpad com.apple.driver.AppleBluetoothMultitouch.trackpad; do
   run defaults write "$dom" TrackpadFourFingerHorizSwipeGesture -int 2
   run defaults write "$dom" TrackpadFourFingerVertSwipeGesture -int 2

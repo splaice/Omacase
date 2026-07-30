@@ -85,7 +85,7 @@
       "type": "command",
       "key": "│ ├",
       "keyColor": "blue",
-      "text": "cat \"${XDG_STATE_HOME:-$HOME/.local/state}/omacase/wm\" 2>/dev/null || echo aerospace"
+      "text": "echo omniwm"
     },
     {
       "type": "terminal",

@@ -7,59 +7,72 @@ omacase_install() {
   ensure_brew_env
   dryrun_banner
   source "$OMACASE_ROOT/lib/backup.sh"
+  _preflight_command_links
 
-  step "1/10  Packages & apps (brew bundle)"
-  _sync_local_tap || warn "Local tap sync failed; borders may be stock."
-  # NO_REQUIRE_TAP_TRUST: Homebrew gates third-party taps behind a trust prompt.
-  # Omacase documents its curated taps and scopes this bypass to this command.
-  run env HOMEBREW_NO_REQUIRE_TAP_TRUST=1 brew bundle --file="$OMACASE_ROOT/Brewfile" \
+  step "1/9  Packages & apps (brew bundle)"
+  _brew_trust_declared_third_party
+  run brew bundle --file="$OMACASE_ROOT/Brewfile" \
     || warn "Some brew items failed; re-run later."
 
-  step "2/10  Link \`omacase\` onto PATH + shell completion"
+  step "2/9  Link \`omacase\` onto PATH + shell completion"
   _link_command
 
-  step "3/10  Safety backup (so this is reversible)"
+  step "3/9  Safety backup (so this is reversible)"
   _auto_backup
 
-  step "4/10  Dotfiles (symlinks)"
+  step "4/9  Dotfiles (symlinks)"
   _link_dotfiles
 
-  step "5/10  Tool runtimes & AI CLIs (mise + grok)"
+  step "5/9  Tool runtimes & AI CLIs (mise + optional grok)"
   _mise_install
   _grok_install
 
-  step "6/10  macOS defaults"
+  step "6/9  macOS defaults"
   bash "$OMACASE_ROOT/macos/defaults.sh"   # honors OMACASE_DRYRUN itself
 
-  step "7/10  Theme"
+  step "7/9  Theme"
   source "$OMACASE_ROOT/lib/theme.sh"
   # ${:-} (not `|| echo`): an existing-but-empty state file would otherwise
   # yield "" and drop a non-interactive install into the theme picker.
   local saved_theme; saved_theme="$(cat "$OMACASE_STATE/theme" 2>/dev/null || true)"
-  omacase_theme "${saved_theme:-catppuccin-mocha}"
+  OMACASE_BACKUP_READY=1 omacase_theme "${saved_theme:-catppuccin-mocha}"
   # Theme switching flips macOS Light/Dark; that needs Automation consent, which
   # the line above just prompted for on a fresh machine. Flag it if still blocked.
   is_dryrun || can_set_appearance || \
     warn "Grant your terminal Automation → System Events so themes can sync macOS Light/Dark (\`omacase doctor\` re-checks)."
 
-  step "8/10  Window manager + services"
-  check_loop_conflict || true   # Loop fights AeroSpace; offer to quit it first
+  step "8/9  Window manager"
   source "$OMACASE_ROOT/lib/wm.sh"
   omacase_wm
 
-  step "9/10  Spotlight launchers (web apps + appearance toggle)"
+  step "9/9  Spotlight launchers (web apps + Omacase Menu)"
   source "$OMACASE_ROOT/lib/actions.sh"
   omacase_launchers build || warn "Some launchers failed; re-run with \`omacase launchers build\`."
 
-  step "10/10  Launch desktop apps (triggers their permission prompts)"
-  _launch_apps
-
   step "Done"
   success "omacase installed."
-  warn "Next: run \`omacase doctor\` and grant Accessibility to AeroSpace, SketchyBar & Karabiner"
+  warn "Next: run \`omacase doctor\` and grant Accessibility to OmniWM"
   warn "  (plus Automation → System Events so themes can sync macOS Light/Dark)."
-  warn "macOS requires those grants by hand — no installer can click them for you."
+  warn "OmniWM also requires Displays have separate Spaces; a logout applies that setting."
   warn "Don't like the result? \`omacase restore\` rolls back to the pre-install snapshot."
+}
+
+# Homebrew requires an explicit trust decision before loading third-party
+# packages. Trust only the two exact items in the Brewfile instead of disabling
+# enforcement for the entire bundle or every package in their taps.
+_brew_trust_declared_third_party() {
+  if run brew tap BarutSRB/tap; then
+    run brew trust --cask BarutSRB/tap/omniwm || \
+      warn "Could not trust the OmniWM cask; Homebrew may skip it."
+  else
+    warn "Could not add the OmniWM Homebrew tap."
+  fi
+  if run brew tap finbarr/tap; then
+    run brew trust --formula finbarr/tap/yolobox || \
+      warn "Could not trust the yolobox formula; Homebrew may skip it."
+  else
+    warn "Could not add the yolobox Homebrew tap."
+  fi
 }
 
 # Install the tools declared in ~/.config/mise/config.toml (node + the npm: CLIs
@@ -72,17 +85,34 @@ _mise_install() {
 
 # Grok CLI (xAI) ships as a self-updating native binary that installs into
 # ~/.grok rather than Homebrew — the same model as Claude Code, so it lives here
-# instead of the Brewfile. Install from xAI's official script only when missing;
+# instead of the Brewfile. Explicit opt-in permits xAI's installer when missing;
 # it self-updates thereafter, and the managed dot_zshrc puts ~/.grok/bin on PATH
 # and loads its zsh completions.
 _grok_install() {
+  local installer
   if have grok || [ -x "$HOME/.grok/bin/grok" ]; then
     is_dryrun || success "grok already installed — it self-updates."
     return 0
   fi
+  if [ "${OMACASE_INSTALL_GROK:-0}" != 1 ]; then
+    info "Skipping Grok CLI's unpinned upstream installer (opt in with OMACASE_INSTALL_GROK=1)."
+    return 0
+  fi
   have curl || { warn "curl not found — skipping grok CLI install."; return 0; }
-  run bash -c 'curl -fsSL https://x.ai/cli/install.sh | bash' \
-    || warn "grok install failed; re-run \`omacase update\` or install from https://x.ai/cli."
+  if is_dryrun; then
+    log "[dry-run] would download xAI's installer over TLS, then run the complete file"
+    return 0
+  fi
+  installer="$(mktemp)"
+  if ! curl --proto '=https' --tlsv1.2 -fsSL \
+    https://x.ai/cli/install.sh -o "$installer"; then
+    rm -f "$installer"
+    warn "grok installer download failed; re-run \`omacase update\` or install from https://x.ai/cli."
+    return 0
+  fi
+  /bin/bash "$installer" || \
+    warn "grok install failed; re-run \`omacase update\` or install from https://x.ai/cli."
+  rm -f "$installer"
   _grok_strip_zshrc_block
 }
 
@@ -103,46 +133,16 @@ _grok_strip_zshrc_block() {
   rm -f "$tmp"
 }
 
-# Omacase ships a patched JankyBorders (adds `square_apps=` for square-cornered
-# apps like undecorated Ghostty) as formula/borders.rb, built from the
-# splaice/JankyBorders fork. It's served from a machine-local tap so brew
-# treats it like any other package (`brew services start splaice/formulae/borders` etc.).
-# Drop back to FelixKratz/formulae/borders in the Brewfile if upstream merges it.
-_sync_local_tap() {
-  local tap_dir; tap_dir="$(brew --repository)/Library/Taps/splaice/homebrew-formulae"
-  [ -d "$tap_dir/Formula" ] || run brew tap-new splaice/formulae --no-git
-  run cp "$OMACASE_ROOT/formula/borders.rb" "$tap_dir/Formula/borders.rb"
-  # Newer brews gate taps behind `brew trust`. Silence its chatter only on the
-  # real run — redirecting `run` itself would also swallow the [dry-run] echo.
-  if is_dryrun; then
-    run brew trust splaice/formulae || true
-  else
-    brew trust splaice/formulae >/dev/null 2>&1 || true
-  fi
-
-  # Converge to the formula's pinned version. HOMEBREW_NO_REQUIRE_TAP_TRUST is
-  # scoped to this one command: brew's tap-trust check (as of mid-2026) aborts
-  # source builds whenever ANY untrusted tap exists, even unrelated ones.
-  local want have
-  want="$(sed -n 's/^ *version "\(.*\)"$/\1/p' "$OMACASE_ROOT/formula/borders.rb")"
-  have="$(brew list --versions borders 2>/dev/null | awk '{print $2}')"
-  if [ -z "$have" ]; then
-    run env HOMEBREW_NO_REQUIRE_TAP_TRUST=1 brew install splaice/formulae/borders
-  elif [ "$have" != "$want" ]; then
-    run env HOMEBREW_NO_REQUIRE_TAP_TRUST=1 brew reinstall splaice/formulae/borders
-  fi
-}
-
 # Make `omacase` available on PATH for every shell (zsh/bash/fish) and for GUI
 # contexts, by symlinking it into Apple Silicon Homebrew's bin.
-# This is what `brew link` does for formulae; idempotent via `ln -sfn`.
+# This is what `brew link` does for formulae; exact existing links are a no-op.
 _link_command() {
   local bindir; bindir="$(_omacase_bindir)"
   if [ -z "$bindir" ]; then
     warn "No Homebrew bin dir found; \`omacase\` stays available via ~/.zshrc only."
     return 0
   fi
-  run ln -sfn "$OMACASE_ROOT/bin/omacase" "$bindir/omacase"
+  _link_command_file "$OMACASE_ROOT/bin/omacase" "$bindir/omacase"
   is_dryrun || success "omacase → $bindir/omacase"
 
   # Tab completion: link _omacase next to Homebrew's other completions.
@@ -152,29 +152,37 @@ _link_command() {
   local zfunc; zfunc="$(_omacase_zfuncdir)"
   local share="${zfunc%/zsh/site-functions}"
   run mkdir -p "$zfunc"
-  run ln -sfn "$OMACASE_ROOT/completions/_omacase" "$zfunc/_omacase"
+  _link_command_file "$OMACASE_ROOT/completions/_omacase" "$zfunc/_omacase"
   run chmod go-w "$share" "$share/zsh" "$zfunc" "$share/zsh-completions" 2>/dev/null || true
   is_dryrun || success "completion → $zfunc/_omacase"
 }
 
-# GUI helpers that must be running (and granted permissions) for the system to
-# work: Karabiner mints the Super key. The launcher is Spotlight (a system
-# service, nothing to launch). open -a is a no-op if already running.
-_launch_apps() {
-  local app
-  # shellcheck disable=SC2043  # one entry today; the loop is the extension point
-  for app in "Karabiner-Elements"; do
-    [ -d "/Applications/$app.app" ] && run open -a "$app" || true
-  done
-  # Karabiner 15+ ships its virtual HID as a DriverKit system extension. Merely
-  # opening the app does NOT surface the approval prompt — explicitly asking the
-  # bundled VirtualHIDDevice-Manager to `activate` does (macOS then shows the
-  # system-extension prompt → Login Items & Extensions). The user still approves
-  # by hand, but at least the dialog now appears during install.
-  local km="/Applications/.Karabiner-VirtualHIDDevice-Manager.app/Contents/MacOS/Karabiner-VirtualHIDDevice-Manager"
-  [ -x "$km" ] && run "$km" activate || true
-  warn "Karabiner needs Input Monitoring + its driver extension enabled — a by-hand"
-  warn "grant. \`omacase doctor\` lists what's left."
+# PATH and completion directories are outside the snapshot boundary. Never
+# overwrite an unrelated file there; require the owner to move it explicitly.
+_assert_command_link_target() {
+  local source="$1" target="$2"
+  if [ -e "$target" ] || [ -L "$target" ]; then
+    if [ -L "$target" ] && [ "$(readlink "$target")" = "$source" ]; then
+      return 0
+    fi
+    abort "Refusing to overwrite unrelated path: $target"
+  fi
+}
+
+_preflight_command_links() {
+  local bindir zfunc
+  bindir="$(_omacase_bindir)"
+  [ -n "$bindir" ] || return 0
+  zfunc="$(_omacase_zfuncdir)"
+  _assert_command_link_target "$OMACASE_ROOT/bin/omacase" "$bindir/omacase"
+  _assert_command_link_target "$OMACASE_ROOT/completions/_omacase" "$zfunc/_omacase"
+}
+
+_link_command_file() {
+  local source="$1" target="$2"
+  _assert_command_link_target "$source" "$target"
+  if [ -L "$target" ]; then return 0; fi
+  run ln -s "$source" "$target"
 }
 
 # home/<rel> → its $HOME target, translating chezmoi-style dot_ prefixes
@@ -190,21 +198,34 @@ _dot_target() {
 # alongside without polluting the repo.
 _link_dotfiles() {
   source "$OMACASE_ROOT/lib/backup.sh"
-  # Clear pre-existing real config at managed targets (already backed up).
+  # Never write through a top-level config symlink into an external directory.
+  # Replace only that symlink; preserve real directories and any unrelated
+  # files they contain.
   local t
   while IFS= read -r t; do
     [ -n "$t" ] || continue
-    if ! _is_omacase_link "$t" && { [ -e "$t" ] || [ -L "$t" ]; }; then
-      run rm -rf "$t"
-    fi
+    case "$t" in
+      "$HOME/.config/"*)
+        if [ -L "$t" ] || { [ -e "$t" ] && [ ! -d "$t" ]; }; then
+          run rm -rf "$t"
+          run mkdir -p "$t"
+        fi ;;
+    esac
   done < <(_managed_targets)
 
-  # Symlink each source file to its translated target.
+  # Link each managed leaf. A conflicting leaf was captured by _auto_backup;
+  # siblings in the same app directory are deliberately left untouched.
   local src="$OMACASE_ROOT/home" f target
   while IFS= read -r f; do
     target="$(_dot_target "${f#"$src"/}")"
+    if [ -e "$target" ] || [ -L "$target" ]; then
+      if [ -L "$target" ] && [ "$(readlink "$target")" = "$f" ]; then
+        continue
+      fi
+      run rm -rf "$target"
+    fi
     run mkdir -p "$(dirname "$target")"
-    run ln -sfn "$f" "$target"
+    run ln -s "$f" "$target"
   done < <(find "$src" -type f ! -name '.DS_Store' ! -name '*.pyc' ! -path '*/__pycache__/*')
 }
 
@@ -231,15 +252,9 @@ omacase_uninstall() {
     { _is_omacase_link "$themed" && run rm -f "$themed"; } || true
   done < <(_theme_links)
 
-  # Runtime helper scripts generated by the SketchyBar config.
-  local generated
-  for generated in "$HOME/.config/sketchybar/spaces.sh" \
-                   "$HOME/.config/sketchybar/space_handler.sh" \
-                   "$HOME/.config/sketchybar/sysstats.sh" \
-                   "$HOME/.config/btop/omacase-popup.conf"; do
-    [ -e "$generated" ] || [ -L "$generated" ] || continue
-    run rm -f "$generated"
-  done
+  local agent="$HOME/Library/LaunchAgents/org.omacase.omniwm.plist"
+  run launchctl bootout "gui/$(id -u)/org.omacase.omniwm" 2>/dev/null || true
+  { _is_omacase_link "$agent" && run rm -f "$agent"; } || true
 
   source "$OMACASE_ROOT/lib/actions.sh"
   _launchers_remove "$HOME/Applications"

@@ -89,7 +89,7 @@
     <div class="cmd">
       <small>Install</small>
       <div class="copy-row">
-        <pre id="install-command">/bin/bash -c "$(curl -fsSL https://omacase.org/install)"</pre>
+        <pre id="install-command">/bin/bash -c "$(curl --proto '=https' --tlsv1.2 -fsSL https://omacase.org/install)"</pre>
         <button class="copy" type="button" aria-label="Copy install command" title="Copy install command">
           <svg class="copy-icon" viewBox="0 0 24 24" aria-hidden="true"><rect width="14" height="14" x="8" y="8" rx="2"></rect><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"></path></svg>
           <svg class="check" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg>
@@ -102,13 +102,12 @@
   <main>
     <section>
       <h2>What you get</h2>
-      <p>A tiling Mac desktop, a themed terminal/editor/bar, sane defaults, and a rollback path when you decide you hate it.</p>
+      <p>OmniWM tiling, a themed terminal/editor, sane defaults, opinionated apps, and a rollback path when you decide you hate it.</p>
       <ul class="stack">
-        <li>AeroSpace</li>
-        <li>SketchyBar</li>
-        <li>JankyBorders</li>
+        <li>OmniWM</li>
+        <li>Dwindle + Niri layouts</li>
+        <li>Native workspace bar + borders</li>
         <li>Ghostty</li>
-        <li>Karabiner-Elements</li>
         <li>Neovim + LazyVim</li>
         <li>Starship + tmux</li>
         <li>Homebrew + Brewfile</li>

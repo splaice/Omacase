@@ -3,7 +3,7 @@
 #
 # A native macOS notification primitive for omacase commands, keybinds, and your
 # own scripts. Keybind-driven actions run with no terminal to print to, so this
-# is how they surface "done / nothing to do / failed" (see `omacase grid`).
+# is how helpers surface "done / nothing to do / failed".
 #
 # Two backends, in order of preference:
 #   1. terminal-notifier (Brewfile) — registers its own bundle in Notifications,

@@ -1,0 +1,5 @@
+# Techno Viking Light — neutral Omacase palette.
+export THEME_BACKGROUND="#f5f2f4"
+export THEME_FOREGROUND="#2a2230"
+export THEME_ACCENT="#c21b86"
+export THEME_MUTED="#b3a8b0"

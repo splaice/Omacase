@@ -1,0 +1,116 @@
+# Omacase first-run seed for OmniWM v0.5.x.
+#
+# This is intentionally a partial config. OmniWM fills missing keys with its
+# current defaults, canonicalizes the file, and owns the live copy at
+# ~/.config/omniwm/settings.toml from then on. Omacase never symlinks or
+# overwrites an existing live file.
+
+[general]
+defaultLayoutType = "dwindle"
+ipcEnabled = true
+
+[focus]
+crossesMonitorAtEdge = true
+moveCrossesMonitorAtEdge = true
+
+[gaps]
+size = 8.0
+
+[gaps.outer]
+left = 8.0
+right = 8.0
+top = 8.0
+bottom = 8.0
+
+[dwindle]
+smartSplit = true
+useGlobalGaps = true
+moveToRootStable = true
+
+[borders]
+enabled = true
+width = 4.0
+
+[borders.color]
+red = 0.5372549019607843
+green = 0.7058823529411765
+blue = 0.9803921568627451
+alpha = 1.0
+
+[workspaceBar]
+enabled = true
+showLabels = true
+showFloatingWindows = true
+systemStatsButton = true
+deduplicateAppIcons = true
+hideEmptyWorkspaces = false
+reserveLayoutSpace = false
+height = 24.0
+backgroundOpacity = 0.1
+
+[quakeTerminal]
+enabled = true
+position = "center"
+widthPercent = 65.0
+heightPercent = 65.0
+animationDuration = 0.2
+autoHide = false
+opacity = 0.96
+monitorMode = "focusedWindow"
+
+[[workspaces]]
+id = "AD36F001-C57E-41A5-AC1D-DF5249D007F0"
+name = "1"
+monitorAssignment = { type = "main" }
+layoutType = "default"
+
+[[workspaces]]
+id = "454CECD4-5E9D-4ED1-95D7-979D48817F5F"
+name = "2"
+monitorAssignment = { type = "main" }
+layoutType = "default"
+
+[[workspaces]]
+id = "BEB842B5-E894-4791-9FD1-397C3CDD3538"
+name = "3"
+monitorAssignment = { type = "main" }
+layoutType = "default"
+
+[[workspaces]]
+id = "248AA883-2261-4D45-943C-79C0E46A232B"
+name = "4"
+monitorAssignment = { type = "main" }
+layoutType = "default"
+
+[[workspaces]]
+id = "8B8C45D6-CE9E-41D9-BD50-BE4989D5E3DE"
+name = "5"
+monitorAssignment = { type = "main" }
+layoutType = "default"
+
+[[workspaces]]
+id = "5953F2BF-A378-4266-91B2-287174C4FA4D"
+name = "6"
+monitorAssignment = { type = "secondary" }
+layoutType = "default"
+
+[[workspaces]]
+id = "A7D5E104-6985-4516-8ED5-07F144F2A33D"
+name = "7"
+monitorAssignment = { type = "secondary" }
+layoutType = "default"
+
+[[workspaces]]
+id = "BB8A44EC-65C8-4ECD-BD1D-BE97FA878F19"
+name = "8"
+monitorAssignment = { type = "secondary" }
+layoutType = "default"
+
+[[workspaces]]
+id = "D3DDF95D-D26D-4FA0-9F4A-D452F9AB6D2D"
+name = "9"
+monitorAssignment = { type = "secondary" }
+layoutType = "default"
+
+# appRules are intentionally omitted. OmniWM injects the defaults belonging to
+# the installed version, so Omacase does not freeze or shadow upstream changes.

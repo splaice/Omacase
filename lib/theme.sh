@@ -3,7 +3,7 @@
 #
 # Omarchy-derived themes are not vendored as per-app fragments. We download the
 # upstream MIT-licensed colors.toml into OMACASE_DATA and render the Ghostty,
-# SketchyBar, JankyBorders, btop, Neovim, and Starship fragments locally.
+# neutral palette, btop, Neovim, and Starship fragments locally.
 
 _THEME_MANIFEST="$OMACASE_ROOT/themes/manifest"
 
@@ -12,15 +12,14 @@ _THEME_MANIFEST="$OMACASE_ROOT/themes/manifest"
 _theme_links() {
   printf '%s\n' \
     "ghostty|$HOME/.config/ghostty/theme" \
-    "sketchybar|$HOME/.config/sketchybar/theme.sh" \
-    "borders|$HOME/.config/borders/theme.conf" \
+    "palette|$HOME/.config/omacase/theme.sh" \
     "btop|$HOME/.config/btop/themes/current.theme" \
     "nvim.lua|$HOME/.config/nvim/lua/theme.lua" \
     "starship|$HOME/.config/starship/theme.toml"
 }
 
 omacase_theme() {
-  ensure_brew_env   # may run from a keybind/menu popup whose PATH lacks Homebrew (brew services, sketchybar)
+  ensure_brew_env
   local name="${1:-}"
 
   if [ -z "$name" ]; then
@@ -28,6 +27,11 @@ omacase_theme() {
     name="$(gum_choose "Pick a theme" $(_theme_list))" || return
   fi
   _theme_known "$name" || abort "Unknown theme '$name'. Available: $(_theme_list | tr '\n' ' ')"
+
+  if [ -z "${OMACASE_BACKUP_READY:-}" ]; then
+    source "$OMACASE_ROOT/lib/backup.sh"
+    _auto_backup
+  fi
 
   info "Applying theme: $name"
   local src; src="$(_theme_materialize "$name")"
@@ -86,7 +90,7 @@ _theme_materialize() {
   local out colors upstream title nvim
   out="$(_theme_generated_dir "$name")"
   if [ -z "${OMACASE_THEME_REFRESH:-}" ] &&
-     [ -s "$out/ghostty" ] && [ -s "$out/sketchybar" ] && [ -s "$out/borders" ] &&
+     [ -s "$out/ghostty" ] && [ -s "$out/palette" ] &&
      [ -s "$out/btop" ] && [ -s "$out/nvim.lua" ] && [ -s "$out/starship" ]; then
     printf '%s\n' "$out"
     return 0
@@ -141,7 +145,7 @@ _theme_render_from_colors() {
   sel_fg="$(_theme_color "$colors" selection_foreground)"
   sel_bg="$(_theme_color "$colors" selection_background)"
   for i in {0..15}; do
-    pal[$i]="$(_theme_color "$colors" "color$i")"
+    pal[i]="$(_theme_color "$colors" "color$i")"
   done
 
   [ -n "$accent" ] && [ -n "$cursor" ] && [ -n "$fg" ] && [ -n "$bg" ] &&
@@ -164,18 +168,12 @@ _theme_render_from_colors() {
     for i in {0..15}; do printf 'palette = %s=#%s\n' "$i" "${pal[$i]}"; done
   } > "$tmp/ghostty"
 
-  cat > "$tmp/sketchybar" <<EOF
-# $title - SketchyBar palette generated from Omarchy colors.toml.
-export BAR_COLOR=0xff$bg
-export LABEL_COLOR=0xff$fg
-export ACCENT=0xff$accent
-export MUTED=0xff${pal[8]}   # dimmed inactive workspace numbers
-EOF
-
-  cat > "$tmp/borders" <<EOF
-# $title - JankyBorders palette generated from Omarchy colors.toml.
-export ACTIVE_BORDER=0xff$accent
-export INACTIVE_BORDER=0xff$sel_bg
+  cat > "$tmp/palette" <<EOF
+# $title - neutral Omacase palette generated from Omarchy colors.toml.
+export THEME_BACKGROUND="#$bg"
+export THEME_FOREGROUND="#$fg"
+export THEME_ACCENT="#$accent"
+export THEME_MUTED="#${pal[8]}"
 EOF
 
   palette="${name//-/_}"
@@ -409,6 +407,7 @@ omacase_wallpaper() {
       return 0 ;;
     pick)
       [ "$count" -gt 1 ] || { info "Only one background available for '$theme'."; return 0; }
+      # shellcheck disable=SC2086 # one newline-delimited background per picker argument
       chosen="$(gum_choose "Wallpaper · $theme" $bgs)" || return 0 ;;
     next) chosen="$(printf '%s\n' "$bgs" | sed -n "$(( (idx + 1) % count + 1 ))p")" ;;
     prev) chosen="$(printf '%s\n' "$bgs" | sed -n "$(( (idx - 1 + count) % count + 1 ))p")" ;;
@@ -455,14 +454,14 @@ _theme_list() {
   awk -F'|' '$0 !~ /^#/ && NF >= 5 { print $1 }' "$_THEME_MANIFEST" 2>/dev/null
 }
 
-# Light vs dark is derived from the theme's SketchyBar BAR_COLOR (0xffRRGGBB)
+# Light vs dark is derived from the neutral theme background
 # using perceived luminance, so it stays correct for every theme with no
 # per-theme flag to maintain. Returns 0 (true) when the background is light.
 _theme_is_light() {
   local dir f hex
   dir="$(_theme_materialize "$1" 2>/dev/null)" || return 1
-  f="$dir/sketchybar"
-  hex="$(sed -n 's/.*BAR_COLOR=0[xX][fF][fF]\([0-9a-fA-F]\{6\}\).*/\1/p' "$f" 2>/dev/null | head -1)"
+  f="$dir/palette"
+  hex="$(sed -n 's/.*THEME_BACKGROUND="*#\([0-9a-fA-F]\{6\}\).*/\1/p' "$f" 2>/dev/null | head -1)"
   [ -n "$hex" ] || return 1   # unknown/empty background → treat as dark
   local r=$((16#${hex:0:2})) g=$((16#${hex:2:2})) b=$((16#${hex:4:2}))
   # Rec. 601 luma scaled by 1000 to stay in integer math; >128 ≈ light.
@@ -522,7 +521,7 @@ _theme_accent_nearest() { # <rrggbb> → "index|Name" (nearest preset by hue)
 }
 
 # Sync the macOS accent + selection-highlight colors to the theme's accent
-# (the ACCENT= line every sketchybar fragment carries). The accent snaps to
+# (the THEME_ACCENT line every palette fragment carries). The accent snaps to
 # the nearest system preset; the highlight is the exact theme accent blended
 # 70% toward white — the same pastel treatment macOS gives its own highlight
 # swatches — so selected text stays readable. defaults(1) only reaches newly
@@ -531,7 +530,7 @@ _theme_accent_nearest() { # <rrggbb> → "index|Name" (nearest preset by hue)
 _theme_accent() {
   local name="$1" dir hex
   dir="$(_theme_materialize "$name" 2>/dev/null)" || return 0
-  hex="$(sed -n 's/.*ACCENT=0[xX][fF][fF]\([0-9a-fA-F]\{6\}\).*/\1/p' "$dir/sketchybar" 2>/dev/null | head -1)"
+  hex="$(sed -n 's/.*THEME_ACCENT="*#\([0-9a-fA-F]\{6\}\).*/\1/p' "$dir/palette" 2>/dev/null | head -1)"
   [ -n "$hex" ] || return 0
 
   local idx nm
@@ -569,14 +568,18 @@ _link() { # _link <src> <dest>  (only if src exists)
     is_dryrun || warn "theme fragment missing: $1 — leaving the previous link in place."
     return 0
   fi
+  if [ -e "$2" ] || [ -L "$2" ]; then
+    if [ -L "$2" ] && [ "$(readlink "$2")" = "$1" ]; then
+      return 0
+    fi
+    run rm -rf "$2"
+  fi
   run mkdir -p "$(dirname "$2")"
-  run ln -sfn "$1" "$2"
+  run ln -s "$1" "$2"
 }
 
 _theme_reload() {
   # Live-reload anything already running; ignore if not.
-  pgrep -x sketchybar >/dev/null 2>&1 && run sketchybar --reload || true
-  pgrep -x borders   >/dev/null 2>&1 && run brew services restart splaice/formulae/borders 2>/dev/null || true
   # Ghostty reloads its config (and the theme include) on SIGUSR2 since 1.2,
   # which also refreshes ANSI-palette CLIs like eza/ls. CAUTION: any OTHER
   # signal makes Ghostty quit. macOS truncates `comm` and hides GUI argv from
@@ -584,6 +587,7 @@ _theme_reload() {
   # path with no extra args (NF==2), which excludes `ghostty +cmd` CLI runs.
   local gpid
   gpid="$(ps -Axo pid=,args= 2>/dev/null | awk '$2=="/Applications/Ghostty.app/Contents/MacOS/ghostty" && NF==2 {print $1}' || true)"
+  # shellcheck disable=SC2086 # ps may return several GUI process IDs
   [ -n "$gpid" ] && run kill -USR2 $gpid || true
   # nvim picks up the theme on next launch or via its own reload bind.
 }

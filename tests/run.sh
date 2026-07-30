@@ -36,7 +36,7 @@ test_applescript_string_escapes_quotes() {
 }
 
 test_auto_backup_creates_first_snapshot() {
-  local tmp
+  local tmp mode
   tmp="$(mktemp -d)"
   HOME="$tmp/home"
   OMACASE_STATE="$tmp/state"
@@ -47,7 +47,49 @@ test_auto_backup_creates_first_snapshot() {
   # shellcheck source=/dev/null
   source "$ROOT/lib/backup.sh"
   _auto_backup >/dev/null
-  [ -s "$OMACASE_STATE/last-backup" ] && [ -d "$OMACASE_STATE/backups/$(cat "$OMACASE_STATE/last-backup")" ]
+  mode="$(stat -f '%Lp' "$OMACASE_STATE" 2>/dev/null || stat -c '%a' "$OMACASE_STATE")"
+  [ -s "$OMACASE_STATE/last-backup" ] &&
+    [ -d "$OMACASE_STATE/backups/$(cat "$OMACASE_STATE/last-backup")" ] &&
+    [ "$mode" = 700 ]
+}
+
+test_backups_created_same_second_have_unique_ids() {
+  local tmp first second
+  tmp="$(mktemp -d)"
+  HOME="$tmp/home"
+  OMACASE_STATE="$tmp/state"
+  OMACASE_ROOT="$ROOT"
+  mkdir -p "$HOME"
+  # shellcheck source=/dev/null
+  source "$ROOT/lib/common.sh"
+  # shellcheck source=/dev/null
+  source "$ROOT/lib/backup.sh"
+  omacase_backup first >/dev/null
+  first="$(cat "$OMACASE_STATE/last-backup")"
+  omacase_backup second >/dev/null
+  second="$(cat "$OMACASE_STATE/last-backup")"
+  [ "$first" != "$second" ] &&
+    [ -d "$OMACASE_STATE/backups/$first" ] &&
+    [ -d "$OMACASE_STATE/backups/$second" ]
+}
+
+test_auto_backup_ignores_owned_top_level_file_link() {
+  local tmp old
+  tmp="$(mktemp -d)"
+  HOME="$tmp/home"
+  OMACASE_STATE="$tmp/state"
+  OMACASE_ROOT="$ROOT"
+  OMACASE_DATA="$tmp/data"
+  old="20000101-000000"
+  mkdir -p "$HOME" "$OMACASE_STATE/backups/$old"
+  ln -s "$ROOT/home/dot_zshrc" "$HOME/.zshrc"
+  printf '%s\n' "$old" > "$OMACASE_STATE/last-backup"
+  # shellcheck source=/dev/null
+  source "$ROOT/lib/common.sh"
+  # shellcheck source=/dev/null
+  source "$ROOT/lib/backup.sh"
+  _auto_backup >/dev/null
+  [ "$(cat "$OMACASE_STATE/last-backup")" = "$old" ]
 }
 
 test_restore_rejects_unsafe_manifest() {
@@ -68,7 +110,80 @@ test_restore_rejects_unsafe_manifest() {
     source "$ROOT/lib/backup.sh"
     omacase_restore "$id"
   ) >"$out" 2>&1
+  # shellcheck disable=SC2181 # status is intentionally captured after the subshell
   [ $? -ne 0 ] && grep -q "unsafe path" "$out"
+}
+
+test_restore_rejects_missing_saved_file_before_changes() {
+  local tmp id out target
+  tmp="$(mktemp -d)"
+  id="20260101-000000"
+  HOME="$tmp/home"
+  OMACASE_STATE="$tmp/state"
+  OMACASE_ROOT="$ROOT"
+  target="$HOME/.config/omniwm/settings.toml"
+  mkdir -p "$(dirname "$target")" "$OMACASE_STATE/backups/$id/files"
+  printf 'current = true\n' > "$target"
+  printf 'label=test\n' > "$OMACASE_STATE/backups/$id/meta"
+  printf 'PRESENT .config/omniwm/settings.toml\n' > "$OMACASE_STATE/backups/$id/manifest"
+  out="$tmp/out"
+  (
+    # shellcheck source=/dev/null
+    source "$ROOT/lib/common.sh"
+    # shellcheck source=/dev/null
+    source "$ROOT/lib/backup.sh"
+    omacase_restore "$id"
+  ) >"$out" 2>&1
+  # shellcheck disable=SC2181 # status is intentionally captured after the subshell
+  [ $? -ne 0 ] &&
+    grep -q "saved file is missing" "$out" &&
+    grep -q "current = true" "$target"
+}
+
+test_restore_rejects_invalid_defaults_before_changes() {
+  local tmp id out target saved
+  tmp="$(mktemp -d)"
+  id="20260101-000000"
+  HOME="$tmp/home"
+  OMACASE_STATE="$tmp/state"
+  OMACASE_ROOT="$ROOT"
+  target="$HOME/.config/omniwm/settings.toml"
+  saved="$OMACASE_STATE/backups/$id/files/.config/omniwm/settings.toml"
+  mkdir -p "$(dirname "$target")" "$(dirname "$saved")" \
+    "$OMACASE_STATE/backups/$id/defaults"
+  printf 'current = true\n' > "$target"
+  printf 'saved = true\n' > "$saved"
+  printf 'label=test\n' > "$OMACASE_STATE/backups/$id/meta"
+  printf 'PRESENT .config/omniwm/settings.toml\n' > "$OMACASE_STATE/backups/$id/manifest"
+  printf 'not a plist\n' > "$OMACASE_STATE/backups/$id/defaults/NSGlobalDomain.plist"
+  out="$tmp/out"
+  (
+    # shellcheck source=/dev/null
+    source "$ROOT/lib/common.sh"
+    # shellcheck source=/dev/null
+    source "$ROOT/lib/backup.sh"
+    omacase_restore "$id"
+  ) >"$out" 2>&1
+  # shellcheck disable=SC2181 # status is intentionally captured after the subshell
+  [ $? -ne 0 ] &&
+    grep -q "Invalid defaults snapshot" "$out" &&
+    grep -q "current = true" "$target"
+}
+
+test_restore_accepts_legacy_omacase_targets() {
+  local tmp manifest
+  tmp="$(mktemp -d)"
+  HOME="$tmp/home"
+  OMACASE_STATE="$tmp/state"
+  OMACASE_ROOT="$ROOT"
+  manifest="$tmp/manifest"
+  mkdir -p "$HOME" "$tmp/files"
+  printf 'ABSENT .config/aerospace\n' > "$manifest"
+  # shellcheck source=/dev/null
+  source "$ROOT/lib/common.sh"
+  # shellcheck source=/dev/null
+  source "$ROOT/lib/backup.sh"
+  _validate_restore_manifest "$manifest" "$tmp/files"
 }
 
 test_generated_theme_symlinks_are_owned() {
@@ -88,6 +203,47 @@ test_generated_theme_symlinks_are_owned() {
   _is_omacase_link "$target"
 }
 
+test_auto_backup_captures_conflicting_theme_fragment() {
+  local tmp old new
+  tmp="$(mktemp -d)"
+  HOME="$tmp/home"
+  OMACASE_STATE="$tmp/state"
+  OMACASE_ROOT="$ROOT"
+  OMACASE_DATA="$tmp/data"
+  old="20000101-000000"
+  mkdir -p "$HOME/.config/ghostty" "$OMACASE_STATE/backups/$old"
+  printf '%s\n' "$old" > "$OMACASE_STATE/last-backup"
+  printf 'user theme\n' > "$HOME/.config/ghostty/theme"
+  # shellcheck source=/dev/null
+  source "$ROOT/lib/common.sh"
+  # shellcheck source=/dev/null
+  source "$ROOT/lib/backup.sh"
+  _auto_backup >/dev/null
+  new="$(cat "$OMACASE_STATE/last-backup")"
+  [ "$new" != "$old" ] &&
+    grep -q 'user theme' "$OMACASE_STATE/backups/$new/files/.config/ghostty/theme"
+}
+
+test_dotfile_reinstall_preserves_unmanaged_siblings() {
+  local tmp custom
+  tmp="$(mktemp -d)"
+  HOME="$tmp/home"
+  OMACASE_ROOT="$ROOT"
+  OMACASE_STATE="$tmp/state"
+  OMACASE_DATA="$tmp/data"
+  custom="$HOME/.config/ghostty/private.conf"
+  mkdir -p "$(dirname "$custom")"
+  printf 'user-owned = true\n' > "$custom"
+  # shellcheck source=/dev/null
+  source "$ROOT/lib/common.sh"
+  # shellcheck source=/dev/null
+  source "$ROOT/lib/install.sh"
+  _link_dotfiles
+  [ -f "$custom" ] &&
+    grep -q 'user-owned = true' "$custom" &&
+    [ -L "$HOME/.config/ghostty/config" ]
+}
+
 test_dry_run_launchers_do_not_create_applications_dir() {
   local tmp
   tmp="$(mktemp -d)"
@@ -105,19 +261,22 @@ test_dry_run_launchers_do_not_create_applications_dir() {
   [ ! -e "$HOME/Applications" ] && [ ! -e "$OMACASE_STATE" ]
 }
 
-test_caffeinate_rejects_unowned_pid() {
-  local tmp
+test_backup_captures_live_omniwm_settings() {
+  local tmp id
   tmp="$(mktemp -d)"
   HOME="$tmp/home"
   OMACASE_STATE="$tmp/state"
   OMACASE_ROOT="$ROOT"
-  mkdir -p "$HOME" "$OMACASE_STATE"
-  printf '%s\n' "$$" > "$OMACASE_STATE/caffeinate.pid"
+  mkdir -p "$HOME/.config/omniwm"
+  printf 'ipcEnabled = true\n' > "$HOME/.config/omniwm/settings.toml"
   # shellcheck source=/dev/null
   source "$ROOT/lib/common.sh"
   # shellcheck source=/dev/null
-  source "$ROOT/lib/actions.sh"
-  ! _caffeinate_awake
+  source "$ROOT/lib/backup.sh"
+  omacase_backup test >/dev/null
+  id="$(cat "$OMACASE_STATE/last-backup")"
+  cmp -s "$HOME/.config/omniwm/settings.toml" \
+    "$OMACASE_STATE/backups/$id/files/.config/omniwm/settings.toml"
 }
 
 test_update_fails_when_self_pull_fails() {
@@ -141,6 +300,7 @@ test_update_fails_when_self_pull_fails() {
     source "$ROOT/lib/update.sh"
     omacase_update
   ) >"$out" 2>&1
+  # shellcheck disable=SC2181 # status is intentionally captured after the subshell
   [ $? -ne 0 ] && grep -q "git pull failed" "$out"
 }
 
@@ -169,6 +329,22 @@ test_backup_domains_cover_defaults_sh() {
   [ -z "$missing" ] || { printf 'not covered by OMACASE_DEFAULTS_DOMAINS:%s\n' "$missing" >&2; return 1; }
 }
 
+test_stage_manager_is_disabled_by_defaults() {
+  grep -qE 'defaults write com\.apple\.WindowManager GloballyEnabled -bool false' \
+    "$ROOT/macos/defaults.sh"
+}
+
+test_brew_trust_is_scoped() {
+  ! grep -q 'HOMEBREW_NO_REQUIRE_TAP_TRUST' "$ROOT/lib/install.sh" &&
+    grep -q 'brew trust --cask BarutSRB/tap/omniwm' "$ROOT/lib/install.sh" &&
+    grep -q 'brew trust --formula finbarr/tap/yolobox' "$ROOT/lib/install.sh"
+}
+
+test_grok_installer_requires_opt_in() {
+  grep -q 'OMACASE_INSTALL_GROK' "$ROOT/lib/install.sh" &&
+    grep -q "Skipping Grok CLI's unpinned upstream installer" "$ROOT/lib/install.sh"
+}
+
 test_theme_manifest_lists_all_themes() {
   OMACASE_ROOT="$ROOT"
   # shellcheck source=/dev/null
@@ -185,18 +361,39 @@ test_theme_manifest_lists_all_themes() {
     printf '%s\n' "$themes" | grep -qx techno-viking
 }
 
-test_aerospace_persistent_workspaces_cover_bindings() {
-  # config-version 2 no longer infers workspaces from keybindings — any
-  # workspace a binding targets but persistent-workspaces omits silently
-  # disappears when its last window closes.
-  local toml="$ROOT/home/dot_config/aerospace/aerospace.toml" persistent ws missing=""
-  grep -q '^config-version = 2$' "$toml" || { echo "config-version = 2 missing" >&2; return 1; }
-  persistent="$(sed -n 's/^persistent-workspaces = \[\(.*\)\]/\1/p' "$toml")"
-  [ -n "$persistent" ] || { echo "persistent-workspaces missing" >&2; return 1; }
-  while IFS= read -r ws; do
-    printf '%s' "$persistent" | grep -q "'$ws'" || missing="$missing $ws"
-  done < <(grep -oE "'(move-node-to-)?workspace [0-9]+'" "$toml" | grep -oE '[0-9]+' | sort -u)
-  [ -z "$missing" ] || { printf 'not in persistent-workspaces:%s\n' "$missing" >&2; return 1; }
+test_omniwm_seed_is_valid_and_has_nine_workspaces() {
+  python3 - "$ROOT/config/omniwm/settings.toml" <<'PY'
+import sys
+import tomllib
+
+with open(sys.argv[1], "rb") as handle:
+    config = tomllib.load(handle)
+workspaces = config["workspaces"]
+assert config["general"]["ipcEnabled"] is True
+assert config["general"]["defaultLayoutType"] == "dwindle"
+assert "appRules" not in config
+assert [workspace["name"] for workspace in workspaces] == list("123456789")
+assert len({workspace["id"] for workspace in workspaces}) == 9
+PY
+}
+
+test_ghostty_windows_remain_manageable() {
+  local config="$ROOT/home/dot_config/ghostty/config"
+  grep -qE '^window-decoration[[:space:]]*=[[:space:]]*true$' "$config" &&
+    grep -qE '^macos-titlebar-style[[:space:]]*=[[:space:]]*transparent$' "$config"
+}
+
+test_omniwm_focused_mode_matches_pid() {
+  OMACASE_ROOT="$ROOT"
+  # shellcheck source=/dev/null
+  source "$ROOT/lib/common.sh"
+  # shellcheck source=/dev/null
+  source "$ROOT/lib/wm.sh"
+  omniwmctl() {
+    printf '%s\n' '{"result":{"payload":{"windows":[{"pid":42,"isFocused":true,"mode":"floating"}]}}}'
+  }
+  [ "$(_wm_focused_mode_for_pid 42)" = floating ] &&
+    [ -z "$(_wm_focused_mode_for_pid 7)" ]
 }
 
 test_cli_unknown_command_fails() {
@@ -209,6 +406,87 @@ test_cli_unknown_command_fails() {
 test_cli_help_and_version() {
   "$ROOT/bin/omacase" help | grep -q "usage: omacase" &&
     [ "$("$ROOT/bin/omacase" version)" = "$(cat "$ROOT/VERSION")" ]
+}
+
+test_cli_keybinds_displays_reference() {
+  local out
+  out="$(mktemp)"
+  "$ROOT/bin/omacase" keybinds > "$out" &&
+    cmp -s "$ROOT/KEYBINDS.md" "$out" &&
+    "$ROOT/bin/omacase" help | grep -qE '^[[:space:]]+keybinds[[:space:]]'
+}
+
+test_menu_lists_primary_commands_and_routes_keybinds() {
+  local captured out item
+  captured="$(mktemp)"
+  out="$(mktemp)"
+  OMACASE_ROOT="$ROOT"
+  # shellcheck source=/dev/null
+  source "$ROOT/lib/common.sh"
+  # shellcheck source=/dev/null
+  source "$ROOT/lib/menu.sh"
+  gum_choose() {
+    shift
+    printf '%s\n' "$@" > "$captured"
+    printf '%s\n' "View keybinds"
+  }
+  omacase_menu > "$out" &&
+    cmp -s "$ROOT/KEYBINDS.md" "$out" || return 1
+  for item in \
+    "Install / repair" \
+    "Update everything" \
+    "Switch theme" \
+    "Edit theme palette" \
+    "Switch wallpaper" \
+    "Toggle Light / Dark" \
+    "Open a web app" \
+    "Apps and overlays" \
+    "Start / verify OmniWM" \
+    "View keybinds" \
+    "Run doctor" \
+    "Create a backup" \
+    "Restore a backup" \
+    "Manage Spotlight launchers" \
+    "Run migrations" \
+    "Edit config" \
+    "Uninstall Omacase"
+  do
+    grep -Fxq "$item" "$captured" || return 1
+  done
+}
+
+test_menu_lists_app_and_overlay_commands() {
+  local captured item
+  captured="$(mktemp)"
+  OMACASE_ROOT="$ROOT"
+  # shellcheck source=/dev/null
+  source "$ROOT/lib/common.sh"
+  # shellcheck source=/dev/null
+  source "$ROOT/lib/menu.sh"
+  gum_choose() {
+    local header="$1"
+    shift
+    if [ "$header" = "Omacase" ]; then
+      printf '%s\n' "Apps and overlays"
+    else
+      printf '%s\n' "$@" > "$captured"
+      printf '%s\n' "Back"
+    fi
+  }
+  omacase_menu
+  for item in \
+    "New terminal" \
+    "File manager" \
+    "Browser" \
+    "Spotify" \
+    "Apple Music" \
+    "Obsidian" \
+    "1Password" \
+    "Messages" \
+    "Todoist"
+  do
+    grep -Fxq "$item" "$captured" || return 1
+  done
 }
 
 test_theme_renderer_creates_fragments() {
@@ -247,13 +525,12 @@ EOF
   source "$ROOT/lib/theme.sh"
   _theme_render_from_colors sample "Sample" "sample-nvim" "$colors" "$out"
   [ -s "$out/ghostty" ] &&
-    [ -s "$out/sketchybar" ] &&
-    [ -s "$out/borders" ] &&
+    [ -s "$out/palette" ] &&
     [ -s "$out/btop" ] &&
     [ -s "$out/starship" ] &&
     [ -s "$out/nvim.lua" ] &&
     grep -q 'background = 010203' "$out/ghostty" &&
-    grep -q 'export ACCENT=0xff112233' "$out/sketchybar" &&
+    grep -q 'export THEME_ACCENT="#112233"' "$out/palette" &&
     grep -q 'return "sample-nvim"' "$out/nvim.lua"
 }
 
@@ -276,17 +553,32 @@ test_theme_accent_snaps_to_nearest_preset() {
 run_test "shell_quote round-trips shell paths" test_shell_quote_round_trips
 run_test "applescript_string escapes launcher paths" test_applescript_string_escapes_quotes
 run_test "_auto_backup creates first restore point" test_auto_backup_creates_first_snapshot
+run_test "same-second backups receive unique ids" test_backups_created_same_second_have_unique_ids
+run_test "auto-backup ignores owned top-level file links" test_auto_backup_ignores_owned_top_level_file_link
 run_test "restore rejects unsafe manifest paths" test_restore_rejects_unsafe_manifest
+run_test "restore preflights missing saved files" test_restore_rejects_missing_saved_file_before_changes
+run_test "restore preflights invalid defaults" test_restore_rejects_invalid_defaults_before_changes
+run_test "restore accepts legacy Omacase targets" test_restore_accepts_legacy_omacase_targets
 run_test "generated theme symlinks are owned" test_generated_theme_symlinks_are_owned
+run_test "auto-backup captures conflicting theme fragments" test_auto_backup_captures_conflicting_theme_fragment
+run_test "dotfile reinstall preserves unmanaged siblings" test_dotfile_reinstall_preserves_unmanaged_siblings
 run_test "dry-run launchers do not create files" test_dry_run_launchers_do_not_create_applications_dir
-run_test "caffeinate pid ownership is verified" test_caffeinate_rejects_unowned_pid
+run_test "manual backup captures live OmniWM settings" test_backup_captures_live_omniwm_settings
 run_test "update fails on self-update failure" test_update_fails_when_self_pull_fails
 run_test "backup domains cover macos/defaults.sh" test_backup_domains_cover_defaults_sh
+run_test "defaults disable Stage Manager" test_stage_manager_is_disabled_by_defaults
+run_test "Homebrew trust is scoped to exact third-party packages" test_brew_trust_is_scoped
+run_test "Grok installer requires explicit opt-in" test_grok_installer_requires_opt_in
 run_test "site/install matches boot.sh" test_bootstrap_copies_are_identical
 run_test "theme manifest lists all themes" test_theme_manifest_lists_all_themes
-run_test "aerospace persistent-workspaces cover bindings" test_aerospace_persistent_workspaces_cover_bindings
+run_test "OmniWM seed is valid with nine workspaces" test_omniwm_seed_is_valid_and_has_nine_workspaces
+run_test "Ghostty windows remain manageable by OmniWM" test_ghostty_windows_remain_manageable
+run_test "OmniWM focused mode is matched by pid" test_omniwm_focused_mode_matches_pid
 run_test "cli rejects unknown commands" test_cli_unknown_command_fails
 run_test "cli help and version work" test_cli_help_and_version
+run_test "cli keybinds displays KEYBINDS.md" test_cli_keybinds_displays_reference
+run_test "menu lists primary commands and opens keybinds" test_menu_lists_primary_commands_and_routes_keybinds
+run_test "menu lists app and overlay commands" test_menu_lists_app_and_overlay_commands
 run_test "theme renderer creates generated fragments" test_theme_renderer_creates_fragments
 run_test "theme accent snaps to nearest macOS preset" test_theme_accent_snaps_to_nearest_preset
 

@@ -2,8 +2,8 @@
 
 The consolidated, forward-looking list of planned work for Omacase. Completed
 features are documented in the [`README.md`](README.md); the explicit non-goals
-are in the README's *"What Omacase leaves to macOS (by design)"* section. This
-file is only what's *planned*.
+are in the README's [Boundaries](README.md#boundaries) section. This file is
+only what's *planned*.
 
 Everything here follows house style: subcommands in `lib/*.sh`, helpers from
 `lib/common.sh` (`run`/`have`/`info`/`success`/`warn`/`OMACASE_STATE`), idempotent
@@ -123,18 +123,19 @@ opts into a LaunchDaemon. Shared helpers in `lib/common.sh`:
   works from cached Omarchy backgrounds or local custom-theme backgrounds, with
   the choice persisted in `$OMACASE_STATE/wallpaper` and mtime-staged `.live`
   cache-busting. *Remaining:* a
-  Super keybind that calls `omacase wallpaper next` (Omarchy's `omarchy-theme-bg-next`).
-  - Files: `home/dot_config/aerospace/aerospace.toml`.
+  optional OmniWM hotkey that calls `omacase wallpaper next`
+  (Omarchy's `omarchy-theme-bg-next`).
+  - Configure through OmniWM's user-owned settings.
 - **Theme install from URL** — `omacase theme install <git-url>` (import a
   community theme into the manifest + generated cache, like Omarchy's menu-paste
   install).
-- **Font switcher** — `omacase font <name>` to retarget Ghostty + SketchyBar.
+- **Font switcher** — `omacase font <name>` to retarget Ghostty and editor UI.
 
 ## 3. Menu & system
 
 - **System-menu content** — extend the gum menu (`omacase sysmenu` / `omacase
   menu`) with **Capture / Toggle / power** entries for fuller Omarchy parity. The
-  launcher already shipped on `Super+Space`; this is the menu *content*.
+  Spotlight launcher already ships as `Oma Menu`; this is the menu *content*.
   - Files: `lib/menu.sh`.
 - **Own Omacase bundle ID + notification identity** — ship a minimal signed `.app`
   (e.g. `app.omacase` / `com.omacase.Omacase`) so notifications are attributed to
@@ -158,6 +159,6 @@ opts into a LaunchDaemon. Shared helpers in `lib/common.sh`:
 
 ## Not planned (recorded so we don't relitigate)
 
-See the README's [*"What Omacase leaves to macOS (by design)"*](README.md#what-omacase-leaves-to-macos-by-design)
-section: the **DND / Focus toggle** (defer to macOS), things already native on
-macOS (screenshots, lock, clipboard history, …), and Linux-only items.
+See the README's [Boundaries](README.md#boundaries) section: the **DND / Focus
+toggle** (defer to macOS), things already native on macOS (screenshots, lock,
+clipboard history, …), and Linux-only items.

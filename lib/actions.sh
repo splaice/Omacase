@@ -1,11 +1,11 @@
 # shellcheck shell=bash
 # Small, scriptable actions meant to be wrapped in a macOS Shortcut and triggered
-# from Spotlight — the macOS analog of Omarchy's Super-key launcher/menu helpers
+# from Spotlight — the macOS analog of Omarchy's launcher/menu helpers
 # (omarchy-launch-webapp, the toggle scripts). Each is a clean one-liner a
 # Shortcut's "Run Shell Script" step can call.
 
 # Web-app set (name -> URL). Based on Omarchy's config/hypr/bindings.conf
-# Super+Shift web apps, with email/calendar pointed at Gmail / Google Calendar.
+# web apps, with email/calendar pointed at Gmail / Google Calendar.
 _webapp_url() {
   case "$1" in
     chatgpt)  echo "https://chatgpt.com" ;;
@@ -89,6 +89,7 @@ _LAUNCHERS=(
   "Oma X|webapp x"
   "Oma X Post|webapp x-post"
   "Oma Appearance|appearance toggle"
+  "Oma Menu|sysmenu"
 )
 
 omacase_launchers() {
@@ -110,10 +111,7 @@ omacase_launchers() {
     done
   fi
 
-  # Web-app / action launchers, plus one per AeroSpace workspace (Oma 1…9)
-  # so workspaces are switchable from Spotlight, not just the Super+N keys.
-  local entries=("${_LAUNCHERS[@]}") i
-  for i in 1 2 3 4 5 6 7 8 9; do entries+=("Oma $i|workspace $i"); done
+  local entries=("${_LAUNCHERS[@]}")
 
   local entry name args app tmpdir="" tmp
   is_dryrun || tmpdir="$(mktemp -d)"
@@ -130,15 +128,14 @@ omacase_launchers() {
     {
       printf 'set omacase_bin to %s\n' "$(applescript_string "$bin")"
       printf 'set omacase_args to %s\n' "$(applescript_string "$args")"
+      # shellcheck disable=SC2016 # $PATH must expand inside the generated AppleScript shell.
       printf 'do shell script "export PATH=/opt/homebrew/bin:$PATH; " & quoted form of omacase_bin & " " & omacase_args\n'
       printf 'tell me to quit\n'
     } > "$tmp"
     if osacompile -o "$app" "$tmp" >/dev/null 2>&1; then
       : > "$app/Contents/Resources/.omacase-launcher"   # marker for clean removal
       # Run as an agent (LSUIElement): the launcher never becomes the frontmost
-      # app, so it can't steal focus or — critically for the `workspace N`
-      # launchers — bounce AeroSpace back when it quits. Also keeps them out of
-      # the Dock / ⌘-Tab.
+      # app, so it can't steal focus. Also keeps it out of the Dock / ⌘-Tab.
       /usr/libexec/PlistBuddy -c "Add :LSUIElement bool true" "$app/Contents/Info.plist" >/dev/null 2>&1 \
         || /usr/libexec/PlistBuddy -c "Set :LSUIElement true" "$app/Contents/Info.plist" >/dev/null 2>&1
       success "$name"
@@ -159,82 +156,4 @@ _launchers_remove() {
     run rm -rf "$app"; n=$((n + 1))
   done
   success "Removed $n omacase launcher(s) from $dir."
-}
-
-# `omacase caffeinate [toggle|on|off|status]` — hold a power assertion via the
-# built-in `caffeinate` (-d -i: no display or idle sleep), tracked by a pidfile
-# so the state survives across calls and SketchyBar reloads; a stale pid (e.g.
-# after a reboot, when caffeinate is gone) reconciles to "off". With no argument
-# it just repaints the bar. Bound to the SketchyBar coffee-cup click; also
-# usable from a shell or keybind.
-_caffeinate_pidfile() { printf '%s' "$OMACASE_STATE/caffeinate.pid"; }
-
-_caffeinate_awake() {   # 0 only if the caffeinate we started is still alive
-  local pid cmd
-  pid="$(cat "$(_caffeinate_pidfile)" 2>/dev/null)" || return 1
-  pid="${pid%% *}"
-  [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null || return 1
-  cmd="$(ps -p "$pid" -o command= 2>/dev/null | sed 's/^ *//')"
-  [ "$cmd" = "/usr/bin/caffeinate -d -i" ]
-}
-
-_caffeinate_start() {
-  _caffeinate_awake && return 0
-  if is_dryrun; then
-    printf '\033[2m[dry-run]\033[0m start caffeinate\n'
-    return 0
-  fi
-  ensure_state_dir
-  nohup /usr/bin/caffeinate -d -i >/dev/null 2>&1 &   # runs until killed
-  echo $! > "$(_caffeinate_pidfile)"
-}
-
-_caffeinate_stop() {
-  local pid
-  if is_dryrun; then
-    printf '\033[2m[dry-run]\033[0m stop caffeinate\n'
-    return 0
-  fi
-  if _caffeinate_awake; then
-    pid="$(cat "$(_caffeinate_pidfile)" 2>/dev/null)"
-    kill "${pid%% *}" 2>/dev/null || true
-  fi
-  run rm -f "$(_caffeinate_pidfile)"
-}
-
-# Reflect state on the SketchyBar coffee-cup item — best-effort (silent if the
-# bar isn't running). Colors come from the live theme.
-_caffeinate_paint() {
-  have sketchybar || return 0
-  sketchybar_theme_env
-  if _caffeinate_awake; then
-    sketchybar --set caffeine icon.color="$ACCENT" 2>/dev/null || true
-  else
-    sketchybar --set caffeine icon.color="$MUTED" 2>/dev/null || true
-  fi
-}
-
-omacase_caffeinate() {
-  brew_env_if_available   # SketchyBar click env lacks Homebrew on PATH; /usr/bin/caffeinate itself needs no brew
-  local before; _caffeinate_awake && before=on || before=off
-  case "${1:-paint}" in
-    toggle) if _caffeinate_awake; then _caffeinate_stop; else _caffeinate_start; fi ;;
-    on)     _caffeinate_start ;;
-    off)    _caffeinate_stop ;;
-    status) if _caffeinate_awake; then echo on; _caffeinate_paint; return 0
-            else echo off; _caffeinate_paint; return 1; fi ;;
-    paint|"") : ;;
-    *) abort "usage: omacase caffeinate [toggle|on|off|status]" ;;
-  esac
-  _caffeinate_awake || run rm -f "$(_caffeinate_pidfile)" 2>/dev/null   # drop a stale pid
-  _caffeinate_paint
-  # Notify only on a real on↔off transition (so paint/status/no-op on|off stay quiet).
-  local after; _caffeinate_awake && after=on || after=off
-  if [ "$before" != "$after" ]; then
-    if [ "$after" = on ]; then
-      notify --subtitle "Caffeinate" --sound Glass "Caffeinated — your Mac will stay awake"
-    else
-      notify --subtitle "Caffeinate" --sound Glass "Decaffeinated — normal sleep restored"
-    fi
-  fi
 }

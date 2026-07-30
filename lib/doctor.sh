@@ -7,7 +7,7 @@ omacase_doctor() {
   local issues=0
 
   step "Tooling"
-  for c in brew gum sketchybar borders; do
+  for c in brew gum omniwmctl; do
     if have "$c"; then success "$c installed"; else error "$c missing — run \`omacase install\`"; issues=$((issues + 1)); fi
   done
 
@@ -19,11 +19,11 @@ omacase_doctor() {
     link="$bindir/omacase"
     if [ "$(readlink "$link" 2>/dev/null)" = "$want" ]; then
       success "\`omacase\` → $link"
-    elif [ -e "$link" ] && [ ! -L "$link" ]; then
-      warn "$link exists and isn't a symlink — leaving it alone."; issues=$((issues + 1))
+    elif [ -e "$link" ] || [ -L "$link" ]; then
+      warn "$link is unrelated to this checkout — leaving it alone."; issues=$((issues + 1))
     else
       warn "\`omacase\` not linked onto PATH — repairing → $link"
-      run ln -sfn "$want" "$link"
+      run ln -s "$want" "$link"
       is_dryrun || success "linked \`omacase\` → $link"
     fi
   fi
@@ -34,10 +34,12 @@ omacase_doctor() {
     warn "No Homebrew prefix found — can't link zsh completion."; issues=$((issues + 1))
   elif [ "$(readlink "$zfunc/_omacase" 2>/dev/null)" = "$comp" ]; then
     success "_omacase → $zfunc/_omacase  (omacase <Tab> completes; compinit runs via ~/.zshrc)"
+  elif [ -e "$zfunc/_omacase" ] || [ -L "$zfunc/_omacase" ]; then
+    warn "$zfunc/_omacase is unrelated to this checkout — leaving it alone."; issues=$((issues + 1))
   else
     warn "zsh completion not linked — repairing → $zfunc/_omacase"
     run mkdir -p "$zfunc"
-    run ln -sfn "$comp" "$zfunc/_omacase"
+    run ln -s "$comp" "$zfunc/_omacase"
     is_dryrun || success "linked _omacase → $zfunc/_omacase  (open a new shell to pick it up)"
   fi
   # Group-writable dirs above an fpath entry make compinit prompt "insecure
@@ -64,35 +66,29 @@ omacase_doctor() {
   step "Window manager"
   # shellcheck source=/dev/null
   source "$OMACASE_ROOT/lib/wm.sh"
-  if ! pgrep -x AeroSpace >/dev/null; then
-    warn "AeroSpace not running — \`omacase wm\`"; issues=$((issues + 1))
-  elif _wm_aerospace_stale; then
-    # brew upgraded the cask under the running app — keybinds/tiling are dead
-    # until relaunch (CLI/server socket protocol mismatch).
-    warn "AeroSpace binary was upgraded under the running app — repairing: restarting it."
-    _wm_restart_aerospace
+  if ! pgrep -x OmniWM >/dev/null; then
+    warn "OmniWM not running — \`omacase wm\`"; issues=$((issues + 1))
+  elif _wm_ipc_ready; then
+    success "OmniWM running and IPC healthy"
   else
-    success "AeroSpace running (app and CLI in sync)"
+    warn "OmniWM is running but IPC is unavailable — enable IPC in OmniWM settings."
+    issues=$((issues + 1))
   fi
-  check_loop_conflict || issues=$((issues + 1))
-
-  step "Desktop apps"
-  # Karabiner 15+ uses DriverKit; the real "Super key live" signal is the system
-  # extension being 'activated enabled' (not 'waiting for user').
-  if pgrep -x Karabiner-Elements >/dev/null || pgrep -f Karabiner-Core-Service >/dev/null; then
-    local se; se="$(systemextensionsctl list 2>/dev/null | grep -i karabiner)"
-    if printf '%s' "$se" | grep -q 'activated enabled'; then
-      success "Karabiner driver active (Super key live)"
-    elif printf '%s' "$se" | grep -q 'waiting for user'; then
-      warn "Karabiner driver is 'waiting for user' — APPROVE it: System Settings → General →"
-      warn "  Login Items & Extensions → Driver Extensions (toggle Karabiner on)."
-      issues=$((issues + 1))
-    else
-      warn "Karabiner driver extension not enabled — enable it + Input Monitoring."
-      issues=$((issues + 1))
-    fi
+  step "macOS window management"
+  local spans stage_manager
+  spans="$(defaults read com.apple.spaces spans-displays 2>/dev/null || echo 1)"
+  if [ "$spans" = 0 ]; then
+    success "Displays have separate Spaces (OmniWM requirement)"
   else
-    warn "Karabiner-Elements not running — \`open -a Karabiner-Elements\`"; issues=$((issues + 1))
+    warn "Displays have separate Spaces is not active. Omacase set it, but you must log out once."
+    issues=$((issues + 1))
+  fi
+  stage_manager="$(defaults read com.apple.WindowManager GloballyEnabled 2>/dev/null || echo 0)"
+  if [ "$stage_manager" = 0 ]; then
+    success "Stage Manager is disabled (all tiles can remain visible)"
+  else
+    warn "Stage Manager is active and can hide OmniWM tiles. Re-run \`omacase install\` or disable it in Control Center."
+    issues=$((issues + 1))
   fi
 
   step "Appearance sync (theme ⇄ macOS Light/Dark)"
@@ -109,8 +105,8 @@ omacase_doctor() {
   These need a manual toggle in System Settings → Privacy & Security.
   No script can grant them — that's the OS security model, by design.
 
-    Accessibility      : AeroSpace, SketchyBar
-    Input Monitoring   : Karabiner-Elements
+    Accessibility      : OmniWM
+    Input Monitoring   : only if you enable OmniWM's optional system Hyper key
     Automation         : terminal → System Events (theme Light/Dark sync)
     Full Disk Access   : (optional) terminal, for some defaults writes
 EOF
@@ -124,8 +120,8 @@ EOF
     ⌘ Tab          →  Switch apps (macOS app switcher)
   If ⌘Space doesn't open Spotlight (e.g. a launcher had taken it), re-enable it:
   System Settings → Keyboard → Keyboard Shortcuts → Spotlight → "Show Spotlight search".
-  Tip: bind your own automations as Shortcuts to run them from Spotlight (and via
-  the Karabiner Super key if you like).
+  OmniWM owns the window-management shortcuts; Omacase adds named web-app and
+  menu launchers without intercepting normal keyboard input.
 EOF
   if confirm "Open the Accessibility settings pane now?"; then
     open "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility" || true
