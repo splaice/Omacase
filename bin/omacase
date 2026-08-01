@@ -31,7 +31,7 @@ usage: omacase <command> [args]
   webapp [name]      Open an Omarchy web app (no name = list); for Spotlight Shortcuts
   appearance [...]   Toggle/set macOS Light/Dark (toggle|dark|light)
   launchers [...]    Generate Spotlight .app launchers for web apps and Omacase Menu (build|remove)
-  wm                 Start OmniWM and verify its automation endpoint
+  wm [menu|palette]  Start OmniWM and verify it; menu/palette open its app menu / command palette
   terminal [cmd...]  Open a new Ghostty window in the running instance, optionally running cmd (alias: term)
   files              Toggle a centered ranger file-manager popup
   browser            Open/focus the system default browser

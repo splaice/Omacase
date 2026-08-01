@@ -78,7 +78,29 @@ _wm_ipc_ready() {
   wait "$pid"
 }
 
+# `omacase wm menu|palette` — open OmniWM's app menu / command palette over
+# IPC. macOS 26 can fail to register OmniWM's menu bar icon (it never appears
+# under System Settings → Menu Bar), so these are the reliable entry points for
+# keybinds and Spotlight launchers.
+_wm_open_ui() {
+  ensure_brew_env
+  local ipc="$1"
+  if is_dryrun; then
+    printf '\033[2m[dry-run]\033[0m omniwmctl command %s\n' "$ipc"
+    return 0
+  fi
+  _wm_ipc_ready || abort "OmniWM IPC is not ready — run \`omacase wm\` first."
+  omniwmctl command "$ipc" >/dev/null
+}
+
 omacase_wm() {
+  case "${1:-}" in
+    menu)    _wm_open_ui open-menu-anywhere; return ;;
+    palette) _wm_open_ui open-command-palette; return ;;
+    "")      ;;
+    *)       abort "usage: omacase wm [menu|palette]" ;;
+  esac
+
   ensure_brew_env
   _wm_seed_config
   _wm_install_login_item

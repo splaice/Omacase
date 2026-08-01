@@ -30,7 +30,7 @@ _omacase() {
         'webapp:open an Omarchy web app (no name = list)'
         'appearance:toggle/set macOS Light/Dark'
         'launchers:generate Spotlight .app launchers for web apps and Omacase Menu'
-        'wm:start and verify OmniWM'
+        'wm:start/verify OmniWM; menu|palette open its app menu / command palette'
         'terminal:open a new Ghostty window in the running instance'
         'term:open a new Ghostty window in the running instance'
         'files:toggle a centered ranger file-manager popup'
@@ -78,6 +78,9 @@ _omacase() {
           ;;
         music)
           _values 'music app' spotify apple && ret=0
+          ;;
+        wm)
+          _values 'wm action' 'menu[open the OmniWM app menu]' 'palette[open the OmniWM command palette]' && ret=0
           ;;
         restore)
           local backups=${OMACASE_STATE:-$HOME/.local/state/omacase}/backups

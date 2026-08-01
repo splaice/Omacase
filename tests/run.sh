@@ -396,6 +396,22 @@ test_omniwm_focused_mode_matches_pid() {
     [ -z "$(_wm_focused_mode_for_pid 7)" ]
 }
 
+test_wm_menu_and_palette_route_to_ipc() {
+  OMACASE_ROOT="$ROOT"
+  # shellcheck source=/dev/null
+  source "$ROOT/lib/common.sh"
+  # shellcheck source=/dev/null
+  source "$ROOT/lib/wm.sh"
+  local calls=""
+  ensure_brew_env() { :; }
+  _wm_ipc_ready() { return 0; }
+  omniwmctl() { calls="$calls $2"; }
+  omacase_wm menu &&
+    omacase_wm palette &&
+    [ "$calls" = " open-menu-anywhere open-command-palette" ] &&
+    ! ( omacase_wm bogus ) 2>/dev/null
+}
+
 test_cli_unknown_command_fails() {
   local out
   out="$(mktemp)"
@@ -442,6 +458,8 @@ test_menu_lists_primary_commands_and_routes_keybinds() {
     "Open a web app" \
     "Apps and overlays" \
     "Start / verify OmniWM" \
+    "OmniWM app menu" \
+    "OmniWM command palette" \
     "View keybinds" \
     "Run doctor" \
     "Create a backup" \
@@ -574,6 +592,7 @@ run_test "theme manifest lists all themes" test_theme_manifest_lists_all_themes
 run_test "OmniWM seed is valid with nine workspaces" test_omniwm_seed_is_valid_and_has_nine_workspaces
 run_test "Ghostty windows remain manageable by OmniWM" test_ghostty_windows_remain_manageable
 run_test "OmniWM focused mode is matched by pid" test_omniwm_focused_mode_matches_pid
+run_test "wm menu and palette route to omniwmctl" test_wm_menu_and_palette_route_to_ipc
 run_test "cli rejects unknown commands" test_cli_unknown_command_fails
 run_test "cli help and version work" test_cli_help_and_version
 run_test "cli keybinds displays KEYBINDS.md" test_cli_keybinds_displays_reference
