@@ -6,7 +6,7 @@
 # overwrites an existing live file.
 
 [general]
-defaultLayoutType = "dwindle"
+defaultLayoutType = "niri"
 ipcEnabled = true
 
 [focus]

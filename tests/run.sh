@@ -370,7 +370,7 @@ with open(sys.argv[1], "rb") as handle:
     config = tomllib.load(handle)
 workspaces = config["workspaces"]
 assert config["general"]["ipcEnabled"] is True
-assert config["general"]["defaultLayoutType"] == "dwindle"
+assert config["general"]["defaultLayoutType"] == "niri"
 assert "appRules" not in config
 assert [workspace["name"] for workspace in workspaces] == list("123456789")
 assert len({workspace["id"] for workspace in workspaces}) == 9
