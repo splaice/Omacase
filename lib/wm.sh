@@ -93,12 +93,31 @@ _wm_open_ui() {
   omniwmctl command "$ipc" >/dev/null
 }
 
+# `omacase wm settings` — OmniWM has no IPC command or URL scheme for its
+# settings window (checked 0.5.10), so activate the app and click the app
+# menu's "Settings…" item via System Events.
+_wm_open_settings() {
+  if is_dryrun; then
+    printf '\033[2m[dry-run]\033[0m open the OmniWM settings window\n'
+    return 0
+  fi
+  pgrep -x OmniWM >/dev/null 2>&1 || abort "OmniWM is not running — run \`omacase wm\` first."
+  osascript >/dev/null 2>&1 <<'OSA' ||
+tell application "OmniWM" to activate
+tell application "System Events" to tell process "OmniWM"
+  click (first menu item of menu "OmniWM" of menu bar item "OmniWM" of menu bar 1 whose name begins with "Settings")
+end tell
+OSA
+    warn "Couldn't open OmniWM settings — the calling app needs Accessibility and Automation consent."
+}
+
 omacase_wm() {
   case "${1:-}" in
-    menu)    _wm_open_ui open-menu-anywhere; return ;;
-    palette) _wm_open_ui open-command-palette; return ;;
-    "")      ;;
-    *)       abort "usage: omacase wm [menu|palette]" ;;
+    menu)     _wm_open_ui open-menu-anywhere; return ;;
+    palette)  _wm_open_ui open-command-palette; return ;;
+    settings) _wm_open_settings; return ;;
+    "")       ;;
+    *)        abort "usage: omacase wm [menu|palette|settings]" ;;
   esac
 
   ensure_brew_env

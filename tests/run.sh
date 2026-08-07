@@ -460,6 +460,7 @@ test_menu_lists_primary_commands_and_routes_keybinds() {
     "Start / verify OmniWM" \
     "OmniWM app menu" \
     "OmniWM command palette" \
+    "OmniWM settings" \
     "View keybinds" \
     "Run doctor" \
     "Create a backup" \
