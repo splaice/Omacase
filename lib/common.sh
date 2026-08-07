@@ -122,7 +122,13 @@ can_set_appearance() {
 # --- gum (optional TUI sugar) ------------------------------------------------
 gum_choose() { # gum_choose "header" opt1 opt2 ...  -> prints choice
   local header="$1"; shift
-  if have gum; then gum choose --header "$header" "$@"
+  if have gum; then
+    # gum's default --height=10 truncates longer menus; show every option,
+    # clamped to the terminal (1 row goes to the header).
+    local height=$# rows
+    rows="$(tput lines 2>/dev/null || echo 0)"
+    [ "$rows" -gt 1 ] && [ "$height" -gt $((rows - 1)) ] && height=$((rows - 1))
+    gum choose --height "$height" --header "$header" "$@"
   else
     printf '%s\n' "$header" >&2
     select c in "$@"; do [ -n "$c" ] && { printf '%s\n' "$c"; return; }; done
