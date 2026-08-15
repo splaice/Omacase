@@ -23,9 +23,11 @@ omacase_install() {
   step "4/9  Dotfiles (symlinks)"
   _link_dotfiles
 
-  step "5/9  Tool runtimes & AI CLIs (mise + optional grok)"
+  step "5/9  Tool runtimes & AI CLIs (mise + optional grok) + herdr agent hooks & skill"
   _mise_install
   _grok_install
+  _herdr_integrations
+  _herdr_skill
 
   step "6/9  macOS defaults"
   bash "$OMACASE_ROOT/macos/defaults.sh"   # honors OMACASE_DRYRUN itself
@@ -131,6 +133,79 @@ _grok_strip_zshrc_block() {
   sed '/^# >>> grok installer >>>/,/^# <<< grok installer <<</d' "$zshrc" > "$tmp" \
     && cat "$tmp" > "$zshrc"
   rm -f "$tmp"
+}
+
+# herdr ships per-agent hooks that report each coding agent's lifecycle state
+# (idle/working/blocked/done) back to herdr — that reporting is what drives its
+# agent sidebar, notifications, and `herdr agent` commands. Without them a pane
+# running an agent is just an anonymous shell to herdr.
+#
+# Only agents actually on PATH get a hook, so this tracks whatever the Brewfile
+# and mise config currently ship (plus opt-in grok). herdr owns the whole
+# lifecycle — install is idempotent and versioned, so re-running upgrades a
+# stale hook in place; `herdr integration status` reports what is current, and
+# `herdr integration uninstall <agent>` removes one.
+_herdr_integrations() {
+  have herdr || { warn "herdr not found (brew bundle should install it) — skipping agent hooks."; return 0; }
+  local agent
+  for agent in claude codex opencode pi grok; do
+    have "$agent" || continue
+    run herdr integration install "$agent" \
+      || warn "herdr integration install $agent failed; re-run \`omacase update\`."
+  done
+}
+
+# Agent harnesses whose config root implies they read a `skills/` directory.
+# opencode, pi, and gemini ship no skills directory, so they are skipped rather
+# than guessed at — revisit if that changes upstream.
+_HERDR_SKILL_HOSTS=(.claude .codex .grok)
+
+# The other half of herdr's agent story: a *skill* describing how to drive herdr
+# itself (panes, tabs, workspaces, other agents), which is the opposite
+# direction from the state hooks above. `herdr --skill` prints it, so it is
+# generated rather than vendored and always matches the installed binary.
+#
+# ~/.agents/skills is the shared cross-harness store; each harness reads its own
+# skills/ directory, which by convention symlinks there. Writing the canonical
+# copy once and linking keeps every agent on the same text. Re-running refreshes
+# the generated file and picks up harnesses installed since the last run, which
+# is what makes this safe for `omacase update` to repeat.
+_herdr_skill() {
+  have herdr || return 0
+  local store="$HOME/.agents/skills/herdr" host dir target
+  if is_dryrun; then
+    log "[dry-run] would write $store/SKILL.md from \`herdr --skill\`"
+  else
+    if ! mkdir -p "$store"; then
+      warn "Could not create $store — skipping herdr skill."
+      return 0
+    fi
+    if ! herdr --skill > "$store/SKILL.md"; then
+      warn "\`herdr --skill\` failed — skipping herdr skill."
+      return 0
+    fi
+  fi
+
+  for host in "${_HERDR_SKILL_HOSTS[@]}"; do
+    [ -d "$HOME/$host" ] || continue
+    dir="$HOME/$host/skills"
+    target="$dir/herdr"
+    # Never clobber a skill someone else installed under the same name; an
+    # existing link of ours is already correct, so re-running is a no-op.
+    if [ -L "$target" ]; then
+      if [ "$(readlink "$target")" != "$store" ]; then
+        warn "$target points elsewhere — leaving it alone."
+      fi
+      continue
+    fi
+    if [ -e "$target" ]; then
+      warn "$target exists and is not an Omacase symlink — leaving it alone."
+      continue
+    fi
+    run mkdir -p "$dir"
+    run ln -s "$store" "$target"
+    is_dryrun || success "herdr skill → $target"
+  done
 }
 
 # Make `omacase` available on PATH for every shell (zsh/bash/fish) and for GUI
@@ -251,6 +326,19 @@ omacase_uninstall() {
   while IFS='|' read -r _ themed; do
     { _is_omacase_link "$themed" && run rm -f "$themed"; } || true
   done < <(_theme_links)
+
+  # herdr skill links point at ~/.agents, outside the repo, so _is_omacase_link
+  # cannot classify them — match the exact target this installer creates. The
+  # per-agent state hooks are deliberately left in place: herdr owns their
+  # lifecycle and removes them with `herdr integration uninstall <agent>`.
+  local skill_store="$HOME/.agents/skills/herdr" host
+  for host in "${_HERDR_SKILL_HOSTS[@]}"; do
+    target="$HOME/$host/skills/herdr"
+    if [ -L "$target" ] && [ "$(readlink "$target")" = "$skill_store" ]; then
+      run rm -f "$target"
+    fi
+  done
+  { [ -d "$skill_store" ] && run rm -rf "$skill_store"; } || true
 
   local agent="$HOME/Library/LaunchAgents/org.omacase.omniwm.plist"
   run launchctl bootout "gui/$(id -u)/org.omacase.omniwm" 2>/dev/null || true

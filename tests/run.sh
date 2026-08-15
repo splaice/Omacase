@@ -345,6 +345,40 @@ test_grok_installer_requires_opt_in() {
     grep -q "Skipping Grok CLI's unpinned upstream installer" "$ROOT/lib/install.sh"
 }
 
+test_herdr_is_declared_in_brewfile() {
+  grep -qE '^brew "herdr"' "$ROOT/Brewfile"
+}
+
+# Every agent CLI Omacase ships must also get a herdr agent hook, or that agent
+# shows up in herdr as an anonymous shell with no lifecycle state. The declared
+# set is derived from where each CLI actually comes from (Brewfile / mise /
+# opt-in installer), so dropping one of those without updating the hook loop —
+# or vice versa — fails here.
+test_herdr_hooks_cover_shipped_agents() {
+  local hooked declared="" agent
+  hooked="$(sed -n 's/^ *for agent in \(.*\); do$/\1/p' "$ROOT/lib/install.sh")"
+  [ -n "$hooked" ] || return 1
+  grep -q 'cask "codex"'    "$ROOT/Brewfile" && declared="$declared codex"
+  grep -q 'brew "opencode"' "$ROOT/Brewfile" && declared="$declared opencode"
+  grep -q 'pi-coding-agent' "$ROOT/home/dot_config/mise/config.toml" && declared="$declared pi"
+  grep -q 'OMACASE_INSTALL_GROK' "$ROOT/lib/install.sh" && declared="$declared grok"
+  # claude self-manages via its own installer, so it is never declared elsewhere.
+  for agent in $declared claude; do
+    case " $hooked " in *" $agent "*) ;; *) return 1 ;; esac
+  done
+  grep -q 'herdr integration install "\$agent"' "$ROOT/lib/install.sh"
+}
+
+# The herdr skill is generated from the installed binary rather than vendored,
+# so it can never drift from the herdr actually on PATH. The host list must be
+# consumed twice — once to link on install, once to unlink on uninstall — or
+# `omacase uninstall` strands symlinks in ~/.claude, ~/.codex, and ~/.grok.
+test_herdr_skill_is_generated_and_reversible() {
+  grep -q 'herdr --skill > "\$store/SKILL.md"' "$ROOT/lib/install.sh" || return 1
+  ! find "$ROOT/home" -name 'SKILL.md' | grep -q . || return 1
+  [ "$(grep -c '_HERDR_SKILL_HOSTS\[@\]' "$ROOT/lib/install.sh")" -eq 2 ]
+}
+
 test_theme_manifest_lists_all_themes() {
   OMACASE_ROOT="$ROOT"
   # shellcheck source=/dev/null
@@ -588,6 +622,9 @@ run_test "backup domains cover macos/defaults.sh" test_backup_domains_cover_defa
 run_test "defaults disable Stage Manager" test_stage_manager_is_disabled_by_defaults
 run_test "Homebrew trust is scoped to exact third-party packages" test_brew_trust_is_scoped
 run_test "Grok installer requires explicit opt-in" test_grok_installer_requires_opt_in
+run_test "herdr is declared in the Brewfile" test_herdr_is_declared_in_brewfile
+run_test "herdr agent hooks cover shipped agent CLIs" test_herdr_hooks_cover_shipped_agents
+run_test "herdr skill is generated and uninstall reverses it" test_herdr_skill_is_generated_and_reversible
 run_test "site/install matches boot.sh" test_bootstrap_copies_are_identical
 run_test "theme manifest lists all themes" test_theme_manifest_lists_all_themes
 run_test "OmniWM seed is valid with nine workspaces" test_omniwm_seed_is_valid_and_has_nine_workspaces

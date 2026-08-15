@@ -73,3 +73,11 @@ if [[ -o interactive ]] && [ -t 1 ]; then
   [ -f "$_omacase_motd" ] && command cat -- "$_omacase_motd"
   unset _omacase_motd
 fi
+
+# Name the terminal window after the host, so a `herdr --remote` attach reads as
+# the remote box and a local session as this one. Guarded on the herdr binary as
+# well as HERDR_ENV, and wrapped in `if` rather than `&&` so a non-herdr shell
+# doesn't leave $? at 1 for Starship to render as a failed command.
+if [ -n "$HERDR_ENV" ] && command -v herdr >/dev/null 2>&1; then
+  herdr terminal title set "$(hostname -s)" >/dev/null 2>&1 || true
+fi
