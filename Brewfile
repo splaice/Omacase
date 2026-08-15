@@ -55,6 +55,12 @@ cask "ollama-app"        # Ollama — local LLM runner (menu-bar app, auto-updat
 tap  "finbarr/tap"
 brew "finbarr/tap/yolobox" # run AI coding agents in a sandboxed container
 
+# --- Networking -------------------------------------------------------------
+# Tailscale is what makes the remote half of herdr usable: `herdr --remote
+# <host>` needs the box reachable from anywhere, and the herdr server keeps the
+# agent running there after the laptop disconnects.
+cask "tailscale-app"     # mesh VPN / private network
+
 # --- Opinionated applications -----------------------------------------------
 # Omacase installs these and offers optional CLI/menu launch helpers. OmniWM's
 # own shortcuts remain untouched; its app rules decide which windows float.
@@ -62,6 +68,15 @@ cask "spotify"           # music (Apple Music is stock)
 cask "obsidian"          # notes / knowledge base
 cask "1password"         # password manager
 cask "todoist-app"       # tasks
+cask "the-unarchiver"    # archives beyond zip (stock Archive Utility handles little else)
+
+# Messaging. Native apps rather than `omacase webapp` shells: these want
+# background notifications, and the desktop clients carry features the web
+# versions do not.
+cask "discord"
+cask "signal"
+cask "telegram"
+cask "whatsapp"
 
 # --- Dictation --------------------------------------------------------------
 cask "fluidvoice" # offline voice-to-text (local model); needs Mic + Accessibility
@@ -74,7 +89,12 @@ brew "terminal-notifier" # reliable native notifications for `omacase notify` (o
 # --- Fonts ------------------------------------------------------------------
 cask "font-jetbrains-mono-nerd-font"
 
-# --- Browser ----------------------------------------------------------------
+# --- Browsers ---------------------------------------------------------------
 # Brave is the dedicated `omacase webapp` browser (signed; opens chromeless
 # app windows) so ⌘Q on a web app never quits your daily/default browser.
 cask "brave-browser" # Chromium + PWAs; pairs with Safari "Add to Dock"
+# Chrome is the third role the line above implies: a daily/default browser and
+# the web-dev reference engine (and where Claude in Chrome runs). Safari stays
+# stock. Only the stable channel ships — a default set has no business
+# installing two channels of one browser.
+cask "google-chrome"
