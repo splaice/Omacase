@@ -28,7 +28,7 @@ asks.
 | Layer | Choice |
 |---|---|
 | Window environment | **OmniWM** — Dwindle default, nine workspaces, borders, workspace bar, overview, quake terminal |
-| Launcher | **Spotlight** plus generated `Oma …` web-app/menu launchers |
+| Launcher | **Spotlight** (stock) |
 | Terminal | **Ghostty**, zsh, Starship, tmux, herdr, and a modern CLI set |
 | Editor | **Neovim / LazyVim** |
 | Applications | **Homebrew + Brewfile** |
@@ -52,7 +52,6 @@ omacase theme [name]        apply a coordinated theme
 omacase palette [name]      edit a theme's terminal ANSI palette
 omacase wallpaper [...]     list or change the active theme wallpaper
 omacase webapp [name]       open a named web app
-omacase launchers [...]     build/remove Spotlight “Oma …” launchers
 omacase backup [label]      snapshot managed state and live OmniWM settings
 omacase restore [id]        restore a snapshot
 omacase migrate             run one-time changeovers

@@ -29,7 +29,6 @@ _omacase() {
         'wp:pick the active theme background (list|next|prev|<n>)'
         'webapp:open an Omarchy web app (no name = list)'
         'appearance:toggle/set macOS Light/Dark'
-        'launchers:generate Spotlight .app launchers for web apps and Omacase Menu'
         'wm:start/verify OmniWM; menu|palette|settings open its app menu / command palette / settings window'
         'terminal:open a new Ghostty window in the running instance'
         'term:open a new Ghostty window in the running instance'
@@ -48,7 +47,6 @@ _omacase() {
         'restore:roll back to a snapshot (--list to see them)'
         'config:open the config directory'
         'menu:interactive TUI'
-        'sysmenu:toggle the Omacase system menu popup'
         'notify:pop a native macOS notification (for scripts/keybinds)'
         'version:print version'
         'uninstall:remove omacase-managed config (keeps your apps)'
@@ -69,9 +67,6 @@ _omacase() {
           ;;
         appearance)
           _values 'appearance' toggle dark light && ret=0
-          ;;
-        launchers)
-          _values 'action' build remove && ret=0
           ;;
         wallpaper|wp)
           _values 'wallpaper' list next prev pick && ret=0

@@ -32,7 +32,7 @@ Settings → Hotkeys screen is authoritative and supports changing every binding
 | `⌃⌥ + Space` | Toggle command palette |
 | `⌃⌥ + M` | Open the OmniWM menu anywhere |
 
-## macOS and Omacase launchers
+## macOS
 
 | Keys | Action |
 |---|---|
@@ -40,10 +40,9 @@ Settings → Hotkeys screen is authoritative and supports changing every binding
 | `⌘ Tab` | macOS app switcher |
 | `⌃⌘ Space` | Emoji & Symbols |
 
-`omacase launchers build` creates Spotlight-visible launchers named `Oma
-ChatGPT`, `Oma Mail`, `Oma Cal`, `Oma Menu`, and similar. Type `Oma` in
-Spotlight to see them. Workspace switching stays in OmniWM rather than being
-duplicated as launcher applications.
+Spotlight is the launcher, unmodified. Omacase adds no launcher applications of
+its own; run `omacase menu` for its TUI, or bind any `omacase` subcommand as an
+OmniWM shortcut.
 
 ## Terminal
 

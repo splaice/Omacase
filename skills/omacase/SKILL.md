@@ -20,7 +20,6 @@ to the Omacase-managed Mac environment.
 - `omacase keybinds` — render the project key reference in the terminal.
 - `omacase theme [name]`, `palette [name]`, `wallpaper [...]` — visual system.
 - `omacase backup [label]`, `restore [id]` — reversible configuration snapshots.
-- `omacase launchers [build|remove]` — Spotlight web-app and menu launchers.
 - `omacase migrate` — apply exact, tracked one-time cleanups.
 
 ## Ownership

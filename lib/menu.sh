@@ -23,7 +23,6 @@ omacase_menu() {
     "Run doctor" \
     "Create a backup" \
     "Restore a backup" \
-    "Manage Spotlight launchers" \
     "Run migrations" \
     "Edit config" \
     "About" \
@@ -48,7 +47,6 @@ omacase_menu() {
     "Run doctor")            source "$OMACASE_ROOT/lib/doctor.sh"; omacase_doctor ;;
     "Create a backup")       source "$OMACASE_ROOT/lib/backup.sh"; omacase_backup ;;
     "Restore a backup")      source "$OMACASE_ROOT/lib/backup.sh"; omacase_restore ;;
-    "Manage Spotlight launchers") _menu_launchers ;;
     "Run migrations")        source "$OMACASE_ROOT/lib/migrate.sh"; omacase_migrate ;;
     "Edit config")           exec sh -c 'exec ${EDITOR:-open} "$1"' sh "$OMACASE_ROOT/home" ;;   # sh splits multi-word EDITORs like "code -w"
     "Uninstall Omacase")     source "$OMACASE_ROOT/lib/install.sh"; omacase_uninstall ;;
@@ -64,21 +62,6 @@ _menu_webapp() {
   choice="$(gum_choose "Web app" "${apps[@]}" "Back")" || return
   [ "$choice" = "Back" ] || omacase_webapp "$choice"
 }
-
-_menu_launchers() {
-  local choice
-  choice="$(gum_choose "Spotlight launchers" \
-    "Build / rebuild" \
-    "Remove" \
-    "Back")" || return
-  source "$OMACASE_ROOT/lib/actions.sh"
-  case "$choice" in
-    "Build / rebuild") omacase_launchers build ;;
-    "Remove")          omacase_launchers remove ;;
-    "Back"|"")         return ;;
-  esac
-}
-
 _menu_apps() {
   local choice
   choice="$(gum_choose "Apps and overlays" \

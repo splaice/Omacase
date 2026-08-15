@@ -120,8 +120,8 @@ EOF
     ⌘ Tab          →  Switch apps (macOS app switcher)
   If ⌘Space doesn't open Spotlight (e.g. a launcher had taken it), re-enable it:
   System Settings → Keyboard → Keyboard Shortcuts → Spotlight → "Show Spotlight search".
-  OmniWM owns the window-management shortcuts; Omacase adds named web-app and
-  menu launchers without intercepting normal keyboard input.
+  OmniWM owns the window-management shortcuts; Omacase installs no launcher
+  applications and does not intercept normal keyboard input.
 EOF
   if confirm "Open the Accessibility settings pane now?"; then
     open "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility" || true

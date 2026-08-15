@@ -81,7 +81,7 @@ _wm_ipc_ready() {
 # `omacase wm menu|palette` — open OmniWM's app menu / command palette over
 # IPC. macOS 26 can fail to register OmniWM's menu bar icon (it never appears
 # under System Settings → Menu Bar), so these are the reliable entry points for
-# keybinds and Spotlight launchers.
+# keybinds.
 _wm_open_ui() {
   ensure_brew_env
   local ipc="$1"
@@ -241,12 +241,6 @@ omacase_files() {
   _ghostty_popup_toggle "omacase-files" \
     "printf '\033]0;omacase-files\007'; exec ranger --confdir='$HOME/.config/ranger'" \
     "ranger --confdir=$HOME/.config/ranger"
-}
-
-omacase_sysmenu() {
-  _ghostty_popup_toggle "omacase-menu" \
-    "printf '\033]0;omacase-menu\007'; exec omacase menu --popup" \
-    "omacase menu --popup"
 }
 
 omacase_browser() {

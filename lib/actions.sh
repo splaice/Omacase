@@ -1,8 +1,8 @@
 # shellcheck shell=bash
-# Small, scriptable actions meant to be wrapped in a macOS Shortcut and triggered
-# from Spotlight — the macOS analog of Omarchy's launcher/menu helpers
-# (omarchy-launch-webapp, the toggle scripts). Each is a clean one-liner a
-# Shortcut's "Run Shell Script" step can call.
+# Small, scriptable actions — the macOS analog of Omarchy's launcher/menu
+# helpers (omarchy-launch-webapp, the toggle scripts). Each is a clean one-liner,
+# reachable from `omacase menu` or callable directly, so it also drops into a
+# macOS Shortcut's "Run Shell Script" step if you want to bind one yourself.
 
 # Web-app set (name -> URL). Based on Omarchy's config/hypr/bindings.conf
 # web apps, with email/calendar pointed at Gmail / Google Calendar.
@@ -67,93 +67,4 @@ omacase_appearance() {
   else
     warn "Couldn't set appearance — grant Automation → System Events to the caller (\`omacase doctor\`)."
   fi
-}
-
-# Spotlight launchers. macOS Shortcuts can't be authored from a script, but a
-# tiny osacompile'd .app can: it's indexed by Spotlight and runs a shell command
-# when launched. We generate one per web app (plus an appearance toggle) into
-# ~/Applications, so each is launchable by name from Spotlight (⌘Space).
-# Display name | omacase subcommand+args. Names are picked to be distinct in
-# Spotlight (e.g. "Google Photos", not "Photos", which collides with Photos.app).
-_LAUNCHERS=(
-  "Oma ChatGPT|webapp chatgpt"
-  "Oma Grok|webapp grok"
-  "Oma Mail|webapp email"
-  "Oma Cal|webapp calendar"
-  "Oma Hey Mail|webapp hey-mail"
-  "Oma Hey Calendar|webapp hey-cal"
-  "Oma YouTube|webapp youtube"
-  "Oma WhatsApp|webapp whatsapp"
-  "Oma Messages|webapp messages"
-  "Oma Photos|webapp photos"
-  "Oma X|webapp x"
-  "Oma X Post|webapp x-post"
-  "Oma Appearance|appearance toggle"
-  "Oma Menu|sysmenu"
-)
-
-omacase_launchers() {
-  local action="${1:-build}" dir="$HOME/Applications" bin="$OMACASE_ROOT/bin/omacase"
-  case "$action" in
-    build|"") ;;
-    remove)   _launchers_remove "$dir"; return ;;
-    *) abort "usage: omacase launchers [build|remove]" ;;
-  esac
-  have osacompile || abort "osacompile not found (ships with macOS)."
-
-  run mkdir -p "$dir"
-  # Clear any previously-generated launchers first, so renames/removals don't
-  # leave stale .app bundles behind. Identified by the marker file we write.
-  if ! is_dryrun; then
-    local old
-    for old in "$dir"/*.app; do
-      [ -e "$old/Contents/Resources/.omacase-launcher" ] && run rm -rf "$old"
-    done
-  fi
-
-  local entries=("${_LAUNCHERS[@]}")
-
-  local entry name args app tmpdir="" tmp
-  is_dryrun || tmpdir="$(mktemp -d)"
-  for entry in "${entries[@]}"; do
-    name="${entry%%|*}"; args="${entry#*|}"
-    app="$dir/$name.app"
-    if is_dryrun; then printf '\033[2m[dry-run]\033[0m create %s → omacase %s\n' "$app" "$args"; continue; fi
-    run rm -rf "$app"
-    # Launchers run with a minimal PATH, so set Homebrew + call omacase by path.
-    # `quit` makes the applet terminate after running, so each launch re-runs the
-    # command — otherwise it stays resident and a relaunch just reactivates the
-    # idle instance (the script never fires again).
-    tmp="$tmpdir/launcher.applescript"
-    {
-      printf 'set omacase_bin to %s\n' "$(applescript_string "$bin")"
-      printf 'set omacase_args to %s\n' "$(applescript_string "$args")"
-      # shellcheck disable=SC2016 # $PATH must expand inside the generated AppleScript shell.
-      printf 'do shell script "export PATH=/opt/homebrew/bin:$PATH; " & quoted form of omacase_bin & " " & omacase_args\n'
-      printf 'tell me to quit\n'
-    } > "$tmp"
-    if osacompile -o "$app" "$tmp" >/dev/null 2>&1; then
-      : > "$app/Contents/Resources/.omacase-launcher"   # marker for clean removal
-      # Run as an agent (LSUIElement): the launcher never becomes the frontmost
-      # app, so it can't steal focus. Also keeps it out of the Dock / ⌘-Tab.
-      /usr/libexec/PlistBuddy -c "Add :LSUIElement bool true" "$app/Contents/Info.plist" >/dev/null 2>&1 \
-        || /usr/libexec/PlistBuddy -c "Set :LSUIElement true" "$app/Contents/Info.plist" >/dev/null 2>&1
-      success "$name"
-    else
-      warn "failed to build $name"
-    fi
-  done
-  [ -n "$tmpdir" ] && rm -rf "$tmpdir" || true
-  info "Created in $dir — open from Spotlight (⌘Space, type the name)."
-  info "First launch of an action may prompt for permission; \`omacase launchers remove\` deletes them."
-}
-
-# Remove only the .app bundles we created (identified by the marker file).
-_launchers_remove() {
-  local dir="$1" app n=0
-  for app in "$dir"/*.app; do
-    [ -e "$app/Contents/Resources/.omacase-launcher" ] || continue
-    run rm -rf "$app"; n=$((n + 1))
-  done
-  success "Removed $n omacase launcher(s) from $dir."
 }

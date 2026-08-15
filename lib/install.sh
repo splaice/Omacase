@@ -9,30 +9,30 @@ omacase_install() {
   source "$OMACASE_ROOT/lib/backup.sh"
   _preflight_command_links
 
-  step "1/9  Packages & apps (brew bundle)"
+  step "1/8  Packages & apps (brew bundle)"
   _brew_trust_declared_third_party
   run brew bundle --file="$OMACASE_ROOT/Brewfile" \
     || warn "Some brew items failed; re-run later."
 
-  step "2/9  Link \`omacase\` onto PATH + shell completion"
+  step "2/8  Link \`omacase\` onto PATH + shell completion"
   _link_command
 
-  step "3/9  Safety backup (so this is reversible)"
+  step "3/8  Safety backup (so this is reversible)"
   _auto_backup
 
-  step "4/9  Dotfiles (symlinks)"
+  step "4/8  Dotfiles (symlinks)"
   _link_dotfiles
 
-  step "5/9  Tool runtimes & AI CLIs (mise + optional grok) + herdr agent hooks & skill"
+  step "5/8  Tool runtimes & AI CLIs (mise + optional grok) + herdr agent hooks & skill"
   _mise_install
   _grok_install
   _herdr_integrations
   _herdr_skill
 
-  step "6/9  macOS defaults"
+  step "6/8  macOS defaults"
   bash "$OMACASE_ROOT/macos/defaults.sh"   # honors OMACASE_DRYRUN itself
 
-  step "7/9  Theme"
+  step "7/8  Theme"
   source "$OMACASE_ROOT/lib/theme.sh"
   # ${:-} (not `|| echo`): an existing-but-empty state file would otherwise
   # yield "" and drop a non-interactive install into the theme picker.
@@ -43,13 +43,9 @@ omacase_install() {
   is_dryrun || can_set_appearance || \
     warn "Grant your terminal Automation → System Events so themes can sync macOS Light/Dark (\`omacase doctor\` re-checks)."
 
-  step "8/9  Window manager"
+  step "8/8  Window manager"
   source "$OMACASE_ROOT/lib/wm.sh"
   omacase_wm
-
-  step "9/9  Spotlight launchers (web apps + Omacase Menu)"
-  source "$OMACASE_ROOT/lib/actions.sh"
-  omacase_launchers build || warn "Some launchers failed; re-run with \`omacase launchers build\`."
 
   step "Done"
   success "omacase installed."
@@ -343,9 +339,6 @@ omacase_uninstall() {
   local agent="$HOME/Library/LaunchAgents/org.omacase.omniwm.plist"
   run launchctl bootout "gui/$(id -u)/org.omacase.omniwm" 2>/dev/null || true
   { _is_omacase_link "$agent" && run rm -f "$agent"; } || true
-
-  source "$OMACASE_ROOT/lib/actions.sh"
-  _launchers_remove "$HOME/Applications"
 
   # Remove the `omacase` command + completion symlinks from Homebrew (only ours).
   local cmd

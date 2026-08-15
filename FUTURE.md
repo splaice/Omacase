@@ -133,9 +133,9 @@ opts into a LaunchDaemon. Shared helpers in `lib/common.sh`:
 
 ## 3. Menu & system
 
-- **System-menu content** — extend the gum menu (`omacase sysmenu` / `omacase
-  menu`) with **Capture / Toggle / power** entries for fuller Omarchy parity. The
-  Spotlight launcher already ships as `Oma Menu`; this is the menu *content*.
+- **System-menu content** — extend the gum menu (`omacase menu`) with
+  **Capture / Toggle / power** entries for fuller Omarchy parity. This is the
+  menu *content*; binding it to an OmniWM shortcut is a separate question.
   - Files: `lib/menu.sh`.
 - **Own Omacase bundle ID + notification identity** — ship a minimal signed `.app`
   (e.g. `app.omacase` / `com.omacase.Omacase`) so notifications are attributed to
@@ -145,7 +145,7 @@ opts into a LaunchDaemon. Shared helpers in `lib/common.sh`:
     bundle (or `terminal-notifier -sender <our-id>`) gets the true Omacase icon.
   - Sketch: tiny notifier `.app` (icon = `assets/omacase-icon.png`), code-signed,
     then `terminal-notifier -sender app.omacase`. Pick the canonical bundle id
-    once and reuse it for future launchers/Shortcuts.
+    once and reuse it for future Shortcuts.
   - Files: `lib/notify.sh`, new `app/` (or `macos/`) bundle, install step.
 
 ## 4. Hotkeys

@@ -244,23 +244,6 @@ test_dotfile_reinstall_preserves_unmanaged_siblings() {
     [ -L "$HOME/.config/ghostty/config" ]
 }
 
-test_dry_run_launchers_do_not_create_applications_dir() {
-  local tmp
-  tmp="$(mktemp -d)"
-  HOME="$tmp/home"
-  OMACASE_STATE="$tmp/state"
-  OMACASE_ROOT="$ROOT"
-  # shellcheck disable=SC2034  # consumed by the sourced lib/common.sh below
-  OMACASE_DRYRUN=1
-  mkdir -p "$HOME"
-  # shellcheck source=/dev/null
-  source "$ROOT/lib/common.sh"
-  # shellcheck source=/dev/null
-  source "$ROOT/lib/actions.sh"
-  omacase_launchers build >/dev/null
-  [ ! -e "$HOME/Applications" ] && [ ! -e "$OMACASE_STATE" ]
-}
-
 test_backup_captures_live_omniwm_settings() {
   local tmp id
   tmp="$(mktemp -d)"
@@ -499,7 +482,6 @@ test_menu_lists_primary_commands_and_routes_keybinds() {
     "Run doctor" \
     "Create a backup" \
     "Restore a backup" \
-    "Manage Spotlight launchers" \
     "Run migrations" \
     "Edit config" \
     "Uninstall Omacase"
@@ -604,7 +586,7 @@ test_theme_accent_snaps_to_nearest_preset() {
 }
 
 run_test "shell_quote round-trips shell paths" test_shell_quote_round_trips
-run_test "applescript_string escapes launcher paths" test_applescript_string_escapes_quotes
+run_test "applescript_string escapes embedded quotes" test_applescript_string_escapes_quotes
 run_test "_auto_backup creates first restore point" test_auto_backup_creates_first_snapshot
 run_test "same-second backups receive unique ids" test_backups_created_same_second_have_unique_ids
 run_test "auto-backup ignores owned top-level file links" test_auto_backup_ignores_owned_top_level_file_link
@@ -615,7 +597,6 @@ run_test "restore accepts legacy Omacase targets" test_restore_accepts_legacy_om
 run_test "generated theme symlinks are owned" test_generated_theme_symlinks_are_owned
 run_test "auto-backup captures conflicting theme fragments" test_auto_backup_captures_conflicting_theme_fragment
 run_test "dotfile reinstall preserves unmanaged siblings" test_dotfile_reinstall_preserves_unmanaged_siblings
-run_test "dry-run launchers do not create files" test_dry_run_launchers_do_not_create_applications_dir
 run_test "manual backup captures live OmniWM settings" test_backup_captures_live_omniwm_settings
 run_test "update fails on self-update failure" test_update_fails_when_self_pull_fails
 run_test "backup domains cover macos/defaults.sh" test_backup_domains_cover_defaults_sh
