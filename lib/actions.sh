@@ -4,26 +4,19 @@
 # reachable from `omacase menu` or callable directly, so it also drops into a
 # macOS Shortcut's "Run Shell Script" step if you want to bind one yourself.
 
-# Web-app set (name -> URL). Based on Omarchy's config/hypr/bindings.conf
-# web apps, with email/calendar pointed at Gmail / Google Calendar.
+# Web-app set (name -> URL). Originally mirrored Omarchy's
+# config/hypr/bindings.conf web apps; trimmed to the ones that earn a chromeless
+# window. Mail, calendar, messaging, photos, and video are better served by
+# native apps (several now ship in the Brewfile) or a normal browser tab.
 _webapp_url() {
   case "$1" in
-    chatgpt)  echo "https://chatgpt.com" ;;
     grok)     echo "https://grok.com" ;;
-    calendar) echo "https://calendar.google.com/" ;;
-    email)    echo "https://mail.google.com/" ;;
-    hey-cal)  echo "https://app.hey.com/calendar/weeks/" ;;  # a nod to DHH/Omarchy
-    hey-mail) echo "https://app.hey.com" ;;
-    youtube)  echo "https://youtube.com/" ;;
-    whatsapp) echo "https://web.whatsapp.com/" ;;
-    messages) echo "https://messages.google.com/web/conversations" ;;
-    photos)   echo "https://photos.google.com/" ;;
     x)        echo "https://x.com/" ;;
     x-post)   echo "https://x.com/compose/post" ;;
     *)        return 1 ;;
   esac
 }
-_webapp_names="chatgpt grok calendar email hey-cal hey-mail youtube whatsapp messages photos x x-post"
+_webapp_names="grok x x-post"
 
 # omacase webapp [name] — open a named web app. With no name (or `list`), print
 # the set. Opens as a chromeless "app" window when a Chromium browser is present
