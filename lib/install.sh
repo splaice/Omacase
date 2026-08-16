@@ -307,6 +307,12 @@ omacase_uninstall() {
   is_dryrun || confirm "Proceed?" || { info "Cancelled."; return; }
   source "$OMACASE_ROOT/lib/wm.sh"; _wm_stop_all || true
 
+  # Extras write root-owned /etc files; never silently sudo during uninstall —
+  # point at the explicit revert instead.
+  if [ -f /etc/sudoers.d/omacase ]; then
+    warn "The sudo-touchid extra is still enabled — revert it with \`omacase extras sudo-touchid off\` before deleting the repo."
+  fi
+
   # Remove only the symlinks Omacase created. (`|| true`: a target that isn't
   # ours must not abort the walk under set -e.)
   local src="$OMACASE_ROOT/home" f target

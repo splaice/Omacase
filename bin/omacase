@@ -43,6 +43,7 @@ usage: omacase <command> [args]
   doctor             Check permissions and missing grants
   backup [label]     Snapshot current dotfiles & macOS defaults
   restore [id]       Roll back to a snapshot (--list to see them)
+  extras [name]      Optional opt-in tweaks (list | sudo-touchid [on|off|status])
   config             Open the config directory
   menu               Interactive TUI
   notify [...]       Pop a native macOS notification (--title/--subtitle/--sound/--image) for scripts/keybinds
@@ -78,6 +79,7 @@ case "$cmd" in
   doctor)         source "$OMACASE_ROOT/lib/doctor.sh";   omacase_doctor  "$@" ;;
   backup)         source "$OMACASE_ROOT/lib/backup.sh";   omacase_backup  "$@" ;;
   restore)        source "$OMACASE_ROOT/lib/backup.sh";   omacase_restore "$@" ;;
+  extras)         source "$OMACASE_ROOT/lib/extras.sh";   omacase_extras  "$@" ;;
   menu)           source "$OMACASE_ROOT/lib/menu.sh";     omacase_menu    "$@" ;;
   config)         exec sh -c 'exec ${EDITOR:-open} "$1"' sh "$OMACASE_ROOT/home" ;;   # sh splits multi-word EDITORs like "code -w"
   version|-v|--version) cat "$OMACASE_ROOT/VERSION" ;;

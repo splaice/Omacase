@@ -24,6 +24,7 @@ omacase_menu() {
     "Create a backup" \
     "Restore a backup" \
     "Run migrations" \
+    "Extras" \
     "Edit config" \
     "About" \
     "Uninstall Omacase" \
@@ -48,6 +49,7 @@ omacase_menu() {
     "Create a backup")       source "$OMACASE_ROOT/lib/backup.sh"; omacase_backup ;;
     "Restore a backup")      source "$OMACASE_ROOT/lib/backup.sh"; omacase_restore ;;
     "Run migrations")        source "$OMACASE_ROOT/lib/migrate.sh"; omacase_migrate ;;
+    "Extras")                source "$OMACASE_ROOT/lib/extras.sh"; omacase_extras ;;
     "Edit config")           exec sh -c 'exec ${EDITOR:-open} "$1"' sh "$OMACASE_ROOT/home" ;;   # sh splits multi-word EDITORs like "code -w"
     "Uninstall Omacase")     source "$OMACASE_ROOT/lib/install.sh"; omacase_uninstall ;;
     "Quit"|"")               return ;;

@@ -45,6 +45,7 @@ _omacase() {
         'doctor:check permissions and missing grants'
         'backup:snapshot current dotfiles & macOS defaults'
         'restore:roll back to a snapshot (--list to see them)'
+        'extras:optional opt-in tweaks (list | sudo-touchid)'
         'config:open the config directory'
         'menu:interactive TUI'
         'notify:pop a native macOS notification (for scripts/keybinds)'
@@ -81,6 +82,14 @@ _omacase() {
           local backups=${OMACASE_STATE:-$HOME/.local/state/omacase}/backups
           local -a snapshots=( $backups/*(N/:t) ) flags=( '--list:list snapshots' )
           _describe -t snapshots 'snapshot' snapshots -- flags && ret=0
+          ;;
+        extras)
+          if (( CURRENT == 2 )); then
+            _values 'extra' 'list[list extras and their state]' \
+              'sudo-touchid[Touch ID for sudo + longer shared credential cache]' && ret=0
+          else
+            _values 'action' 'on[enable]' 'off[revert]' 'status[show current state]' && ret=0
+          fi
           ;;
       esac
       ;;

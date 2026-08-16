@@ -441,6 +441,26 @@ test_cli_help_and_version() {
     [ "$("$ROOT/bin/omacase" version)" = "$(cat "$ROOT/VERSION")" ]
 }
 
+test_extras_in_usage_completion_and_menu() {
+  "$ROOT/bin/omacase" help | grep -qE '^[[:space:]]+extras[[:space:]]' &&
+    grep -q "'extras:" "$ROOT/completions/_omacase" &&
+    grep -q 'sudo-touchid' "$ROOT/completions/_omacase" &&
+    grep -q '"Extras"' "$ROOT/lib/menu.sh"
+}
+
+test_extras_list_reports_sudo_touchid_state() {
+  "$ROOT/bin/omacase" extras list | grep -qE 'sudo-touchid[[:space:]]+\((on|off|partial)\)'
+}
+
+test_extras_sudo_touchid_dry_run_wraps_all_mutations() {
+  # Every root mutation must go through `run sudo`, so a dry run prints them
+  # instead of executing; the sudoers content must also validate.
+  local out
+  out="$(OMACASE_DRYRUN=1 "$ROOT/bin/omacase" extras sudo-touchid on)" &&
+    printf '%s\n' "$out" | grep -q '\[dry-run\].*sudo install .* /etc/sudoers.d/omacase' &&
+    ! printf '%s\n' "$out" | grep -E '^\s*sudo ' >/dev/null
+}
+
 test_cli_keybinds_displays_reference() {
   local out
   out="$(mktemp)"
@@ -614,6 +634,9 @@ run_test "OmniWM focused mode is matched by pid" test_omniwm_focused_mode_matche
 run_test "wm menu and palette route to omniwmctl" test_wm_menu_and_palette_route_to_ipc
 run_test "cli rejects unknown commands" test_cli_unknown_command_fails
 run_test "cli help and version work" test_cli_help_and_version
+run_test "extras wired into usage, completion, and menu" test_extras_in_usage_completion_and_menu
+run_test "extras list reports sudo-touchid state" test_extras_list_reports_sudo_touchid_state
+run_test "extras sudo-touchid dry run wraps all mutations" test_extras_sudo_touchid_dry_run_wraps_all_mutations
 run_test "cli keybinds displays KEYBINDS.md" test_cli_keybinds_displays_reference
 run_test "menu lists primary commands and opens keybinds" test_menu_lists_primary_commands_and_routes_keybinds
 run_test "menu lists app and overlay commands" test_menu_lists_app_and_overlay_commands
