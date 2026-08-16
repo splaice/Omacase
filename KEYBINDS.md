@@ -48,4 +48,4 @@ OmniWM shortcut.
 
 Ghostty, shell, and editor bindings remain independent of OmniWM. Use
 `omacase terminal` when a script needs a new Ghostty window and
-`omacase files` for the optional ranger popup.
+`omacase files` for the optional yazi popup.

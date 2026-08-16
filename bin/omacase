@@ -32,7 +32,7 @@ usage: omacase <command> [args]
   appearance [...]   Toggle/set macOS Light/Dark (toggle|dark|light)
   wm [menu|palette|settings]  Start OmniWM and verify it; menu/palette/settings open its app menu / command palette / settings window
   terminal [cmd...]  Open a new Ghostty window in the running instance, optionally running cmd (alias: term)
-  files              Toggle a centered ranger file-manager popup
+  files              Toggle a centered yazi file-manager popup
   browser            Open/focus the system default browser
   music [spotify|apple]  Toggle a centered music overlay
   obsidian           Toggle a centered Obsidian overlay

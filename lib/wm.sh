@@ -223,9 +223,11 @@ OSA
 }
 
 omacase_files() {
+  # --cwd-file doubles as the unique argv marker _ghostty_popup_toggle pkills
+  # (the role ranger's --confdir played before the yazi cutover).
   _ghostty_popup_toggle "omacase-files" \
-    "printf '\033]0;omacase-files\007'; exec ranger --confdir='$HOME/.config/ranger'" \
-    "ranger --confdir=$HOME/.config/ranger"
+    "printf '\033]0;omacase-files\007'; exec yazi --cwd-file='$HOME/.local/state/omacase/yazi-popup-cwd'" \
+    "yazi --cwd-file=$HOME/.local/state/omacase/yazi-popup-cwd"
 }
 
 omacase_browser() {

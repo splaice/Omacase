@@ -23,7 +23,7 @@ brew "ripgrep"           # grep
 brew "zoxide"            # cd
 brew "fzf"               # fuzzy finder
 brew "btop"              # full terminal system monitor (OmniWM also has a compact native stats popup)
-brew "ranger"            # TUI file manager (`omacase files` opens it as an optional popup)
+brew "yazi"              # TUI file manager (`omacase files` opens it as an optional popup)
 brew "atuin"             # shell history
 brew "git-delta"         # git diffs
 brew "herdr"             # agent-aware multiplexer; sessions survive disconnect (`herdr --remote` for SSH)

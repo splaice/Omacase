@@ -12,6 +12,6 @@
 state/
 *.local
 
-# Python bytecode (e.g. ranger colorscheme compile artifacts)
+# Python bytecode (e.g. lib/palette.py compile artifacts)
 __pycache__/
 *.pyc

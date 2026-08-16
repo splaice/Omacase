@@ -42,10 +42,11 @@ omacase_theme() {
   while IFS='|' read -r frag target; do
     _link "$src/$frag" "$target"
   done < <(_theme_links)
-  # NB: eza (ls), ranger, and glow are NOT linked per theme. Their colors are
-  # ANSI palette indices (configured once in zshrc / their dotfiles), so they
-  # track whichever theme is active automatically — Ghostty swaps the 16 ANSI
-  # colors per theme, and greyscale themes (white, vantablack) render monochrome.
+  # NB: eza (ls) and glow are NOT linked per theme. Their colors are ANSI
+  # palette indices (configured once in zshrc / their dotfiles), so they track
+  # whichever theme is active automatically — Ghostty swaps the 16 ANSI colors
+  # per theme, and greyscale themes (white, vantablack) render monochrome.
+  # (yazi ships its own default theme and is deliberately left unthemed.)
 
   if ! is_dryrun; then
     ensure_state_dir

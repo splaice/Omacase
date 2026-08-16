@@ -46,7 +46,7 @@ alias vim='nvim'
 alias vi='nvim'
 alias lg='lazygit'
 # glow renders markdown with the omacase style — ANSI palette indices, so it
-# tracks the active theme like eza/ls and ranger do.
+# tracks the active theme like eza/ls does.
 alias glow='command glow -s "$HOME/.config/glow/omacase-glow.json"'
 
 # Tools that hook the shell.

@@ -32,7 +32,7 @@ _omacase() {
         'wm:start/verify OmniWM; menu|palette|settings open its app menu / command palette / settings window'
         'terminal:open a new Ghostty window in the running instance'
         'term:open a new Ghostty window in the running instance'
-        'files:toggle a centered ranger file-manager popup'
+        'files:toggle a centered yazi file-manager popup'
         'browser:open/focus the system default browser'
         'music:toggle a centered music overlay'
         'obsidian:toggle a centered Obsidian overlay'
