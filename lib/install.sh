@@ -342,6 +342,9 @@ omacase_uninstall() {
   done
   { [ -d "$skill_store" ] && run rm -rf "$skill_store"; } || true
 
+  # The login launcher (current) plus the legacy raw OmniWM agent that
+  # pre-launcher installs linked directly.
+  source "$OMACASE_ROOT/lib/launcher.sh"; _launcher_uninstall
   local agent="$HOME/Library/LaunchAgents/org.omacase.omniwm.plist"
   run launchctl bootout "gui/$(id -u)/org.omacase.omniwm" 2>/dev/null || true
   { _is_omacase_link "$agent" && run rm -f "$agent"; } || true

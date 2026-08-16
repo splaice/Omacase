@@ -25,25 +25,10 @@ _wm_seed_config() {
 }
 
 _wm_install_login_item() {
-  local source target domain
-  domain="gui/$(id -u)"
-  source="$OMACASE_ROOT/assets/org.omacase.omniwm.plist"
-  target="$HOME/Library/LaunchAgents/org.omacase.omniwm.plist"
-  run mkdir -p "$(dirname "$target")"
-  if [ -e "$target" ] || [ -L "$target" ]; then
-    [ -L "$target" ] && [ "$(readlink "$target")" = "$source" ] || \
-      abort "Refusing to overwrite unrelated login item: $target"
-  else
-    run ln -s "$source" "$target"
-  fi
-
-  if is_dryrun; then
-    run launchctl bootstrap "$domain" "$target"
-  else
-    launchctl bootout "$domain/org.omacase.omniwm" >/dev/null 2>&1 || true
-    launchctl bootstrap "$domain" "$target" >/dev/null 2>&1 || \
-      warn "Could not register OmniWM at login; add OmniWM in System Settings → General → Login Items."
-  fi
+  # Login-time launches (OmniWM included, via ~/.config/omacase/login-items)
+  # go through the OmacaseLauncher app bundle so Login Items shows a real name.
+  source "$OMACASE_ROOT/lib/launcher.sh"
+  _launcher_install
 }
 
 _wm_stop_all() {

@@ -452,6 +452,31 @@ test_extras_list_reports_sudo_touchid_state() {
   "$ROOT/bin/omacase" extras list | grep -qE 'sudo-touchid[[:space:]]+\((on|off|partial)\)'
 }
 
+test_launcher_build_produces_valid_bundle() {
+  local tmp
+  tmp="$(mktemp -d)"
+  (
+    HOME="$tmp"
+    OMACASE_ROOT="$ROOT"
+    # shellcheck source=/dev/null
+    source "$ROOT/lib/common.sh"
+    # shellcheck source=/dev/null
+    source "$ROOT/lib/launcher.sh"
+    _launcher_build
+  ) >/dev/null 2>&1 &&
+    [ -x "$tmp/Applications/OmacaseLauncher.app/Contents/MacOS/OmacaseLauncher" ] &&
+    plutil -lint -s "$tmp/Applications/OmacaseLauncher.app/Contents/Info.plist" &&
+    plutil -lint -s "$tmp/Library/LaunchAgents/org.omacase.launcher.plist" &&
+    grep -q "$tmp/Applications/OmacaseLauncher.app/Contents/MacOS/OmacaseLauncher" \
+      "$tmp/Library/LaunchAgents/org.omacase.launcher.plist"
+}
+
+test_launcher_reads_login_items_config() {
+  # The shipped config must list OmniWM, and the launcher script must consult it.
+  grep -qx 'OmniWM' "$ROOT/home/dot_config/omacase/login-items" &&
+    grep -q 'omacase/login-items' "$ROOT/assets/launcher/OmacaseLauncher.sh"
+}
+
 test_extras_mole_is_declared_everywhere() {
   "$ROOT/bin/omacase" extras list | grep -qE '^[[:space:]]+mole[[:space:]]' &&
     grep -qE '^brew "mole"' "$ROOT/Brewfile" &&
@@ -643,6 +668,8 @@ run_test "cli help and version work" test_cli_help_and_version
 run_test "extras wired into usage, completion, and menu" test_extras_in_usage_completion_and_menu
 run_test "extras list reports sudo-touchid state" test_extras_list_reports_sudo_touchid_state
 run_test "extras mole is declared in list, Brewfile, and completion" test_extras_mole_is_declared_everywhere
+run_test "launcher build produces a valid bundle and agent" test_launcher_build_produces_valid_bundle
+run_test "launcher reads the login-items config" test_launcher_reads_login_items_config
 run_test "extras sudo-touchid dry run wraps all mutations" test_extras_sudo_touchid_dry_run_wraps_all_mutations
 run_test "cli keybinds displays KEYBINDS.md" test_cli_keybinds_displays_reference
 run_test "menu lists primary commands and opens keybinds" test_menu_lists_primary_commands_and_routes_keybinds

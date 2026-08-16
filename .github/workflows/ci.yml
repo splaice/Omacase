@@ -20,7 +20,8 @@ jobs:
         run: |
           shellcheck --severity=warning -x \
             bin/omacase lib/*.sh boot.sh site/install \
-            macos/defaults.sh migrations/*.sh tests/run.sh
+            macos/defaults.sh migrations/*.sh tests/run.sh \
+            assets/launcher/OmacaseLauncher.sh
       - name: zsh parses the completion
         run: zsh -n completions/_omacase
 

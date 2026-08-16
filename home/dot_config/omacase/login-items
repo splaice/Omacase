@@ -1,0 +1,3 @@
+# Apps OmacaseLauncher opens at login — one `open -a` name per line.
+# Managed by Omacase; edit freely, `omacase install` never overwrites edits.
+OmniWM
