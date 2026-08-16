@@ -19,6 +19,7 @@ omacase_menu() {
     "OmniWM app menu" \
     "OmniWM command palette" \
     "OmniWM settings" \
+    "Agent usage" \
     "View keybinds" \
     "Run doctor" \
     "Create a backup" \
@@ -44,6 +45,7 @@ omacase_menu() {
     "OmniWM app menu")        source "$OMACASE_ROOT/lib/wm.sh";    omacase_wm menu ;;
     "OmniWM command palette") source "$OMACASE_ROOT/lib/wm.sh";    omacase_wm palette ;;
     "OmniWM settings")        source "$OMACASE_ROOT/lib/wm.sh";    omacase_wm settings ;;
+    "Agent usage")           source "$OMACASE_ROOT/lib/usage.sh"; omacase_usage ;;
     "View keybinds")         source "$OMACASE_ROOT/lib/keybinds.sh"; omacase_keybinds ;;
     "Run doctor")            source "$OMACASE_ROOT/lib/doctor.sh"; omacase_doctor ;;
     "Create a backup")       source "$OMACASE_ROOT/lib/backup.sh"; omacase_backup ;;
