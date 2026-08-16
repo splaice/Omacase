@@ -93,9 +93,9 @@ opts into a LaunchDaemon. Shared helpers in `lib/common.sh`:
 ### Open decisions (need a call before building)
 1. **Runtime:** `mlx-lm` + LaunchAgent (recommended — lean/scriptable/fastest) vs.
    **LM Studio** cask (GUI: model browser/chat). Plan defaults to mlx-lm; LM Studio
-   could be a documented alternate profile later. Note: the Brewfile already ships
-   the **Ollama** menu-bar app (`ollama-app`) as an interim local runtime — this
-   decision must fold it in: adopt it as the engine, or drop the cask when this ships.
+   could be a documented alternate profile later. (The **Ollama** menu-bar app
+   (`ollama-app`) shipped as an interim local runtime until Aug 2026, then was
+   dropped from the Brewfile — the decision is now purely mlx-lm vs. LM Studio.)
 2. **Always-on vs. on-demand:** ship enabled at login (KeepAlive) vs. start-on-use.
    Plan = always-on, but install asks; low-RAM machines should default to on-demand.
 3. **Default model pinning:** verify the current best 4-bit/MXFP4 MLX-community
