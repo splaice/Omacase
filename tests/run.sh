@@ -477,6 +477,30 @@ test_launcher_reads_login_items_config() {
     grep -q 'omacase/login-items' "$ROOT/assets/launcher/OmacaseLauncher.sh"
 }
 
+test_usage_wired_and_compiles() {
+  "$ROOT/bin/omacase" help | grep -qE '^[[:space:]]+usage[[:space:]]' &&
+    grep -q "'usage:" "$ROOT/completions/_omacase" &&
+    grep -q "'usage-tracker\[" "$ROOT/completions/_omacase" &&
+    "$ROOT/bin/omacase" extras list | grep -qE '^[[:space:]]+usage-tracker[[:space:]]+\((on|off)\)' &&
+    python3 -m py_compile "$ROOT/lib/usage.py"
+}
+
+test_usage_renders_fixture_records() {
+  local tmp out
+  tmp="$(mktemp -d)"
+  mkdir -p "$tmp/usage"
+  local today; today="$(date +%Y-%m-%d)"
+  local agent
+  for agent in claude codex grok; do
+    printf '{"agent":"%s","name":"%s","days":{"%s":{"total":123456,"models":{"m1":123456}}},"limits":[{"label":"weekly","used_percent":42.0}],"collected_at":"now"}\n' \
+      "$agent" "$agent" "$today" > "$tmp/usage/$agent.json"
+  done
+  out="$(OMACASE_STATE="$tmp" "$ROOT/bin/omacase" usage)" &&
+    printf '%s' "$out" | grep -q '123.5K' &&
+    printf '%s' "$out" | grep -q '42.0%' &&
+    printf '%s' "$out" | grep -q '└'
+}
+
 test_extras_mole_is_declared_everywhere() {
   "$ROOT/bin/omacase" extras list | grep -qE '^[[:space:]]+mole[[:space:]]' &&
     grep -qE '^brew "mole"' "$ROOT/Brewfile" &&
@@ -668,6 +692,8 @@ run_test "cli help and version work" test_cli_help_and_version
 run_test "extras wired into usage, completion, and menu" test_extras_in_usage_completion_and_menu
 run_test "extras list reports sudo-touchid state" test_extras_list_reports_sudo_touchid_state
 run_test "extras mole is declared in list, Brewfile, and completion" test_extras_mole_is_declared_everywhere
+run_test "usage command wired and python compiles" test_usage_wired_and_compiles
+run_test "usage renders fixture records" test_usage_renders_fixture_records
 run_test "launcher build produces a valid bundle and agent" test_launcher_build_produces_valid_bundle
 run_test "launcher reads the login-items config" test_launcher_reads_login_items_config
 run_test "extras sudo-touchid dry run wraps all mutations" test_extras_sudo_touchid_dry_run_wraps_all_mutations

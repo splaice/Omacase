@@ -13,8 +13,9 @@ omacase_extras() {
   case "$name" in
     "")           _extras_pick ;;
     list)         _extras_list ;;
-    sudo-touchid) _extra_sudo_touchid "${1:-on}" ;;
-    mole)         _extra_mole "$@" ;;
+    sudo-touchid)  _extra_sudo_touchid "${1:-on}" ;;
+    mole)          _extra_mole "$@" ;;
+    usage-tracker) _extra_usage_tracker "${1:-on}" ;;
     *) error "unknown extra: $name"; echo; _extras_list; return 1 ;;
   esac
 }
@@ -24,6 +25,8 @@ _extras_list() {
   printf '  %-13s (%s)  Touch ID for sudo + %s-min credential cache shared across terminals [on|off|status]\n' \
     "sudo-touchid" "$(_extra_sudo_touchid_state)" "$_EXTRAS_SUDO_TIMEOUT_MIN"
   printf '  %-13s (run)  mole system toolbox: clean, uninstall, optimize, analyze (`mo`)\n' "mole"
+  printf '  %-13s (%s)  background refresh for `omacase usage` every 15 min [on|off|status]\n' \
+    "usage-tracker" "$(_extra_usage_tracker_state)"
 }
 
 _extras_pick() {
@@ -31,6 +34,7 @@ _extras_pick() {
   choice="$(gum_choose "Extras — optional tweaks, enable only what you want" \
     "sudo-touchid — Touch ID for sudo + a longer, shared credential cache" \
     "mole — deep clean, app uninstall, optimize, disk analysis (mo)" \
+    "usage-tracker — keep the agent usage dashboard fresh in the background" \
     "Back")" || return
   case "$choice" in
     sudo-touchid*)
@@ -43,7 +47,89 @@ _extras_pick() {
       esac ;;
     mole*)
       _extra_mole ;;
+    usage-tracker*)
+      action="$(gum_choose "usage-tracker" "Status" "Enable" "Disable" "Back")" || return
+      case "$action" in
+        Status)  _extra_usage_tracker status ;;
+        Enable)  _extra_usage_tracker on ;;
+        Disable) _extra_usage_tracker off ;;
+        *)       return ;;
+      esac ;;
     *) return ;;
+  esac
+}
+
+# --- usage-tracker -----------------------------------------------------------
+# LaunchAgent that runs `omacase usage update` every 15 minutes so the
+# dashboard (and anything reading its JSON records) is always fresh. Opt-in:
+# it is a background process polling agent transcripts and, for Claude, an
+# authenticated usage endpoint.
+
+_EXTRAS_USAGE_AGENT="$HOME/Library/LaunchAgents/org.omacase.usage.plist"
+_EXTRAS_USAGE_LABEL="org.omacase.usage"
+
+_extra_usage_tracker_state() {
+  [ -f "$_EXTRAS_USAGE_AGENT" ] && echo on || echo off
+}
+
+_extra_usage_tracker() {
+  local domain
+  domain="gui/$(id -u)"
+  case "${1:-on}" in
+    on)
+      step "Enabling usage-tracker (refreshes \`omacase usage\` every 15 min)"
+      local stage
+      stage="$(mktemp -d)"
+      cat > "$stage/agent.plist" <<EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>$_EXTRAS_USAGE_LABEL</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>$OMACASE_ROOT/bin/omacase</string>
+    <string>usage</string>
+    <string>update</string>
+  </array>
+  <key>StartInterval</key>
+  <integer>900</integer>
+  <key>RunAtLoad</key>
+  <true/>
+  <key>StandardErrorPath</key>
+  <string>$HOME/.local/state/omacase/usage/tracker.log</string>
+</dict>
+</plist>
+EOF
+      run mkdir -p "$(dirname "$_EXTRAS_USAGE_AGENT")" "$HOME/.local/state/omacase/usage"
+      run cp "$stage/agent.plist" "$_EXTRAS_USAGE_AGENT"
+      rm -rf "$stage"
+      if ! is_dryrun; then
+        launchctl bootout "$domain/$_EXTRAS_USAGE_LABEL" >/dev/null 2>&1 || true
+        launchctl bootstrap "$domain" "$_EXTRAS_USAGE_AGENT" >/dev/null 2>&1 || \
+          warn "Could not register the usage tracker with launchd."
+      fi
+      success "usage-tracker on — \`omacase usage\` stays fresh"
+      ;;
+    off)
+      step "Disabling usage-tracker"
+      run launchctl bootout "$domain/$_EXTRAS_USAGE_LABEL" 2>/dev/null || true
+      run rm -f "$_EXTRAS_USAGE_AGENT"
+      success "usage-tracker off (state records kept; \`omacase usage\` refreshes on demand)"
+      ;;
+    status)
+      step "Extra: usage-tracker ($(_extra_usage_tracker_state))"
+      if [ -f "$_EXTRAS_USAGE_AGENT" ]; then
+        success "LaunchAgent installed ($_EXTRAS_USAGE_AGENT)"
+      else
+        warn "not enabled — \`omacase usage\` still works, refreshing on demand"
+      fi
+      local newest
+      newest="$(find "$HOME/.local/state/omacase/usage" -name '*.json' -mmin -30 2>/dev/null | wc -l | tr -d ' ')"
+      [ "$newest" -gt 0 ] && success "state records fresh (<30 min)" || warn "state records stale or absent"
+      ;;
+    *) error "usage: omacase extras usage-tracker [on|off|status]"; return 1 ;;
   esac
 }
 

@@ -41,6 +41,7 @@ _omacase() {
         'message:toggle a centered iMessage overlay'
         'messages:toggle a centered iMessage overlay'
         'todoist:toggle a centered Todoist overlay'
+        'usage:agent usage dashboard — token burn + plan limits'
         'keybinds:display the OmniWM and Omacase key reference'
         'doctor:check permissions and missing grants'
         'backup:snapshot current dotfiles & macOS defaults'
@@ -83,11 +84,15 @@ _omacase() {
           local -a snapshots=( $backups/*(N/:t) ) flags=( '--list:list snapshots' )
           _describe -t snapshots 'snapshot' snapshots -- flags && ret=0
           ;;
+        usage)
+          _values 'usage action' 'update[refresh state records]' 'json[raw records for scripts]' && ret=0
+          ;;
         extras)
           if (( CURRENT == 2 )); then
             _values 'extra' 'list[list extras and their state]' \
               'sudo-touchid[Touch ID for sudo + longer shared credential cache]' \
-              'mole[system toolbox: clean, uninstall, optimize, analyze (mo)]' && ret=0
+              'mole[system toolbox: clean, uninstall, optimize, analyze (mo)]' \
+              'usage-tracker[background refresh for the agent usage dashboard]' && ret=0
           elif [ "$line[2]" = mole ]; then
             _values 'mo command' 'clean[free up disk space]' 'uninstall[remove apps completely]' \
               'optimize[refresh caches and services]' 'analyze[explore disk usage]' \
