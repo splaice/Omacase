@@ -14,7 +14,7 @@ omacase_extras() {
     "")           _extras_pick ;;
     list)         _extras_list ;;
     sudo-touchid) _extra_sudo_touchid "${1:-on}" ;;
-    clean)        _extra_clean "$@" ;;
+    mole)         _extra_mole "$@" ;;
     *) error "unknown extra: $name"; echo; _extras_list; return 1 ;;
   esac
 }
@@ -23,14 +23,14 @@ _extras_list() {
   log "Optional post-install tweaks — omacase extras <name> [args]:"
   printf '  %-13s (%s)  Touch ID for sudo + %s-min credential cache shared across terminals [on|off|status]\n' \
     "sudo-touchid" "$(_extra_sudo_touchid_state)" "$_EXTRAS_SUDO_TIMEOUT_MIN"
-  printf '  %-13s (run)  Deep-clean caches and leftovers via mole (`--dry-run` previews)\n' "clean"
+  printf '  %-13s (run)  mole system toolbox: clean, uninstall, optimize, analyze (`mo`)\n' "mole"
 }
 
 _extras_pick() {
   local choice action
   choice="$(gum_choose "Extras — optional tweaks, enable only what you want" \
     "sudo-touchid — Touch ID for sudo + a longer, shared credential cache" \
-    "clean — deep-clean caches and app leftovers (mo clean)" \
+    "mole — deep clean, app uninstall, optimize, disk analysis (mo)" \
     "Back")" || return
   case "$choice" in
     sudo-touchid*)
@@ -41,26 +41,21 @@ _extras_pick() {
         Disable) _extra_sudo_touchid off ;;
         *)       return ;;
       esac ;;
-    clean*)
-      action="$(gum_choose "clean" "Preview (dry run)" "Clean" "Back")" || return
-      case "$action" in
-        "Preview (dry run)") _extra_clean --dry-run ;;
-        Clean)               _extra_clean ;;
-        *)                   return ;;
-      esac ;;
+    mole*)
+      _extra_mole ;;
     *) return ;;
   esac
 }
 
-# --- clean -------------------------------------------------------------------
-# Thin pass-through to mole's `mo clean` (a default Brewfile package): deep
-# cache/leftover cleanup with its own interactive confirmation, dry-run, and
-# whitelist. Kept under extras because it is an on-demand action, not part of
-# install/update.
+# --- mole --------------------------------------------------------------------
+# Thin pass-through to mole (a default Brewfile package): with no args `mo`
+# opens its own interactive menu (clean, uninstall, optimize, analyze…); args
+# route to subcommands, e.g. `omacase extras mole clean --dry-run`. Kept under
+# extras because it is an on-demand toolbox, not part of install/update.
 
-_extra_clean() {
+_extra_mole() {
   have mo || abort "mole is not installed — run \`omacase install\` (or \`brew install mole\`)."
-  mo clean "$@"
+  mo "$@"
 }
 
 # --- sudo-touchid ------------------------------------------------------------

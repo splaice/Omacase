@@ -43,7 +43,7 @@ usage: omacase <command> [args]
   doctor             Check permissions and missing grants
   backup [label]     Snapshot current dotfiles & macOS defaults
   restore [id]       Roll back to a snapshot (--list to see them)
-  extras [name]      Optional opt-in tweaks (list | sudo-touchid [on|off|status] | clean [--dry-run])
+  extras [name]      Optional opt-in tweaks (list | sudo-touchid [on|off|status] | mole [args])
   config             Open the config directory
   menu               Interactive TUI
   notify [...]       Pop a native macOS notification (--title/--subtitle/--sound/--image) for scripts/keybinds

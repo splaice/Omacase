@@ -31,7 +31,7 @@ brew "herdr"             # agent-aware multiplexer; sessions survive disconnect 
 brew "zsh-completions"   # extra completion defs beyond zsh's bundled set (wired in dot_zshrc)
 brew "glow"              # markdown rendered in the terminal (read READMEs where you are)
 brew "dust"              # du
-brew "mole"              # `mo` — deep clean + thorough app uninstaller (`omacase extras clean`; `mo clean --dry-run` previews)
+brew "mole"              # `mo` — deep clean + thorough app uninstaller (`omacase extras mole`; `mo clean --dry-run` previews)
 brew "jq"                # JSON wrangling
 brew "tldr"              # example-first man pages
 brew "fastfetch"         # branded system summary (`omacase menu` → About); config in home/
