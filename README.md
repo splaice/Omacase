@@ -29,7 +29,7 @@ asks.
 |---|---|
 | Window environment | **OmniWM** — Dwindle default, nine workspaces, borders, workspace bar, overview, quake terminal |
 | Launcher | **Spotlight** (stock) |
-| Terminal | **Ghostty**, zsh, Starship, tmux, herdr, and a modern CLI set |
+| Terminal | **Ghostty**, zsh, Starship, herdr, and a modern CLI set |
 | Editor | **Neovim / LazyVim** |
 | Applications | **Homebrew + Brewfile** |
 | Dotfiles | Omacase-owned symlinks from `home/` |
