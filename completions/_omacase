@@ -86,7 +86,10 @@ _omacase() {
         extras)
           if (( CURRENT == 2 )); then
             _values 'extra' 'list[list extras and their state]' \
-              'sudo-touchid[Touch ID for sudo + longer shared credential cache]' && ret=0
+              'sudo-touchid[Touch ID for sudo + longer shared credential cache]' \
+              'clean[deep-clean caches and app leftovers via mole]' && ret=0
+          elif [ "$line[2]" = clean ]; then
+            _values 'option' '--dry-run[preview without deleting]' '--whitelist[manage protected paths]' && ret=0
           else
             _values 'action' 'on[enable]' 'off[revert]' 'status[show current state]' && ret=0
           fi

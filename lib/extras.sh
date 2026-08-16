@@ -14,29 +14,53 @@ omacase_extras() {
     "")           _extras_pick ;;
     list)         _extras_list ;;
     sudo-touchid) _extra_sudo_touchid "${1:-on}" ;;
+    clean)        _extra_clean "$@" ;;
     *) error "unknown extra: $name"; echo; _extras_list; return 1 ;;
   esac
 }
 
 _extras_list() {
-  log "Optional post-install tweaks — omacase extras <name> [on|off|status]:"
-  printf '  %-13s (%s)  Touch ID for sudo + %s-min credential cache shared across terminals\n' \
+  log "Optional post-install tweaks — omacase extras <name> [args]:"
+  printf '  %-13s (%s)  Touch ID for sudo + %s-min credential cache shared across terminals [on|off|status]\n' \
     "sudo-touchid" "$(_extra_sudo_touchid_state)" "$_EXTRAS_SUDO_TIMEOUT_MIN"
+  printf '  %-13s (run)  Deep-clean caches and leftovers via mole (`--dry-run` previews)\n' "clean"
 }
 
 _extras_pick() {
   local choice action
   choice="$(gum_choose "Extras — optional tweaks, enable only what you want" \
     "sudo-touchid — Touch ID for sudo + a longer, shared credential cache" \
+    "clean — deep-clean caches and app leftovers (mo clean)" \
     "Back")" || return
-  [ "$choice" = "Back" ] || [ -z "$choice" ] && return
-  action="$(gum_choose "${choice%% *}" "Status" "Enable" "Disable" "Back")" || return
-  case "$action" in
-    Status)  _extra_sudo_touchid status ;;
-    Enable)  _extra_sudo_touchid on ;;
-    Disable) _extra_sudo_touchid off ;;
-    *)       return ;;
+  case "$choice" in
+    sudo-touchid*)
+      action="$(gum_choose "sudo-touchid" "Status" "Enable" "Disable" "Back")" || return
+      case "$action" in
+        Status)  _extra_sudo_touchid status ;;
+        Enable)  _extra_sudo_touchid on ;;
+        Disable) _extra_sudo_touchid off ;;
+        *)       return ;;
+      esac ;;
+    clean*)
+      action="$(gum_choose "clean" "Preview (dry run)" "Clean" "Back")" || return
+      case "$action" in
+        "Preview (dry run)") _extra_clean --dry-run ;;
+        Clean)               _extra_clean ;;
+        *)                   return ;;
+      esac ;;
+    *) return ;;
   esac
+}
+
+# --- clean -------------------------------------------------------------------
+# Thin pass-through to mole's `mo clean` (a default Brewfile package): deep
+# cache/leftover cleanup with its own interactive confirmation, dry-run, and
+# whitelist. Kept under extras because it is an on-demand action, not part of
+# install/update.
+
+_extra_clean() {
+  have mo || abort "mole is not installed — run \`omacase install\` (or \`brew install mole\`)."
+  mo clean "$@"
 }
 
 # --- sudo-touchid ------------------------------------------------------------

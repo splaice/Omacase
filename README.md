@@ -55,7 +55,7 @@ omacase webapp [name]       open a named web app
 omacase backup [label]      snapshot managed state and live OmniWM settings
 omacase restore [id]        restore a snapshot
 omacase migrate             run one-time changeovers
-omacase extras [name]       optional opt-in tweaks, e.g. sudo-touchid (never run by install)
+omacase extras [name]       optional opt-in tweaks: sudo-touchid, clean (never run by install)
 omacase uninstall           remove Omacase-managed config; keep applications
 ```
 

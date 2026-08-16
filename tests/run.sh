@@ -452,6 +452,12 @@ test_extras_list_reports_sudo_touchid_state() {
   "$ROOT/bin/omacase" extras list | grep -qE 'sudo-touchid[[:space:]]+\((on|off|partial)\)'
 }
 
+test_extras_clean_is_declared_everywhere() {
+  "$ROOT/bin/omacase" extras list | grep -qE '^[[:space:]]+clean[[:space:]]' &&
+    grep -qE '^brew "mole"' "$ROOT/Brewfile" &&
+    grep -q "'clean\[" "$ROOT/completions/_omacase"
+}
+
 test_extras_sudo_touchid_dry_run_wraps_all_mutations() {
   # Every root mutation must go through `run sudo`, so a dry run prints them
   # instead of executing; the sudoers content must also validate.
@@ -636,6 +642,7 @@ run_test "cli rejects unknown commands" test_cli_unknown_command_fails
 run_test "cli help and version work" test_cli_help_and_version
 run_test "extras wired into usage, completion, and menu" test_extras_in_usage_completion_and_menu
 run_test "extras list reports sudo-touchid state" test_extras_list_reports_sudo_touchid_state
+run_test "extras clean is declared in list, Brewfile, and completion" test_extras_clean_is_declared_everywhere
 run_test "extras sudo-touchid dry run wraps all mutations" test_extras_sudo_touchid_dry_run_wraps_all_mutations
 run_test "cli keybinds displays KEYBINDS.md" test_cli_keybinds_displays_reference
 run_test "menu lists primary commands and opens keybinds" test_menu_lists_primary_commands_and_routes_keybinds
