@@ -4,6 +4,12 @@
 <dict>
   <key>Label</key>
   <string>org.omacase.omniwm</string>
+  <!-- Attribute this item to OmniWM in System Settings → Login Items; without
+       it the pane shows the bare executable name, "open". -->
+  <key>AssociatedBundleIdentifiers</key>
+  <array>
+    <string>com.barut.OmniWM</string>
+  </array>
   <key>ProgramArguments</key>
   <array>
     <string>/usr/bin/open</string>
