@@ -602,6 +602,7 @@ test_update_fails_when_self_pull_fails() {
   OMACASE_ROOT="$tmp/repo"
   HOME="$tmp/home"
   OMACASE_STATE="$tmp/state"
+  export OMACASE_CHANNEL=dev
   mkdir -p "$OMACASE_ROOT/.git" "$HOME"
   out="$tmp/out"
   (
@@ -612,7 +613,175 @@ test_update_fails_when_self_pull_fails() {
     omacase_update
   ) >"$out" 2>&1
   # shellcheck disable=SC2181 # status is intentionally captured after the subshell
-  [ $? -ne 0 ] && grep -q "git pull failed" "$out"
+  [ $? -ne 0 ] && grep -qE 'git (pull|fetch|merge)' "$out"
+}
+
+_test_git_identity() {
+  git -C "$1" config user.email "omacase-test@example.com"
+  git -C "$1" config user.name "omacase-test"
+}
+
+test_latest_release_tag_picks_greatest_semver() {
+  local tmp
+  tmp="$(mktemp -d)"
+  git init -q "$tmp"
+  _test_git_identity "$tmp"
+  git -C "$tmp" checkout -q -B main
+  git -C "$tmp" commit --allow-empty -q -m init
+  git -C "$tmp" tag v1.9.0
+  git -C "$tmp" tag v1.10.0
+  git -C "$tmp" tag v2.0.0
+  (
+    OMACASE_ROOT="$tmp"
+    # shellcheck source=/dev/null
+    source "$ROOT/lib/common.sh"
+    # shellcheck source=/dev/null
+    source "$ROOT/lib/update.sh"
+    [ "$(_latest_release_tag)" = v2.0.0 ]
+  )
+}
+
+test_update_check_mutates_nothing() {
+  local origin clone out before after
+  origin="$(mktemp -d)"
+  clone="$(mktemp -d)"
+  out="$(mktemp)"
+  git init -q "$origin"
+  _test_git_identity "$origin"
+  git -C "$origin" checkout -q -B main
+  printf 'a\n' > "$origin/file"
+  git -C "$origin" add file
+  git -C "$origin" commit -q -m first
+  git clone -q "$origin" "$clone"
+  _test_git_identity "$clone"
+  printf 'b\n' > "$origin/file"
+  git -C "$origin" commit -q -am second
+  before="$(git -C "$clone" rev-parse HEAD)"
+  (
+    OMACASE_ROOT="$clone"
+    OMACASE_CHANNEL=dev
+    HOME="$(mktemp -d)"
+    OMACASE_STATE="$HOME/state"
+    # shellcheck source=/dev/null
+    source "$ROOT/lib/common.sh"
+    # shellcheck source=/dev/null
+    source "$ROOT/lib/update.sh"
+    _update_check
+  ) >"$out" 2>&1
+  after="$(git -C "$clone" rev-parse HEAD)"
+  [ "$before" = "$after" ] &&
+    grep -q 'pending:' "$out" &&
+    grep -q 'second' "$out"
+}
+
+test_homebrew_installer_checksum_is_enforced() {
+  local tmp
+  tmp="$(mktemp)"
+  printf 'tampered\n' > "$tmp"
+  ! printf '%s  %s\n' \
+      "12479a24be3f5307eecac7cde670fad7118640f031229e964f544b1367b52a41" \
+      "$tmp" | shasum -a 256 -c -- >/dev/null 2>&1 &&
+    grep -q 'shasum -a 256 -c' "$ROOT/boot.sh" &&
+    grep -q 'shasum -a 256 -c' "$ROOT/site/install" &&
+    grep -q 'Homebrew installer checksum mismatch' "$ROOT/boot.sh"
+}
+
+test_mise_tools_are_pinned() {
+  ! grep -q '@latest' "$ROOT/home/dot_config/mise/config.toml" &&
+    ! grep -Eq 'node = "lts"' "$ROOT/home/dot_config/mise/config.toml"
+}
+
+test_update_rollback_restores_recorded_sha() {
+  local origin clone prev
+  origin="$(mktemp -d)"
+  git init -q "$origin"
+  _test_git_identity "$origin"
+  git -C "$origin" checkout -q -B main
+  printf 'one\n' > "$origin/file"
+  git -C "$origin" add file
+  git -C "$origin" commit -q -m one
+  git -C "$origin" tag v0.1.0
+  printf 'two\n' > "$origin/file"
+  git -C "$origin" commit -q -am two
+  git -C "$origin" tag v0.2.0
+  clone="$(mktemp -d)"
+  git clone -q "$origin" "$clone"
+  _test_git_identity "$clone"
+  git -C "$clone" checkout -q v0.2.0
+  prev="$(git -C "$clone" rev-parse v0.1.0)"
+  mkdir -p "$clone/bin"
+  printf '#!/bin/bash\nexit 0\n' > "$clone/bin/omacase"
+  chmod +x "$clone/bin/omacase"
+  (
+    OMACASE_ROOT="$clone"
+    OMACASE_STATE="$(mktemp -d)"
+    HOME="$(mktemp -d)"
+    printf '%s\n' "$prev" > "$OMACASE_STATE/update-prev"
+    # shellcheck source=/dev/null
+    source "$ROOT/lib/common.sh"
+    # shellcheck source=/dev/null
+    source "$ROOT/lib/update.sh"
+    _update_rollback >/dev/null 2>&1
+  )
+  [ "$(git -C "$clone" rev-parse HEAD)" = "$prev" ]
+}
+
+_test_stable_then_dev_fixture() {
+  # origin: v1.0.0 then a later main commit. clone starts detached on the tag.
+  local origin="$1" clone="$2"
+  git init -q "$origin"
+  _test_git_identity "$origin"
+  git -C "$origin" checkout -q -B main
+  printf 'one\n' > "$origin/file"
+  git -C "$origin" add file
+  git -C "$origin" commit -q -m one
+  git -C "$origin" tag v1.0.0
+  printf 'two\n' > "$origin/file"
+  git -C "$origin" commit -q -am two
+  git clone -q "$origin" "$clone"
+  _test_git_identity "$clone"
+  git -C "$clone" checkout -q v1.0.0
+}
+
+test_update_dev_attaches_from_stable_tag() {
+  local origin clone tip
+  origin="$(mktemp -d)"
+  clone="$(mktemp -d)"
+  _test_stable_then_dev_fixture "$origin" "$clone"
+  tip="$(git -C "$origin" rev-parse HEAD)"
+  ! git -C "$clone" symbolic-ref -q HEAD >/dev/null || return 1
+  (
+    OMACASE_ROOT="$clone"
+    OMACASE_CHANNEL=dev
+    OMACASE_STATE="$(mktemp -d)"
+    HOME="$(mktemp -d)"
+    # shellcheck source=/dev/null
+    source "$ROOT/lib/common.sh"
+    # shellcheck source=/dev/null
+    source "$ROOT/lib/update.sh"
+    _update_attach_dev >/dev/null 2>&1
+  )
+  [ "$(git -C "$clone" symbolic-ref --short HEAD)" = main ] &&
+    [ "$(git -C "$clone" rev-parse HEAD)" = "$tip" ]
+}
+
+test_boot_dev_attaches_from_stable_tag() {
+  local origin clone tip
+  origin="$(mktemp -d)"
+  clone="$(mktemp -d)"
+  _test_stable_then_dev_fixture "$origin" "$clone"
+  tip="$(git -C "$origin" rev-parse HEAD)"
+  ! git -C "$clone" symbolic-ref -q HEAD >/dev/null || return 1
+  (
+    info() { :; }
+    abort() { printf '%s\n' "$*" >&2; return 1; }
+    # shellcheck disable=SC1090
+    eval "$(sed -n '/^_omacase_remote_default_branch()/,/^_omacase_checkout_channel()/{ /^_omacase_checkout_channel()/q; p; }' "$ROOT/boot.sh")"
+    OMACASE_CHANNEL=dev
+    _omacase_attach_dev "$clone" >/dev/null 2>&1
+  )
+  [ "$(git -C "$clone" symbolic-ref --short HEAD)" = main ] &&
+    [ "$(git -C "$clone" rev-parse HEAD)" = "$tip" ]
 }
 
 test_bootstrap_copies_are_identical() {
@@ -1320,6 +1489,13 @@ run_test "partial brew upgrade fails update" test_partial_brew_upgrade_fails_upd
 run_test "partial brew update fails update" test_partial_brew_update_fails_update
 run_test "update stops on non-ledgered install failure" test_update_stops_on_non_ledgered_install_failure
 run_test "update fails on self-update failure" test_update_fails_when_self_pull_fails
+run_test "latest release tag is greatest semver" test_latest_release_tag_picks_greatest_semver
+run_test "update --check does not mutate the worktree" test_update_check_mutates_nothing
+run_test "homebrew installer checksum is enforced" test_homebrew_installer_checksum_is_enforced
+run_test "mise tools are pinned to exact versions" test_mise_tools_are_pinned
+run_test "update --rollback restores the recorded SHA" test_update_rollback_restores_recorded_sha
+run_test "update dev attaches a detached stable tag to main" test_update_dev_attaches_from_stable_tag
+run_test "boot dev attaches a detached stable tag to main" test_boot_dev_attaches_from_stable_tag
 run_test "backup domains cover macos/defaults.sh" test_backup_domains_cover_defaults_sh
 run_test "defaults disable Stage Manager" test_stage_manager_is_disabled_by_defaults
 run_test "Homebrew trust is scoped to exact third-party packages" test_brew_trust_is_scoped

@@ -64,9 +64,14 @@ if ! command -v brew >/dev/null 2>&1; then
   installer="$(mktemp)"
   trap 'rm -f "$installer"' EXIT
   info "Installing Homebrew…"
+  # Homebrew/install publishes no tags; pin a reviewed commit + sha256.
+  HOMEBREW_INSTALLER_VERSION=cced90146ea6d3057c03a636b668fef177415eb3
+  HOMEBREW_INSTALLER_SHA256=12479a24be3f5307eecac7cde670fad7118640f031229e964f544b1367b52a41
   curl --proto '=https' --tlsv1.2 -fsSL \
-    https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh \
+    "https://raw.githubusercontent.com/Homebrew/install/${HOMEBREW_INSTALLER_VERSION}/install.sh" \
     -o "$installer"
+  printf '%s  %s\n' "$HOMEBREW_INSTALLER_SHA256" "$installer" | shasum -a 256 -c -- >/dev/null 2>&1 \
+    || abort "Homebrew installer checksum mismatch — refusing to run it. (Upstream may have released a new version; update omacase or install Homebrew manually from brew.sh, then re-run.)"
   NONINTERACTIVE=1 /bin/bash "$installer"
   rm -f "$installer"
   trap - EXIT
@@ -79,6 +84,52 @@ else
 fi
 
 # 3. Clone or update the payload.
+# stable (default) checks out the greatest v* tag; OMACASE_CHANNEL=dev tracks
+# the default branch. A missing tag (pre-first-release) stays on the default
+# branch rather than aborting bootstrap.
+_omacase_remote_default_branch() {
+  local root="$1" ref
+  ref="$(git -C "$root" symbolic-ref --quiet --short refs/remotes/origin/HEAD 2>/dev/null || true)"
+  ref="${ref#origin/}"
+  printf '%s\n' "${ref:-main}"
+}
+
+# stable leaves a detached tag checkout. Dev must attach to the remote
+# default branch without reset --hard / checkout -B (those discard work).
+_omacase_attach_dev() {
+  local root="$1" branch
+  branch="$(_omacase_remote_default_branch "$root")"
+  git -C "$root" fetch origin "$branch"
+  if git -C "$root" symbolic-ref -q HEAD >/dev/null; then
+    git -C "$root" merge --ff-only "origin/$branch"
+    return
+  fi
+  info "Attaching detached checkout to origin/$branch (dev channel)…"
+  if git -C "$root" show-ref --verify --quiet "refs/heads/$branch"; then
+    git -C "$root" checkout -q "$branch" \
+      || abort "Could not check out $branch (local changes?). Resolve them or stay on OMACASE_CHANNEL=stable."
+  else
+    git -C "$root" checkout -q --track "origin/$branch" \
+      || abort "Could not attach to origin/$branch (local changes?). Resolve them or stay on OMACASE_CHANNEL=stable."
+  fi
+  git -C "$root" merge --ff-only "origin/$branch" \
+    || abort "git merge --ff-only origin/$branch failed (local changes?). Resolve it before updating."
+}
+
+_omacase_checkout_channel() {
+  local root="$1" tag
+  if [ "${OMACASE_CHANNEL:-stable}" = dev ]; then
+    _omacase_attach_dev "$root"
+    return
+  fi
+  git -C "$root" fetch --tags --depth 1 origin 2>/dev/null || true
+  tag="$(git -C "$root" tag --list 'v*' --sort=-v:refname | head -1)"
+  if [ -n "$tag" ]; then
+    git -C "$root" checkout -q "$tag"
+  else
+    info "No release tags found; staying on the default branch (set OMACASE_CHANNEL=dev to keep tracking it)."
+  fi
+}
 # Older public installs cloned into the data root itself. Keep using that
 # checkout rather than forking a second copy next to its caches.
 if [ -z "${OMACASE_PREFIX:-}" ] && [ -d "$HOME/.local/share/omacase/.git" ]; then
@@ -88,11 +139,12 @@ fi
 if [ -d "$PREFIX/.git" ]; then
   info "Updating existing omacase payload at $PREFIX…"
   _recover_legacy_login_items "$PREFIX"
-  git -C "$PREFIX" pull --ff-only
+  _omacase_checkout_channel "$PREFIX"
 else
   info "Cloning omacase → $PREFIX…"
   mkdir -p "$(dirname "$PREFIX")"
-  git clone --depth 1 "$REPO" "$PREFIX"
+  git clone --tags --depth 1 "$REPO" "$PREFIX"
+  _omacase_checkout_channel "$PREFIX"
 fi
 
 # 4. Hand off.
