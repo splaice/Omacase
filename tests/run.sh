@@ -399,6 +399,122 @@ test_restore_absent_leaf_prunes_empty_parents_not_config() {
     [ -d "$HOME/.config" ]
 }
 
+test_require_ledgers_failure_and_continues() {
+  (
+    # shellcheck source=/dev/null
+    source "$ROOT/lib/common.sh"
+    boom() { return 1; }
+    require "step-a" boom >/dev/null 2>&1
+    require "step-b" true >/dev/null 2>&1
+    [ "${#OMACASE_INCOMPLETE[@]}" -eq 1 ] && ! converged "done" >/dev/null 2>&1
+  )
+}
+
+# Keep install/update integration tests offline and off the live machine.
+_test_stub_convergence_externals() {
+  brew() { return 0; }
+  mise() { return 0; }
+  herdr() { return 0; }
+  defaults() { return 0; }
+  killall() { return 0; }
+  osascript() { return 0; }
+  launchctl() { return 0; }
+  git() { return 0; }
+  bash() {
+    case "${1:-}" in
+      */macos/defaults.sh) return 0 ;;
+      *) command bash "$@" ;;
+    esac
+  }
+  source() {
+    case "${1:-}" in
+      */theme.sh)
+        omacase_theme() { return 0; }
+        can_set_appearance() { return 0; }
+        return 0 ;;
+      */wm.sh)
+        omacase_wm() { return 0; }
+        return 0 ;;
+      */migrate.sh)
+        _migrations_baseline() { return 0; }
+        omacase_migrate() { return 0; }
+        return 0 ;;
+      */install.sh)
+        omacase_install() { return 0; }
+        return 0 ;;
+      *) builtin source "$@" ;;
+    esac
+  }
+}
+
+test_partial_brew_bundle_fails_install() {
+  local tmp out
+  tmp="$(mktemp -d)"
+  out="$tmp/out"
+  HOME="$tmp/home"
+  OMACASE_STATE="$tmp/state"
+  OMACASE_DATA="$tmp/data"
+  OMACASE_ROOT="$ROOT"
+  mkdir -p "$HOME"
+  (
+    # shellcheck source=/dev/null
+    source "$ROOT/lib/common.sh"
+    # shellcheck source=/dev/null
+    source "$ROOT/lib/install.sh"
+    _test_stub_convergence_externals
+    brew() { [ "${1:-}" = bundle ] && return 1; return 0; }
+    omacase_install
+  ) >"$out" 2>&1
+  # shellcheck disable=SC2181 # status is intentionally captured after the subshell
+  [ $? -ne 0 ] && grep -q 'PARTIAL' "$out" && grep -q 'brew bundle' "$out"
+}
+
+test_partial_brew_upgrade_fails_update() {
+  local tmp out
+  tmp="$(mktemp -d)"
+  out="$tmp/out"
+  HOME="$tmp/home"
+  OMACASE_STATE="$tmp/state"
+  OMACASE_DATA="$tmp/data"
+  OMACASE_ROOT="$ROOT"
+  mkdir -p "$HOME"
+  (
+    export OMACASE_UPDATE_REEXECED=1
+    # shellcheck source=/dev/null
+    source "$ROOT/lib/common.sh"
+    # shellcheck source=/dev/null
+    source "$ROOT/lib/update.sh"
+    _test_stub_convergence_externals
+    brew() { [ "${1:-}" = upgrade ] && return 1; return 0; }
+    omacase_update
+  ) >"$out" 2>&1
+  # shellcheck disable=SC2181 # status is intentionally captured after the subshell
+  [ $? -ne 0 ] && grep -q 'PARTIAL' "$out" && grep -q 'brew upgrade' "$out"
+}
+
+test_partial_brew_update_fails_update() {
+  local tmp out
+  tmp="$(mktemp -d)"
+  out="$tmp/out"
+  HOME="$tmp/home"
+  OMACASE_STATE="$tmp/state"
+  OMACASE_DATA="$tmp/data"
+  OMACASE_ROOT="$ROOT"
+  mkdir -p "$HOME"
+  (
+    export OMACASE_UPDATE_REEXECED=1
+    # shellcheck source=/dev/null
+    source "$ROOT/lib/common.sh"
+    # shellcheck source=/dev/null
+    source "$ROOT/lib/update.sh"
+    _test_stub_convergence_externals
+    brew() { [ "${1:-}" = update ] && return 1; return 0; }
+    omacase_update
+  ) >"$out" 2>&1
+  # shellcheck disable=SC2181 # status is intentionally captured after the subshell
+  [ $? -ne 0 ] && grep -q 'PARTIAL' "$out" && grep -q 'brew update' "$out"
+}
+
 test_update_fails_when_self_pull_fails() {
   # omacase_update's ensure_brew_env aborts before the pull on anything but
   # Apple Silicon + /opt/homebrew — the abort message would satisfy the
@@ -947,6 +1063,10 @@ run_test "restore PRESENT leaf preserves sibling" test_restore_present_leaf_pres
 run_test "restore legacy PRESENT dir does not follow current symlink" test_restore_legacy_present_dir_does_not_follow_current_symlink
 run_test "restore legacy ABSENT dir preserves sibling" test_restore_legacy_absent_dir_preserves_sibling
 run_test "restore ABSENT leaf prunes empty parents not .config" test_restore_absent_leaf_prunes_empty_parents_not_config
+run_test "require ledgers a failure and continues" test_require_ledgers_failure_and_continues
+run_test "partial brew bundle fails install" test_partial_brew_bundle_fails_install
+run_test "partial brew upgrade fails update" test_partial_brew_upgrade_fails_update
+run_test "partial brew update fails update" test_partial_brew_update_fails_update
 run_test "update fails on self-update failure" test_update_fails_when_self_pull_fails
 run_test "backup domains cover macos/defaults.sh" test_backup_domains_cover_defaults_sh
 run_test "defaults disable Stage Manager" test_stage_manager_is_disabled_by_defaults

@@ -74,6 +74,36 @@ _omacase_zfuncdir() {
   [ -n "$bindir" ] && printf '%s\n' "${bindir%/bin}/share/zsh/site-functions"
 }
 
+# --- convergence ledger -------------------------------------------------------
+# Required steps that fail are recorded (not fatal) so independent work
+# continues; the entry point reports partial convergence and exits nonzero.
+OMACASE_INCOMPLETE=()
+
+# require <label> <cmd...> — run a REQUIRED convergence step; on failure, warn
+# and record. Optional steps keep using plain `run … || warn` and never ledger.
+require() {
+  local label="$1"; shift
+  if ! run "$@"; then
+    warn "$label failed — continuing with remaining steps."
+    OMACASE_INCOMPLETE+=("$label")
+    return 0
+  fi
+}
+
+converged() {  # converged "<verb phrase>" — final report + exit status
+  if [ "${#OMACASE_INCOMPLETE[@]}" -eq 0 ]; then
+    success "$1"
+    return 0
+  fi
+  warn "PARTIAL: $1 — ${#OMACASE_INCOMPLETE[@]} required step(s) failed:"
+  local s
+  for s in "${OMACASE_INCOMPLETE[@]}"; do
+    warn "  - $s"
+  done
+  warn "Re-run \`omacase update\` after fixing the above."
+  return 1
+}
+
 # --- dry run -----------------------------------------------------------------
 # Set OMACASE_DRYRUN=1 to print mutating commands instead of running them.
 # Wrap every side-effecting command (brew, ln, defaults, services…)
