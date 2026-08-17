@@ -23,9 +23,22 @@ confirm() { # confirm "Question?" -> 0 if yes
 }
 
 # --- environment -------------------------------------------------------------
+OMACASE_MACOS_MIN=26
+
+# Pure comparison so tests can feed arbitrary strings. Accepts "26", "26.0",
+# "26.6.1"; compares the MAJOR only (Omacase supports a major, not a minor).
+_macos_version_supported() {
+  local major="${1%%.*}"
+  case "$major" in ''|*[!0-9]*) return 1 ;; esac
+  [ "$major" -ge "$OMACASE_MACOS_MIN" ]
+}
+
 ensure_supported_platform() {
   [ "$(uname -s)" = "Darwin" ] || abort "omacase only runs on macOS."
   [ "$(uname -m)" = "arm64" ] || abort "omacase supports Apple Silicon Macs only."
+  local v; v="$(sw_vers -productVersion 2>/dev/null)"
+  _macos_version_supported "$v" || \
+    abort "omacase requires macOS $OMACASE_MACOS_MIN or later (detected: ${v:-unknown})."
 }
 
 ensure_brew_env() {
