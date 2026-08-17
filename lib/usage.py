@@ -17,10 +17,12 @@ Colors are plain ANSI indices so charts track the active Ghostty theme.
 """
 
 import datetime as dt
+import fcntl
 import json
 import os
 import subprocess
 import sys
+import tempfile
 import urllib.error
 import urllib.request
 from pathlib import Path
@@ -243,20 +245,48 @@ def collect_grok() -> dict:
 COLLECTORS = {"claude": collect_claude, "codex": collect_codex, "grok": collect_grok}
 
 
-def collect(agents=None):
-    STATE_DIR.mkdir(parents=True, exist_ok=True)
-    for agent, fn in COLLECTORS.items():
-        if agents and agent not in agents:
-            continue
+def _cleanup_stale_tmps():
+    cutoff = dt.datetime.now().timestamp() - 3600
+    for tmp in STATE_DIR.glob(".*.tmp"):
         try:
-            record = fn()
-        except Exception as e:  # a broken provider must not block the others
-            record = {"agent": agent, "name": agent, "days": {}, "limits": [],
-                      "note": f"collector failed: {e}"}
-        record["collected_at"] = dt.datetime.now().astimezone().isoformat()
-        tmp = STATE_DIR / f".{agent}.tmp"
-        tmp.write_text(json.dumps(record, indent=1) + "\n")
-        tmp.replace(STATE_DIR / f"{agent}.json")
+            if tmp.stat().st_mtime < cutoff:
+                tmp.unlink()
+        except OSError:
+            pass
+
+
+def _write_record(agent: str, record: dict):
+    fd, tmp = tempfile.mkstemp(dir=STATE_DIR, prefix=f".{agent}.", suffix=".tmp")
+    try:
+        with os.fdopen(fd, "w") as fh:
+            fh.write(json.dumps(record, indent=1) + "\n")
+        # No fsync: records are regenerable cache; durability is not worth the cost.
+        os.replace(tmp, STATE_DIR / f"{agent}.json")
+    except BaseException:
+        try:
+            os.unlink(tmp)
+        except OSError:
+            pass
+        raise
+
+
+def collect(agents=None, max_age=None):
+    STATE_DIR.mkdir(parents=True, exist_ok=True)
+    with open(STATE_DIR / ".collect.lock", "w") as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)  # collections take ~1s; blocking is fine
+        if max_age is not None and state_age_seconds() <= max_age:
+            return  # the holder we waited on just refreshed
+        _cleanup_stale_tmps()
+        for agent, fn in COLLECTORS.items():
+            if agents and agent not in agents:
+                continue
+            try:
+                record = fn()
+            except Exception as e:  # a broken provider must not block the others
+                record = {"agent": agent, "name": agent, "days": {}, "limits": [],
+                          "note": f"collector failed: {e}"}
+            record["collected_at"] = dt.datetime.now().astimezone().isoformat()
+            _write_record(agent, record)
 
 
 def state_age_seconds() -> float:
@@ -384,7 +414,7 @@ def main():
         collect(sys.argv[2:] or None)
     elif cmd == "show":
         if state_age_seconds() > 1800:
-            collect()
+            collect(max_age=1800)
         render()
     elif cmd == "json":
         out = {}
