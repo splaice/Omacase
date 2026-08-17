@@ -1149,6 +1149,13 @@ test_recover_legacy_login_items_preserves_nonlegacy_live_paths() {
     [ -n "$(git -C "$root" status --short)" ]
 }
 
+# Self-updating casks (auto_updates true) are the vendor's job; brew
+# re-fetching them rides the flakiest URLs (WhatsApp 500s) and would mark the
+# whole update PARTIAL over an app brew was never meant to update.
+test_update_skips_auto_update_casks() {
+  grep -q 'HOMEBREW_NO_UPGRADE_AUTO_UPDATES_CASKS=1 brew upgrade' "$ROOT/lib/update.sh"
+}
+
 # Issue #4: a failed migration must halt the runner and keep the marker, so
 # the documented retry-on-next-update behavior is real.
 test_migrate_failure_keeps_marker() {
@@ -1516,6 +1523,7 @@ run_test "cli help and version work" test_cli_help_and_version
 run_test "extras wired into usage, completion, and menu" test_extras_in_usage_completion_and_menu
 run_test "extras list reports sudo-touchid state" test_extras_list_reports_sudo_touchid_state
 run_test "extras mole is declared in list, Brewfile, and completion" test_extras_mole_is_declared_everywhere
+run_test "brew upgrade skips self-updating casks" test_update_skips_auto_update_casks
 run_test "failed migration halts runner and keeps marker" test_migrate_failure_keeps_marker
 run_test "install baseline covers every shipped migration" test_migrate_baseline_covers_shipped_history
 run_test "empty migration history uses squash baseline" test_migrate_empty_history_uses_squash_baseline

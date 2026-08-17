@@ -179,7 +179,12 @@ omacase_update() {
     require "mise upgrade" mise upgrade
   fi
   step "Upgrading outdated formulae & casks"
-  require "brew upgrade" brew upgrade
+  # Skip casks marked auto_updates (WhatsApp, Chrome, …): those apps update
+  # themselves in-app, and brew re-downloading them goes through the vendor's
+  # versioned URLs — the flakiest channel there is (rotated/retracted builds
+  # 500/404 routinely). A vendor hiccup must not mark the whole update PARTIAL
+  # over an app that was never brew's to update.
+  require "brew upgrade" env HOMEBREW_NO_UPGRADE_AUTO_UPDATES_CASKS=1 brew upgrade
   converged "omacase up to date"
 }
 
