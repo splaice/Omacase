@@ -706,6 +706,69 @@ test_recover_legacy_login_items_allows_destage_pull() {
     grep -q '_recover_legacy_login_items' "$ROOT/lib/update.sh"
 }
 
+test_recover_legacy_login_items_honors_dryrun() {
+  local tmp root live tracked before
+  tmp="$(mktemp -d)"
+  root="$tmp/repo"
+  HOME="$tmp/home"
+  live="$HOME/.config/omacase/login-items"
+  tracked="$root/home/dot_config/omacase/login-items"
+  mkdir -p "$(dirname "$live")" "$(dirname "$tracked")"
+  git init -q "$root"
+  git -C "$root" config user.email "omacase-test@example.com"
+  git -C "$root" config user.name "omacase-test"
+  printf 'OmniWM\n' > "$tracked"
+  git -C "$root" add home/dot_config/omacase/login-items
+  git -C "$root" commit -q -m legacy
+  ln -s "$tracked" "$live"
+  printf 'OmniWM\nTodoist\n' > "$tracked"
+  before="$(git -C "$root" status --short)"
+  OMACASE_DRYRUN=1
+  # shellcheck source=/dev/null
+  source "$ROOT/lib/common.sh"
+  _recover_legacy_login_items "$root" >/dev/null
+  [ -L "$live" ] &&
+    [ "$(readlink "$live")" = "$tracked" ] &&
+    [ "$(git -C "$root" status --short)" = "$before" ] &&
+    grep -qx 'Todoist' "$tracked"
+}
+
+test_recover_legacy_login_items_preserves_nonlegacy_live_paths() {
+  local tmp root tracked live external
+  tmp="$(mktemp -d)"
+  root="$tmp/repo"
+  HOME="$tmp/home"
+  tracked="$root/home/dot_config/omacase/login-items"
+  live="$HOME/.config/omacase/login-items"
+  external="$tmp/external-login-items"
+  mkdir -p "$(dirname "$tracked")" "$(dirname "$live")"
+  git init -q "$root"
+  git -C "$root" config user.email "omacase-test@example.com"
+  git -C "$root" config user.name "omacase-test"
+  printf 'tracked default\n' > "$tracked"
+  git -C "$root" add home/dot_config/omacase/login-items
+  git -C "$root" commit -q -m legacy
+  printf 'tracked local edit\n' > "$tracked"
+  printf 'external user config\n' > "$external"
+  ln -s "$external" "$live"
+  # shellcheck source=/dev/null
+  source "$ROOT/lib/common.sh"
+  _recover_legacy_login_items "$root"
+  [ -L "$live" ] &&
+    [ "$(readlink "$live")" = "$external" ] &&
+    grep -qx 'external user config' "$live" &&
+    grep -qx 'tracked local edit' "$tracked" &&
+    [ -n "$(git -C "$root" status --short)" ] || return 1
+
+  rm -f "$live"
+  printf 'real user config\n' > "$live"
+  _recover_legacy_login_items "$root"
+  [ -f "$live" ] && [ ! -L "$live" ] &&
+    grep -qx 'real user config' "$live" &&
+    grep -qx 'tracked local edit' "$tracked" &&
+    [ -n "$(git -C "$root" status --short)" ]
+}
+
 # Issue #4: a failed migration must halt the runner and keep the marker, so
 # the documented retry-on-next-update behavior is real.
 test_migrate_failure_keeps_marker() {
@@ -1075,6 +1138,8 @@ run_test "login-items is seed-once user config" test_login_items_is_seed_not_sym
 run_test "launcher seed replaces managed link with a copy" test_launcher_seed_replaces_managed_link_with_copy
 run_test "launcher seed recovers a dangling pre-move login-items link" test_launcher_seed_dangling_old_link_uses_seed
 run_test "legacy login-items edits survive a destage pull" test_recover_legacy_login_items_allows_destage_pull
+run_test "legacy login-items recovery honors dry-run" test_recover_legacy_login_items_honors_dryrun
+run_test "legacy recovery preserves nonlegacy live config" test_recover_legacy_login_items_preserves_nonlegacy_live_paths
 run_test "extras sudo-touchid dry run wraps all mutations" test_extras_sudo_touchid_dry_run_wraps_all_mutations
 run_test "cli keybinds displays KEYBINDS.md" test_cli_keybinds_displays_reference
 run_test "menu lists primary commands and opens keybinds" test_menu_lists_primary_commands_and_routes_keybinds

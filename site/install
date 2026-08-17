@@ -26,13 +26,19 @@ _recover_legacy_login_items() {
   local tmp
   [ -f "$tracked" ] || [ -L "$tracked" ] || return 0
 
-  if [ -L "$live" ] || [ ! -e "$live" ]; then
-    mkdir -p "$(dirname "$live")"
-    tmp="$(mktemp)"
-    cat "$tracked" > "$tmp"
-    rm -f "$live"
-    mv "$tmp" "$live"
+  # Only replace the exact legacy link. A real file or unrelated symlink is
+  # user-owned; do not clean checkout edits unless we first recover their bytes.
+  if [ -L "$live" ]; then
+    [ "$(readlink "$live")" = "$tracked" ] || return 0
+  elif [ -e "$live" ]; then
+    return 0
   fi
+
+  mkdir -p "$(dirname "$live")"
+  tmp="$(mktemp)"
+  cat "$tracked" > "$tmp"
+  rm -f "$live"
+  mv "$tmp" "$live"
 
   if [ -d "$root/.git" ]; then
     git -C "$root" checkout -- "$rel" 2>/dev/null || true
