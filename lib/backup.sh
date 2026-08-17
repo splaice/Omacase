@@ -9,8 +9,8 @@
 #
 # Snapshots live in $OMACASE_STATE/backups/<id>/ :
 #   meta            label, version, host, date
-#   manifest        one line per managed dotfile target: "PRESENT|ABSENT <rel>"
-#   files/<rel>     copies of pre-existing dotfile targets (relative to $HOME)
+#   manifest        one line per managed leaf file: "PRESENT|ABSENT <rel>"
+#   files/<rel>     copies of pre-existing leaf files (relative to $HOME)
 #   defaults/*.plist  exported macOS defaults domains
 
 OMACASE_BACKUPS="$OMACASE_STATE/backups"
@@ -63,10 +63,11 @@ _managed_theme_targets() {
     "$HOME/.config/starship/theme.toml"
 }
 
-# Manual snapshots also capture OmniWM's live, user-editable settings. Omacase
-# seeds this file once but deliberately does not symlink or overwrite it.
+# Snapshot the exact leaf files Omacase links, plus generated theme fragments
+# and OmniWM's live, user-editable settings (seeded once, never overwritten).
 _backup_targets() {
-  _managed_targets
+  _managed_file_targets
+  _managed_theme_targets
   echo "$HOME/.config/omniwm/settings.toml"
 }
 
@@ -92,6 +93,18 @@ _is_omacase_link() {
     "$OMACASE_ROOT"/*|"$OMACASE_DATA"/generated/themes/*) return 0 ;;
     *) return 1 ;;
   esac
+}
+
+# True if $1 or any ancestor (up to $HOME) is our link. Old-style installs
+# symlinked whole ~/.config/<app> dirs into the repo; leaves under such a
+# link hold nothing of the user's.
+_under_omacase_link() {
+  local p="$1"
+  while [ "$p" != "$HOME" ] && [ "$p" != "/" ]; do
+    _is_omacase_link "$p" && return 0
+    p="$(dirname "$p")"
+  done
+  return 1
 }
 
 # --- backup ------------------------------------------------------------------
@@ -130,7 +143,7 @@ omacase_backup() {
   while IFS= read -r target; do
     [ -n "$target" ] || continue
     local rel="${target#"$HOME"/}"
-    if _is_omacase_link "$target"; then
+    if _under_omacase_link "$target"; then
       continue                                  # our own symlink — nothing of theirs to save
     elif [ -e "$target" ] || [ -L "$target" ]; then
       mkdir -p "$dest/files/$(dirname "$rel")"
@@ -197,8 +210,109 @@ _rel_is_managed_target() {
   while IFS= read -r target; do
     managed_rel="${target#"$HOME"/}"
     [ "$rel" = "$managed_rel" ] && return 0
-  done < <(_backup_targets; _legacy_restore_targets)
+  done < <(_backup_targets; _managed_targets; _legacy_restore_targets)
   return 1
+}
+
+_rel_is_leaf_target() {
+  local rel="$1" target managed_rel
+  while IFS= read -r target; do
+    managed_rel="${target#"$HOME"/}"
+    [ "$rel" = "$managed_rel" ] && return 0
+  done < <(_backup_targets)
+  return 1
+}
+
+# rmdir upward from the deleted path's parent. Stops before $HOME/.config and
+# $HOME; rmdir fails (and the walk stops) as soon as a sibling remains.
+_prune_empty_parents() {
+  local p
+  p="$(dirname "$1")"
+  while [ -n "$p" ] && [ "$p" != "/" ] && [ "$p" != "$HOME" ] && [ "$p" != "$HOME/.config" ]; do
+    run rmdir "$p" 2>/dev/null || break
+    p="$(dirname "$p")"
+  done
+}
+
+_prune_empty_dirs_under() {
+  local root="$1" p
+  [ -d "$root" ] || return 0
+  while IFS= read -r p; do
+    [ -n "$p" ] || continue
+    [ "$p" = "$root" ] && continue
+    run rmdir "$p" 2>/dev/null || true
+  done < <(find "$root" -depth -type d)
+}
+
+# Legacy v1 PRESENT directory: merge files back, never wipe the tree.
+_restore_present_dir() {
+  local dir="$1" rel="$2" target="$3"
+  local saved dest sub p counterpart
+
+  # Never merge through a symlink: an unrelated current link may point outside
+  # $HOME, and writing $target/<subpath> would overwrite its destination.
+  # Replacing the link itself restores the snapshot without touching that tree.
+  if [ -L "$target" ] || { [ -e "$target" ] && [ ! -d "$target" ]; }; then
+    run rm -f "$target"
+  fi
+  run mkdir -p "$target"
+
+  while IFS= read -r saved; do
+    [ -n "$saved" ] || continue
+    sub="${saved#"$dir/files/$rel"/}"
+    dest="$target/$sub"
+    run rm -f "$dest"
+    run mkdir -p "$(dirname "$dest")"
+    run cp -RP "$saved" "$dest"
+  done < <(find "$dir/files/$rel" \( -type f -o -type l \))
+
+  if [ -d "$target" ]; then
+    while IFS= read -r p; do
+      [ -n "$p" ] || continue
+      _is_omacase_link "$p" || continue
+      counterpart="$dir/files/$rel/${p#"$target"/}"
+      if [ ! -e "$counterpart" ] && [ ! -L "$counterpart" ]; then
+        run rm -f "$p"
+      fi
+    done < <(find "$target" -type l)
+  fi
+
+  _prune_empty_dirs_under "$target"
+}
+
+# Legacy v1 ABSENT directory: remove only what Omacase owns, then rmdir.
+_restore_absent_toplevel() {
+  local target="$1"
+  local p leaf
+
+  if [ -L "$target" ]; then
+    if _is_omacase_link "$target"; then
+      run rm -f "$target"
+      _prune_empty_parents "$target"
+    fi
+    return
+  fi
+
+  if [ -d "$target" ]; then
+    while IFS= read -r p; do
+      [ -n "$p" ] || continue
+      _is_omacase_link "$p" && run rm -f "$p"
+    done < <(find "$target" -type l)
+  fi
+
+  while IFS= read -r leaf; do
+    [ -n "$leaf" ] || continue
+    case "$leaf" in
+      "$target"/*)
+        run rm -f "$leaf"
+        _prune_empty_parents "$leaf"
+        ;;
+    esac
+  done < <(_backup_targets)
+
+  _prune_empty_dirs_under "$target"
+  run rmdir "$target" 2>/dev/null || true
+  _prune_empty_parents "$target"
 }
 
 _valid_restore_rel() {
@@ -256,11 +370,20 @@ omacase_restore() {
       target="$HOME/$rel"
       case "$status" in
         PRESENT)
-          run rm -rf "$target"
-          run mkdir -p "$(dirname "$target")"
-          run cp -RP "$dir/files/$rel" "$target" ;;
+          if [ -d "$dir/files/$rel" ] && [ ! -L "$dir/files/$rel" ]; then
+            _restore_present_dir "$dir" "$rel" "$target"
+          else
+            run rm -f "$target"
+            run mkdir -p "$(dirname "$target")"
+            run cp -RP "$dir/files/$rel" "$target"
+          fi ;;
         ABSENT)
-          run rm -rf "$target" ;;             # remove what Omacase created
+          if _rel_is_leaf_target "$rel"; then
+            run rm -f "$target"
+            _prune_empty_parents "$target"
+          else
+            _restore_absent_toplevel "$target"
+          fi ;;
       esac
     done < "$dir/manifest"
   fi

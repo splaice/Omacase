@@ -162,3 +162,6 @@ opts into a LaunchDaemon. Shared helpers in `lib/common.sh`:
 See the README's [Boundaries](README.md#boundaries) section: the **DND / Focus
 toggle** (defer to macOS), things already native on macOS (screenshots, lock,
 clipboard history, …), and Linux-only items.
+
+If per-machine dotfile variation (templates/secrets) is ever needed, adopt
+chezmoi — `home/` already uses its source format.

@@ -262,6 +262,143 @@ test_backup_captures_live_omniwm_settings() {
     "$OMACASE_STATE/backups/$id/files/.config/omniwm/settings.toml"
 }
 
+# Restore without importing live defaults or restarting Dock/Finder.
+_test_restore() {
+  defaults() { :; }
+  killall() { :; }
+  OMACASE_DRYRUN=
+  printf 'y\n' | omacase_restore "$1" >/dev/null 2>&1
+}
+
+# Issue #1: ABSENT snapshot must not rm -rf a managed app dir and take
+# user-created siblings with it.
+test_restore_preserves_sibling_after_absent_backup() {
+  local tmp id custom link
+  tmp="$(mktemp -d)"
+  HOME="$tmp/home"
+  OMACASE_STATE="$tmp/state"
+  OMACASE_ROOT="$ROOT"
+  mkdir -p "$HOME"
+  # shellcheck source=/dev/null
+  source "$ROOT/lib/common.sh"
+  # shellcheck source=/dev/null
+  source "$ROOT/lib/backup.sh"
+  omacase_backup issue1 >/dev/null
+  id="$(cat "$OMACASE_STATE/last-backup")"
+  # The original bug was `ABSENT .config/ghostty` + `rm -rf` of that directory.
+  # New backups record leaves only; keep the v1 line so this test still
+  # reproduces the deletion if restore reverts to wiping whole targets.
+  printf 'ABSENT .config/ghostty\n' >> "$OMACASE_STATE/backups/$id/manifest"
+  custom="$HOME/.config/ghostty/private.conf"
+  link="$HOME/.config/ghostty/config"
+  mkdir -p "$(dirname "$custom")"
+  printf 'user-owned = true\n' > "$custom"
+  ln -s "$OMACASE_ROOT/home/dot_config/ghostty/config" "$link"
+  _test_restore "$id"
+  [ -f "$custom" ] &&
+    grep -q 'user-owned = true' "$custom" &&
+    [ ! -e "$link" ] &&
+    [ -d "$HOME/.config/ghostty" ] &&
+    [ -d "$HOME/.config" ]
+}
+
+test_restore_present_leaf_preserves_sibling() {
+  local tmp id leaf sibling
+  tmp="$(mktemp -d)"
+  HOME="$tmp/home"
+  OMACASE_STATE="$tmp/state"
+  OMACASE_ROOT="$ROOT"
+  leaf="$HOME/.config/ghostty/config"
+  sibling="$HOME/.config/ghostty/private.conf"
+  mkdir -p "$(dirname "$leaf")"
+  printf 'original = true\n' > "$leaf"
+  # shellcheck source=/dev/null
+  source "$ROOT/lib/common.sh"
+  # shellcheck source=/dev/null
+  source "$ROOT/lib/backup.sh"
+  omacase_backup leaf >/dev/null
+  id="$(cat "$OMACASE_STATE/last-backup")"
+  printf 'changed = true\n' > "$leaf"
+  printf 'sibling = true\n' > "$sibling"
+  _test_restore "$id"
+  grep -q 'original = true' "$leaf" &&
+    ! grep -q 'changed = true' "$leaf" &&
+    grep -q 'sibling = true' "$sibling"
+}
+
+test_restore_legacy_present_dir_does_not_follow_current_symlink() {
+  local tmp id target external saved
+  tmp="$(mktemp -d)"
+  id="20260101-000000"
+  HOME="$tmp/home"
+  OMACASE_STATE="$tmp/state"
+  OMACASE_ROOT="$ROOT"
+  target="$HOME/.config/ghostty"
+  external="$tmp/external"
+  saved="$OMACASE_STATE/backups/$id/files/.config/ghostty/config"
+  mkdir -p "$HOME/.config" "$external" "$(dirname "$saved")"
+  printf 'saved = true\n' > "$saved"
+  printf 'external = true\n' > "$external/config"
+  printf 'keep me\n' > "$external/user-note.txt"
+  ln -s "$external" "$target"
+  printf 'label=legacy\n' > "$OMACASE_STATE/backups/$id/meta"
+  printf 'PRESENT .config/ghostty\n' > "$OMACASE_STATE/backups/$id/manifest"
+  # shellcheck source=/dev/null
+  source "$ROOT/lib/common.sh"
+  # shellcheck source=/dev/null
+  source "$ROOT/lib/backup.sh"
+  _test_restore "$id"
+  [ ! -L "$target" ] &&
+    grep -q 'saved = true' "$target/config" &&
+    grep -q 'external = true' "$external/config" &&
+    grep -q 'keep me' "$external/user-note.txt"
+}
+
+test_restore_legacy_absent_dir_preserves_sibling() {
+  local tmp id note
+  tmp="$(mktemp -d)"
+  id="20260101-000000"
+  HOME="$tmp/home"
+  OMACASE_STATE="$tmp/state"
+  OMACASE_ROOT="$ROOT"
+  mkdir -p "$HOME/.config/aerospace" "$OMACASE_STATE/backups/$id/files"
+  printf 'label=legacy\n' > "$OMACASE_STATE/backups/$id/meta"
+  printf 'ABSENT .config/aerospace\n' > "$OMACASE_STATE/backups/$id/manifest"
+  note="$HOME/.config/aerospace/user-note.txt"
+  printf 'keep me\n' > "$note"
+  # shellcheck source=/dev/null
+  source "$ROOT/lib/common.sh"
+  # shellcheck source=/dev/null
+  source "$ROOT/lib/backup.sh"
+  _test_restore "$id"
+  [ -f "$note" ] &&
+    grep -q 'keep me' "$note" &&
+    [ -d "$HOME/.config/aerospace" ]
+}
+
+test_restore_absent_leaf_prunes_empty_parents_not_config() {
+  local tmp id theme
+  tmp="$(mktemp -d)"
+  HOME="$tmp/home"
+  OMACASE_STATE="$tmp/state"
+  OMACASE_ROOT="$ROOT"
+  mkdir -p "$HOME/.config"
+  # shellcheck source=/dev/null
+  source "$ROOT/lib/common.sh"
+  # shellcheck source=/dev/null
+  source "$ROOT/lib/backup.sh"
+  omacase_backup prune >/dev/null
+  id="$(cat "$OMACASE_STATE/last-backup")"
+  theme="$HOME/.config/btop/themes/current.theme"
+  mkdir -p "$(dirname "$theme")"
+  printf 'tmp\n' > "$theme"
+  _test_restore "$id"
+  [ ! -e "$theme" ] &&
+    [ ! -d "$HOME/.config/btop/themes" ] &&
+    [ ! -d "$HOME/.config/btop" ] &&
+    [ -d "$HOME/.config" ]
+}
+
 test_update_fails_when_self_pull_fails() {
   # omacase_update's ensure_brew_env aborts before the pull on anything but
   # Apple Silicon + /opt/homebrew — the abort message would satisfy the
@@ -805,6 +942,11 @@ run_test "generated theme symlinks are owned" test_generated_theme_symlinks_are_
 run_test "auto-backup captures conflicting theme fragments" test_auto_backup_captures_conflicting_theme_fragment
 run_test "dotfile reinstall preserves unmanaged siblings" test_dotfile_reinstall_preserves_unmanaged_siblings
 run_test "manual backup captures live OmniWM settings" test_backup_captures_live_omniwm_settings
+run_test "restore preserves sibling after ABSENT backup" test_restore_preserves_sibling_after_absent_backup
+run_test "restore PRESENT leaf preserves sibling" test_restore_present_leaf_preserves_sibling
+run_test "restore legacy PRESENT dir does not follow current symlink" test_restore_legacy_present_dir_does_not_follow_current_symlink
+run_test "restore legacy ABSENT dir preserves sibling" test_restore_legacy_absent_dir_preserves_sibling
+run_test "restore ABSENT leaf prunes empty parents not .config" test_restore_absent_leaf_prunes_empty_parents_not_config
 run_test "update fails on self-update failure" test_update_fails_when_self_pull_fails
 run_test "backup domains cover macos/defaults.sh" test_backup_domains_cover_defaults_sh
 run_test "defaults disable Stage Manager" test_stage_manager_is_disabled_by_defaults
