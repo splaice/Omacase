@@ -352,14 +352,13 @@ test_herdr_hooks_cover_shipped_agents() {
   grep -q 'herdr integration install "\$agent"' "$ROOT/lib/install.sh"
 }
 
-# The herdr skill is generated from the installed binary rather than vendored,
-# so it can never drift from the herdr actually on PATH. The host list must be
-# consumed twice — once to link on install, once to unlink on uninstall — or
-# `omacase uninstall` strands symlinks in ~/.claude, ~/.codex, and ~/.grok.
-test_herdr_skill_is_generated_and_reversible() {
-  grep -q 'herdr --skill > "\$store/SKILL.md"' "$ROOT/lib/install.sh" || return 1
-  ! find "$ROOT/home" -name 'SKILL.md' | grep -q . || return 1
-  [ "$(grep -c '_HERDR_SKILL_HOSTS\[@\]' "$ROOT/lib/install.sh")" -eq 2 ]
+# herdr installs and refreshes its own skill on first launch; Omacase must not
+# write into or delete from ~/.agents/skills (it cannot prove ownership there —
+# issue #3). Regression: no skill generation or removal code may come back.
+test_herdr_skill_is_not_managed_by_omacase() {
+  ! grep -rq 'herdr --skill' "$ROOT/lib" &&
+    ! grep -rq '_HERDR_SKILL_HOSTS' "$ROOT/lib" &&
+    ! grep -rq 'agents/skills/herdr" && run rm' "$ROOT/lib"
 }
 
 test_theme_manifest_lists_all_themes() {
@@ -680,7 +679,7 @@ run_test "Homebrew trust is scoped to exact third-party packages" test_brew_trus
 run_test "Grok installer requires explicit opt-in" test_grok_installer_requires_opt_in
 run_test "herdr is declared in the Brewfile" test_herdr_is_declared_in_brewfile
 run_test "herdr agent hooks cover shipped agent CLIs" test_herdr_hooks_cover_shipped_agents
-run_test "herdr skill is generated and uninstall reverses it" test_herdr_skill_is_generated_and_reversible
+run_test "herdr skill is left to herdr, not managed by omacase" test_herdr_skill_is_not_managed_by_omacase
 run_test "site/install matches boot.sh" test_bootstrap_copies_are_identical
 run_test "theme manifest lists all themes" test_theme_manifest_lists_all_themes
 run_test "OmniWM seed is valid with nine workspaces" test_omniwm_seed_is_valid_and_has_nine_workspaces

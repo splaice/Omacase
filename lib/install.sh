@@ -23,11 +23,10 @@ omacase_install() {
   step "4/8  Dotfiles (symlinks)"
   _link_dotfiles
 
-  step "5/8  Tool runtimes & AI CLIs (mise + optional grok) + herdr agent hooks & skill"
+  step "5/8  Tool runtimes & AI CLIs (mise + optional grok) + herdr agent hooks"
   _mise_install
   _grok_install
   _herdr_integrations
-  _herdr_skill
 
   step "6/8  macOS defaults"
   bash "$OMACASE_ROOT/macos/defaults.sh"   # honors OMACASE_DRYRUN itself
@@ -151,58 +150,10 @@ _herdr_integrations() {
   done
 }
 
-# Agent harnesses whose config root implies they read a `skills/` directory.
-# opencode, pi, and gemini ship no skills directory, so they are skipped rather
-# than guessed at — revisit if that changes upstream.
-_HERDR_SKILL_HOSTS=(.claude .codex .grok)
-
-# The other half of herdr's agent story: a *skill* describing how to drive herdr
-# itself (panes, tabs, workspaces, other agents), which is the opposite
-# direction from the state hooks above. `herdr --skill` prints it, so it is
-# generated rather than vendored and always matches the installed binary.
-#
-# ~/.agents/skills is the shared cross-harness store; each harness reads its own
-# skills/ directory, which by convention symlinks there. Writing the canonical
-# copy once and linking keeps every agent on the same text. Re-running refreshes
-# the generated file and picks up harnesses installed since the last run, which
-# is what makes this safe for `omacase update` to repeat.
-_herdr_skill() {
-  have herdr || return 0
-  local store="$HOME/.agents/skills/herdr" host dir target
-  if is_dryrun; then
-    log "[dry-run] would write $store/SKILL.md from \`herdr --skill\`"
-  else
-    if ! mkdir -p "$store"; then
-      warn "Could not create $store — skipping herdr skill."
-      return 0
-    fi
-    if ! herdr --skill > "$store/SKILL.md"; then
-      warn "\`herdr --skill\` failed — skipping herdr skill."
-      return 0
-    fi
-  fi
-
-  for host in "${_HERDR_SKILL_HOSTS[@]}"; do
-    [ -d "$HOME/$host" ] || continue
-    dir="$HOME/$host/skills"
-    target="$dir/herdr"
-    # Never clobber a skill someone else installed under the same name; an
-    # existing link of ours is already correct, so re-running is a no-op.
-    if [ -L "$target" ]; then
-      if [ "$(readlink "$target")" != "$store" ]; then
-        warn "$target points elsewhere — leaving it alone."
-      fi
-      continue
-    fi
-    if [ -e "$target" ]; then
-      warn "$target exists and is not an Omacase symlink — leaving it alone."
-      continue
-    fi
-    run mkdir -p "$dir"
-    run ln -s "$store" "$target"
-    is_dryrun || success "herdr skill → $target"
-  done
-}
+# NB: the herdr *skill* (the reverse direction — agents driving herdr) is NOT
+# managed here. herdr installs and refreshes its own skill on first launch, so
+# Omacase writing into ~/.agents/skills/herdr would fight the owner and risk
+# clobbering user-managed content (issue #3).
 
 # Make `omacase` available on PATH for every shell (zsh/bash/fish) and for GUI
 # contexts, by symlinking it into Apple Silicon Homebrew's bin.
@@ -329,18 +280,10 @@ omacase_uninstall() {
     { _is_omacase_link "$themed" && run rm -f "$themed"; } || true
   done < <(_theme_links)
 
-  # herdr skill links point at ~/.agents, outside the repo, so _is_omacase_link
-  # cannot classify them — match the exact target this installer creates. The
-  # per-agent state hooks are deliberately left in place: herdr owns their
-  # lifecycle and removes them with `herdr integration uninstall <agent>`.
-  local skill_store="$HOME/.agents/skills/herdr" host
-  for host in "${_HERDR_SKILL_HOSTS[@]}"; do
-    target="$HOME/$host/skills/herdr"
-    if [ -L "$target" ] && [ "$(readlink "$target")" = "$skill_store" ]; then
-      run rm -f "$target"
-    fi
-  done
-  { [ -d "$skill_store" ] && run rm -rf "$skill_store"; } || true
+  # herdr's skill and per-agent state hooks are deliberately left in place:
+  # herdr owns both lifecycles (skill self-installed on launch; hooks removed
+  # with `herdr integration uninstall <agent>`). Omacase cannot prove ownership
+  # of ~/.agents/skills content, so it never deletes there (issue #3).
 
   # The login launcher (current) plus the legacy raw OmniWM agent that
   # pre-launcher installs linked directly.
