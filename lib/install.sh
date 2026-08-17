@@ -46,6 +46,11 @@ omacase_install() {
   source "$OMACASE_ROOT/lib/wm.sh"
   omacase_wm
 
+  # A fresh install is the declarative end-state — baseline the migration
+  # marker so `omacase update` never replays history against this machine.
+  source "$OMACASE_ROOT/lib/migrate.sh"
+  _migrations_baseline
+
   step "Done"
   success "omacase installed."
   warn "Next: run \`omacase doctor\` and grant Accessibility to OmniWM"
