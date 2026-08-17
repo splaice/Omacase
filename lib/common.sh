@@ -87,6 +87,54 @@ _omacase_zfuncdir() {
   [ -n "$bindir" ] && printf '%s\n' "${bindir%/bin}/share/zsh/site-functions"
 }
 
+# Copy login-items out of a legacy checkout and restore the tracked file so a
+# pull that destages home/dot_config/omacase/login-items can fast-forward.
+# Edits made through the old symlink dirty that tracked path; without this,
+# git pull --ff-only refuses the destage.
+_recover_legacy_login_items() {
+  local root="$1"
+  local rel="home/dot_config/omacase/login-items"
+  local tracked="$root/$rel"
+  local live="$HOME/.config/omacase/login-items"
+  local tmp
+  [ -f "$tracked" ] || [ -L "$tracked" ] || return 0
+
+  # Only replace the exact legacy link. A real file or unrelated symlink is
+  # user-owned; do not clean checkout edits unless we first recover their bytes.
+  if [ -L "$live" ]; then
+    [ "$(readlink "$live")" = "$tracked" ] || return 0
+  elif [ -e "$live" ]; then
+    return 0
+  fi
+
+  if is_dryrun; then
+    log "[dry-run] would recover legacy login-items before updating the checkout"
+    return 0
+  fi
+
+  mkdir -p "$(dirname "$live")"
+  tmp="$(mktemp)"
+  cat "$tracked" > "$tmp"
+  rm -f "$live"
+  mv "$tmp" "$live"
+
+  if [ -d "$root/.git" ]; then
+    git -C "$root" checkout -- "$rel" 2>/dev/null || true
+  fi
+}
+
+# True if PATH is a symlink that already points inside this repo or Omacase's
+# generated theme cache.
+_is_omacase_link() {
+  local t="$1" dest
+  [ -L "$t" ] || return 1
+  dest="$(readlink "$t")"
+  case "$dest" in
+    "$OMACASE_ROOT"/*|"$OMACASE_DATA"/generated/themes/*) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
 # --- convergence ledger -------------------------------------------------------
 # Required steps that fail are recorded (not fatal) so independent work
 # continues; the entry point reports partial convergence and exits nonzero.
@@ -116,6 +164,7 @@ converged() {  # converged "<verb phrase>" — final report + exit status
   warn "Re-run \`omacase update\` after fixing the above."
   return 1
 }
+
 
 # --- dry run -----------------------------------------------------------------
 # Set OMACASE_DRYRUN=1 to print mutating commands instead of running them.

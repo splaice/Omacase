@@ -6,6 +6,7 @@ omacase_update() {
   dryrun_banner
   if [ -d "$OMACASE_ROOT/.git" ] && [ -z "${OMACASE_UPDATE_REEXECED:-}" ]; then
     step "Pulling latest omacase"
+    _recover_legacy_login_items "$OMACASE_ROOT"
     run git -C "$OMACASE_ROOT" pull --ff-only || abort "git pull failed (local changes?). Resolve it before updating."
     # Everything sourced so far (common.sh, this file) came from the pre-pull
     # checkout; re-exec into the fresh tree so the rest of the update runs a

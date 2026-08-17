@@ -12,6 +12,12 @@
 state/
 *.local
 
+# Theme caches that used to land inside a public checkout when OMACASE_DATA
+# and the git prefix were the same path (issue #7).
+generated/
+backgrounds/
+upstream/
+
 # Python bytecode (e.g. lib/palette.py compile artifacts)
 __pycache__/
 *.pyc

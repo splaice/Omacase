@@ -819,9 +819,165 @@ test_launcher_build_produces_valid_bundle() {
 }
 
 test_launcher_reads_login_items_config() {
-  # The shipped config must list OmniWM, and the launcher script must consult it.
-  grep -qx 'OmniWM' "$ROOT/home/dot_config/omacase/login-items" &&
+  # The shipped seed must list OmniWM, and the launcher script must consult the
+  # user-owned copy (never a tracked home/ symlink).
+  grep -qx 'OmniWM' "$ROOT/config/omacase/login-items" &&
     grep -q 'omacase/login-items' "$ROOT/assets/launcher/OmacaseLauncher.sh"
+}
+
+test_data_and_checkout_defaults_are_separate() {
+  # The public clone path must not equal the runtime data root, or caches land
+  # in the worktree (issue #7).
+  grep -q 'OMACASE_PREFIX:-\$HOME/.local/share/omacase/repo' "$ROOT/boot.sh" &&
+    grep -q 'OMACASE_PREFIX:-\$HOME/.local/share/omacase/repo' "$ROOT/site/install" &&
+    grep -q 'OMACASE_DATA:-\$HOME/.local/share/omacase' "$ROOT/lib/common.sh"
+}
+
+test_login_items_is_seed_not_symlink() {
+  [ -f "$ROOT/config/omacase/login-items" ] &&
+    ! find "$ROOT/home" -name 'login-items' | grep -q . &&
+    grep -q '_launcher_seed_login_items' "$ROOT/lib/launcher.sh"
+}
+
+test_launcher_seed_replaces_managed_link_with_copy() {
+  local tmp cfg seed
+  tmp="$(mktemp -d)"
+  HOME="$tmp/home"
+  OMACASE_STATE="$tmp/state"
+  OMACASE_ROOT="$ROOT"
+  OMACASE_DATA="$tmp/data"
+  cfg="$HOME/.config/omacase/login-items"
+  seed="$ROOT/config/omacase/login-items"
+  mkdir -p "$(dirname "$cfg")"
+  ln -s "$seed" "$cfg"
+  # shellcheck source=/dev/null
+  source "$ROOT/lib/common.sh"
+  # shellcheck source=/dev/null
+  source "$ROOT/lib/launcher.sh"
+  _launcher_seed_login_items
+  [ -f "$cfg" ] && [ ! -L "$cfg" ] &&
+    cmp -s "$cfg" "$seed" &&
+    grep -qx 'OmniWM' "$seed"
+}
+
+# After login-items left home/, existing installs have a dangling symlink to
+# the old path. Seeding must not write an empty file.
+test_launcher_seed_dangling_old_link_uses_seed() {
+  local tmp cfg
+  tmp="$(mktemp -d)"
+  HOME="$tmp/home"
+  OMACASE_STATE="$tmp/state"
+  OMACASE_ROOT="$ROOT"
+  OMACASE_DATA="$tmp/data"
+  cfg="$HOME/.config/omacase/login-items"
+  mkdir -p "$(dirname "$cfg")"
+  ln -s "$OMACASE_ROOT/home/dot_config/omacase/login-items" "$cfg"
+  # shellcheck source=/dev/null
+  source "$ROOT/lib/common.sh"
+  # shellcheck source=/dev/null
+  source "$ROOT/lib/launcher.sh"
+  _launcher_seed_login_items
+  [ -f "$cfg" ] && [ ! -L "$cfg" ] && grep -qx 'OmniWM' "$cfg"
+}
+
+# Edits through the old symlink dirty the tracked file. Recovery must copy
+# them out and clean the checkout so a destage pull can fast-forward.
+test_recover_legacy_login_items_allows_destage_pull() {
+  local origin clone live
+  origin="$(mktemp -d)"
+  clone="$(mktemp -d)"
+  HOME="$(mktemp -d)/home"
+  live="$HOME/.config/omacase/login-items"
+  git init -q "$origin"
+  git -C "$origin" checkout -q -B main
+  git -C "$origin" config user.email "omacase-test@example.com"
+  git -C "$origin" config user.name "omacase-test"
+  mkdir -p "$origin/home/dot_config/omacase"
+  printf 'OmniWM\n' > "$origin/home/dot_config/omacase/login-items"
+  git -C "$origin" add home/dot_config/omacase/login-items
+  git -C "$origin" commit -q -m 'legacy login-items'
+  git clone -q "$origin" "$clone"
+  mkdir -p "$(dirname "$live")"
+  ln -s "$clone/home/dot_config/omacase/login-items" "$live"
+  printf 'OmniWM\nTodoist\n' > "$clone/home/dot_config/omacase/login-items"
+  mkdir -p "$origin/config/omacase"
+  printf 'OmniWM\n' > "$origin/config/omacase/login-items"
+  git -C "$origin" rm -q home/dot_config/omacase/login-items
+  git -C "$origin" add config/omacase/login-items
+  git -C "$origin" commit -q -m destage
+  # shellcheck source=/dev/null
+  source "$ROOT/lib/common.sh"
+  _recover_legacy_login_items "$clone"
+  git -C "$clone" pull --ff-only >/dev/null 2>&1 &&
+    [ -f "$live" ] && [ ! -L "$live" ] &&
+    grep -qx 'Todoist' "$live" &&
+    [ ! -e "$clone/home/dot_config/omacase/login-items" ] &&
+    grep -q '_recover_legacy_login_items' "$ROOT/boot.sh" &&
+    grep -q '_recover_legacy_login_items' "$ROOT/site/install" &&
+    grep -q '_recover_legacy_login_items' "$ROOT/lib/update.sh"
+}
+
+test_recover_legacy_login_items_honors_dryrun() {
+  local tmp root live tracked before
+  tmp="$(mktemp -d)"
+  root="$tmp/repo"
+  HOME="$tmp/home"
+  live="$HOME/.config/omacase/login-items"
+  tracked="$root/home/dot_config/omacase/login-items"
+  mkdir -p "$(dirname "$live")" "$(dirname "$tracked")"
+  git init -q "$root"
+  git -C "$root" config user.email "omacase-test@example.com"
+  git -C "$root" config user.name "omacase-test"
+  printf 'OmniWM\n' > "$tracked"
+  git -C "$root" add home/dot_config/omacase/login-items
+  git -C "$root" commit -q -m legacy
+  ln -s "$tracked" "$live"
+  printf 'OmniWM\nTodoist\n' > "$tracked"
+  before="$(git -C "$root" status --short)"
+  OMACASE_DRYRUN=1
+  # shellcheck source=/dev/null
+  source "$ROOT/lib/common.sh"
+  _recover_legacy_login_items "$root" >/dev/null
+  [ -L "$live" ] &&
+    [ "$(readlink "$live")" = "$tracked" ] &&
+    [ "$(git -C "$root" status --short)" = "$before" ] &&
+    grep -qx 'Todoist' "$tracked"
+}
+
+test_recover_legacy_login_items_preserves_nonlegacy_live_paths() {
+  local tmp root tracked live external
+  tmp="$(mktemp -d)"
+  root="$tmp/repo"
+  HOME="$tmp/home"
+  tracked="$root/home/dot_config/omacase/login-items"
+  live="$HOME/.config/omacase/login-items"
+  external="$tmp/external-login-items"
+  mkdir -p "$(dirname "$tracked")" "$(dirname "$live")"
+  git init -q "$root"
+  git -C "$root" config user.email "omacase-test@example.com"
+  git -C "$root" config user.name "omacase-test"
+  printf 'tracked default\n' > "$tracked"
+  git -C "$root" add home/dot_config/omacase/login-items
+  git -C "$root" commit -q -m legacy
+  printf 'tracked local edit\n' > "$tracked"
+  printf 'external user config\n' > "$external"
+  ln -s "$external" "$live"
+  # shellcheck source=/dev/null
+  source "$ROOT/lib/common.sh"
+  _recover_legacy_login_items "$root"
+  [ -L "$live" ] &&
+    [ "$(readlink "$live")" = "$external" ] &&
+    grep -qx 'external user config' "$live" &&
+    grep -qx 'tracked local edit' "$tracked" &&
+    [ -n "$(git -C "$root" status --short)" ] || return 1
+
+  rm -f "$live"
+  printf 'real user config\n' > "$live"
+  _recover_legacy_login_items "$root"
+  [ -f "$live" ] && [ ! -L "$live" ] &&
+    grep -qx 'real user config' "$live" &&
+    grep -qx 'tracked local edit' "$tracked" &&
+    [ -n "$(git -C "$root" status --short)" ]
 }
 
 # Issue #4: a failed migration must halt the runner and keep the marker, so
@@ -1195,6 +1351,13 @@ run_test "usage renders fixture records" test_usage_renders_fixture_records
 run_test "usage concurrent writes are safe" test_usage_concurrent_writes_are_safe
 run_test "launcher build produces a valid bundle and agent" test_launcher_build_produces_valid_bundle
 run_test "launcher reads the login-items config" test_launcher_reads_login_items_config
+run_test "data and checkout defaults are separate" test_data_and_checkout_defaults_are_separate
+run_test "login-items is seed-once user config" test_login_items_is_seed_not_symlink
+run_test "launcher seed replaces managed link with a copy" test_launcher_seed_replaces_managed_link_with_copy
+run_test "launcher seed recovers a dangling pre-move login-items link" test_launcher_seed_dangling_old_link_uses_seed
+run_test "legacy login-items edits survive a destage pull" test_recover_legacy_login_items_allows_destage_pull
+run_test "legacy login-items recovery honors dry-run" test_recover_legacy_login_items_honors_dryrun
+run_test "legacy recovery preserves nonlegacy live config" test_recover_legacy_login_items_preserves_nonlegacy_live_paths
 run_test "extras sudo-touchid dry run wraps all mutations" test_extras_sudo_touchid_dry_run_wraps_all_mutations
 run_test "cli keybinds displays KEYBINDS.md" test_cli_keybinds_displays_reference
 run_test "menu lists primary commands and opens keybinds" test_menu_lists_primary_commands_and_routes_keybinds
