@@ -515,6 +515,68 @@ test_partial_brew_update_fails_update() {
   [ $? -ne 0 ] && grep -q 'PARTIAL' "$out" && grep -q 'brew update' "$out"
 }
 
+# `omacase_install || true` disables errexit inside install, so a failed
+# _auto_backup would still link dotfiles. Nested install must stay a simple
+# command so set -e still applies to non-ledgered steps.
+test_update_stops_on_non_ledgered_install_failure() {
+  local tmp out rc
+  tmp="$(mktemp -d)"
+  out="$tmp/out"
+  HOME="$tmp/home"
+  OMACASE_STATE="$tmp/state"
+  OMACASE_DATA="$tmp/data"
+  OMACASE_ROOT="$ROOT"
+  mkdir -p "$HOME"
+  rc=0
+  (
+    export OMACASE_UPDATE_REEXECED=1
+    source() {
+      case "${1:-}" in
+        */backup.sh)
+          builtin source "$@"
+          _auto_backup() { return 1; }
+          return 0 ;;
+        */theme.sh)
+          omacase_theme() { return 0; }
+          can_set_appearance() { return 0; }
+          return 0 ;;
+        */wm.sh)
+          omacase_wm() { return 0; }
+          return 0 ;;
+        */migrate.sh)
+          _migrations_baseline() { return 0; }
+          omacase_migrate() { return 0; }
+          return 0 ;;
+        *) builtin source "$@" ;;
+      esac
+    }
+    brew() { return 0; }
+    mise() { return 0; }
+    herdr() { return 0; }
+    defaults() { return 0; }
+    killall() { return 0; }
+    osascript() { return 0; }
+    launchctl() { return 0; }
+    git() { return 0; }
+    bash() {
+      case "${1:-}" in
+        */macos/defaults.sh) return 0 ;;
+        *) command bash "$@" ;;
+      esac
+    }
+    # shellcheck source=/dev/null
+    builtin source "$ROOT/lib/common.sh"
+    # shellcheck source=/dev/null
+    builtin source "$ROOT/lib/update.sh"
+    omacase_update
+  ) >"$out" 2>&1 || rc=$?
+  [ "$rc" -ne 0 ] &&
+    grep -q 'Safety backup failed' "$out" &&
+    ! grep -q 'omacase up to date' "$out" &&
+    [ ! -e "$HOME/.config/ghostty/config" ] &&
+    ! grep -q 'omacase_install ||' "$ROOT/lib/update.sh"
+}
+
 test_update_fails_when_self_pull_fails() {
   # omacase_update's ensure_brew_env aborts before the pull on anything but
   # Apple Silicon + /opt/homebrew — the abort message would satisfy the
@@ -1067,6 +1129,7 @@ run_test "require ledgers a failure and continues" test_require_ledgers_failure_
 run_test "partial brew bundle fails install" test_partial_brew_bundle_fails_install
 run_test "partial brew upgrade fails update" test_partial_brew_upgrade_fails_update
 run_test "partial brew update fails update" test_partial_brew_update_fails_update
+run_test "update stops on non-ledgered install failure" test_update_stops_on_non_ledgered_install_failure
 run_test "update fails on self-update failure" test_update_fails_when_self_pull_fails
 run_test "backup domains cover macos/defaults.sh" test_backup_domains_cover_defaults_sh
 run_test "defaults disable Stage Manager" test_stage_manager_is_disabled_by_defaults

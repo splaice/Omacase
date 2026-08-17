@@ -17,9 +17,11 @@ omacase_update() {
   step "Updating Homebrew"
   require "brew update" brew update
   source "$OMACASE_ROOT/lib/install.sh"
-  # Install reports its own status; keep going so later upgrade steps still run
-  # under set -e. Failures stay on the shared ledger for the final report.
-  omacase_install || true
+  # Nested so install does not call converged (the outer report does). This is a
+  # simple command: set -e stays in effect inside omacase_install. Ledgered
+  # require() failures still return 0 and later upgrade steps still run.
+  OMACASE_NESTED_INSTALL=1
+  omacase_install
   # One-time imperative cleanup the declarative apply can't do (e.g. uninstall a
   # dropped cask). Idempotent + tracked; failure retries on the next update.
   source "$OMACASE_ROOT/lib/migrate.sh"

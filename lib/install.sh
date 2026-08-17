@@ -17,10 +17,10 @@ omacase_install() {
   _link_command
 
   step "3/8  Safety backup (so this is reversible)"
-  _auto_backup
+  _auto_backup || abort "Safety backup failed; refusing to continue."
 
   step "4/8  Dotfiles (symlinks)"
-  _link_dotfiles
+  _link_dotfiles || abort "Dotfile linking failed."
 
   step "5/8  Tool runtimes & AI CLIs (mise + optional grok) + herdr agent hooks"
   _mise_install
@@ -28,14 +28,15 @@ omacase_install() {
   _herdr_integrations
 
   step "6/8  macOS defaults"
-  bash "$OMACASE_ROOT/macos/defaults.sh"   # honors OMACASE_DRYRUN itself
+  bash "$OMACASE_ROOT/macos/defaults.sh" || abort "macOS defaults apply failed."
 
   step "7/8  Theme"
   source "$OMACASE_ROOT/lib/theme.sh"
   # ${:-} (not `|| echo`): an existing-but-empty state file would otherwise
   # yield "" and drop a non-interactive install into the theme picker.
   local saved_theme; saved_theme="$(cat "$OMACASE_STATE/theme" 2>/dev/null || true)"
-  OMACASE_BACKUP_READY=1 omacase_theme "${saved_theme:-catppuccin-mocha}"
+  OMACASE_BACKUP_READY=1 omacase_theme "${saved_theme:-catppuccin-mocha}" \
+    || abort "Theme apply failed."
   # Theme switching flips macOS Light/Dark; that needs Automation consent, which
   # the line above just prompted for on a fresh machine. Flag it if still blocked.
   is_dryrun || can_set_appearance || \
@@ -48,13 +49,19 @@ omacase_install() {
   # A fresh install is the declarative end-state — baseline the migration
   # marker so `omacase update` never replays history against this machine.
   source "$OMACASE_ROOT/lib/migrate.sh"
-  _migrations_baseline
+  _migrations_baseline || abort "Migration baseline failed."
 
   step "Done"
   warn "Next: run \`omacase doctor\` and grant Accessibility to OmniWM"
   warn "  (plus Automation → System Events so themes can sync macOS Light/Dark)."
   warn "OmniWM also requires Displays have separate Spaces; a logout applies that setting."
   warn "Don't like the result? \`omacase restore\` rolls back to the pre-install snapshot."
+  # When update nests install, the outer converged reports. Returning here
+  # keeps the function a simple command so set -e still applies inside
+  # (a `fn || true` call would disable errexit for _auto_backup etc.).
+  if [ -n "${OMACASE_NESTED_INSTALL:-}" ]; then
+    return 0
+  fi
   converged "omacase installed"
 }
 
