@@ -476,6 +476,48 @@ test_launcher_reads_login_items_config() {
     grep -q 'omacase/login-items' "$ROOT/assets/launcher/OmacaseLauncher.sh"
 }
 
+# Issue #4: a failed migration must halt the runner and keep the marker, so
+# the documented retry-on-next-update behavior is real.
+test_migrate_failure_keeps_marker() {
+  local tmp
+  tmp="$(mktemp -d)"
+  mkdir -p "$tmp/root/migrations"
+  printf 'migrate() { false; }\n' > "$tmp/root/migrations/20990101-boom.sh"
+  (
+    OMACASE_ROOT="$ROOT"
+    # shellcheck source=/dev/null
+    source "$ROOT/lib/common.sh"
+    # shellcheck source=/dev/null
+    source "$ROOT/lib/migrate.sh"
+    OMACASE_ROOT="$tmp/root"
+    OMACASE_STATE="$tmp/state"
+    ! omacase_migrate >/dev/null 2>&1 &&
+      [ ! -s "$tmp/state/migrations-last" ]
+  )
+}
+
+# Issue #2: a fresh install baselines the marker, so historical migrations are
+# never replayed against a machine that already is the declarative end-state.
+test_migrate_baseline_prevents_history_replay() {
+  local tmp
+  tmp="$(mktemp -d)"
+  mkdir -p "$tmp/root/migrations"
+  printf 'migrate() { touch "%s/ran"; }\n' "$tmp" > "$tmp/root/migrations/20200101-old.sh"
+  (
+    OMACASE_ROOT="$ROOT"
+    # shellcheck source=/dev/null
+    source "$ROOT/lib/common.sh"
+    # shellcheck source=/dev/null
+    source "$ROOT/lib/migrate.sh"
+    OMACASE_STATE="$tmp/state"
+    _migrations_baseline
+    grep -q 'install-baseline' "$tmp/state/migrations-last" || exit 1
+    OMACASE_ROOT="$tmp/root"
+    omacase_migrate >/dev/null 2>&1
+    [ ! -e "$tmp/ran" ]
+  )
+}
+
 test_usage_wired_and_compiles() {
   "$ROOT/bin/omacase" help | grep -qE '^[[:space:]]+usage[[:space:]]' &&
     grep -q "'usage:" "$ROOT/completions/_omacase" &&
@@ -691,6 +733,8 @@ run_test "cli help and version work" test_cli_help_and_version
 run_test "extras wired into usage, completion, and menu" test_extras_in_usage_completion_and_menu
 run_test "extras list reports sudo-touchid state" test_extras_list_reports_sudo_touchid_state
 run_test "extras mole is declared in list, Brewfile, and completion" test_extras_mole_is_declared_everywhere
+run_test "failed migration halts runner and keeps marker" test_migrate_failure_keeps_marker
+run_test "install baseline prevents migration history replay" test_migrate_baseline_prevents_history_replay
 run_test "usage command wired and python compiles" test_usage_wired_and_compiles
 run_test "usage renders fixture records" test_usage_renders_fixture_records
 run_test "launcher build produces a valid bundle and agent" test_launcher_build_produces_valid_bundle

@@ -18,12 +18,39 @@
 # timestamp-prefixed slug (YYYYMMDD-slug) so lexical order == chronological order.
 # A high-water mark in $OMACASE_STATE/migrations-last records the last applied id;
 # anything newer runs, in order, and the marker advances after each success.
-# Because every migration is idempotent, the marker is only ordering + speed — a
-# fresh machine can safely run the whole history (each finds nothing to do).
+# `omacase install` stamps a fresh machine with an install-time baseline marker:
+# a fresh install already IS the declarative end-state, so history must never
+# replay against it — migrations only run on machines installed before the
+# migration was authored. That is what keeps a user's own tmux/zed/etc. safe
+# from package-removal migrations they never needed.
 # (Limitation, acceptable for a linear repo: an id added *below* the marker later
 # is skipped. Revisit only if migrations ever grow Omarchy-large.)
+#
+# AUTHORING RULES (each migration is a subshell under `set -e`):
+# - REQUIRED convergence work must propagate failure — plain `run cmd`, no
+#   `|| warn`. The runner halts, keeps the marker, and retries on the next
+#   `omacase update`; masking the failure with `|| warn` would advance the
+#   marker and silently skip the retry forever.
+# - BEST-EFFORT cleanup (nice-to-have, safe to lose) may use `|| warn`, and the
+#   warn text should say it is best-effort.
+# - Migrations must stay idempotent: guarded by "is it actually present", exact
+#   Omacase-shipped names only, never `brew bundle cleanup`.
 
 _migrations_marker() { printf '%s' "$OMACASE_STATE/migrations-last"; }
+
+# Stamp a fresh install as already-converged (no marker → write one). The full
+# timestamp sorts after any same-day date-only migration id, so a migration
+# authored earlier on install day still cannot replay.
+_migrations_baseline() {
+  local marker; marker="$(_migrations_marker)"
+  [ -s "$marker" ] && return 0
+  ensure_state_dir
+  if is_dryrun; then
+    log "[dry-run] would baseline migrations marker"
+  else
+    date +%Y%m%d%H%M%S-install-baseline > "$marker"
+  fi
+}
 
 omacase_migrate() {
   ensure_brew_env

@@ -18,6 +18,7 @@ jobs:
         run: sudo apt-get update -q && sudo apt-get install -y -q shellcheck zsh
       - name: shellcheck (bash sources)
         run: |
+          shopt -s nullglob   # migrations/ may be empty after a squash
           shellcheck --severity=warning -x \
             bin/omacase lib/*.sh boot.sh site/install \
             macos/defaults.sh migrations/*.sh tests/run.sh \
