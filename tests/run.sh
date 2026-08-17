@@ -496,26 +496,92 @@ test_migrate_failure_keeps_marker() {
   )
 }
 
-# Issue #2: a fresh install baselines the marker, so historical migrations are
-# never replayed against a machine that already is the declarative end-state.
-test_migrate_baseline_prevents_history_replay() {
+# Issue #2: a fresh install records the greatest migration shipped in its tree,
+# so even a future-dated id cannot replay because of clock skew or time zones.
+test_migrate_baseline_covers_shipped_history() {
   local tmp
   tmp="$(mktemp -d)"
   mkdir -p "$tmp/root/migrations"
-  printf 'migrate() { touch "%s/ran"; }\n' "$tmp" > "$tmp/root/migrations/20200101-old.sh"
+  printf 'migrate() { touch "%s/ran"; }\n' "$tmp" > "$tmp/root/migrations/20990101-present-at-install.sh"
   (
     OMACASE_ROOT="$ROOT"
     # shellcheck source=/dev/null
     source "$ROOT/lib/common.sh"
     # shellcheck source=/dev/null
     source "$ROOT/lib/migrate.sh"
+    OMACASE_ROOT="$tmp/root"
     OMACASE_STATE="$tmp/state"
     _migrations_baseline
-    grep -q 'install-baseline' "$tmp/state/migrations-last" || exit 1
-    OMACASE_ROOT="$tmp/root"
+    [ "$(cat "$tmp/state/migrations-last")" = "20990101-present-at-install" ] || exit 1
     omacase_migrate >/dev/null 2>&1
     [ ! -e "$tmp/ran" ]
   )
+}
+
+test_migrate_empty_history_uses_squash_baseline() {
+  local tmp
+  tmp="$(mktemp -d)"
+  mkdir -p "$tmp/root/migrations"
+  (
+    OMACASE_ROOT="$ROOT"
+    # shellcheck source=/dev/null
+    source "$ROOT/lib/common.sh"
+    # shellcheck source=/dev/null
+    source "$ROOT/lib/migrate.sh"
+    OMACASE_ROOT="$tmp/root"
+    OMACASE_STATE="$tmp/state"
+    _migrations_baseline
+    [ "$(cat "$tmp/state/migrations-last")" = "$_MIGRATIONS_SQUASH_BASELINE" ]
+  )
+}
+
+test_migrate_baseline_allows_newer_migration() {
+  local tmp
+  tmp="$(mktemp -d)"
+  mkdir -p "$tmp/root/migrations"
+  printf 'migrate() { touch "%s/old-ran"; }\n' "$tmp" > "$tmp/root/migrations/20260817-present-at-install.sh"
+  (
+    OMACASE_ROOT="$ROOT"
+    # shellcheck source=/dev/null
+    source "$ROOT/lib/common.sh"
+    # shellcheck source=/dev/null
+    source "$ROOT/lib/migrate.sh"
+    OMACASE_ROOT="$tmp/root"
+    OMACASE_STATE="$tmp/state"
+    _migrations_baseline
+    printf 'migrate() { touch "%s/new-ran"; }\n' "$tmp" > "$tmp/root/migrations/20260818-added-later.sh"
+    omacase_migrate >/dev/null 2>&1
+    [ ! -e "$tmp/old-ran" ] && [ -e "$tmp/new-ran" ]
+  )
+}
+
+test_migrate_dryrun_uses_in_memory_baseline() {
+  local tmp out
+  tmp="$(mktemp -d)"
+  mkdir -p "$tmp/root/migrations"
+  printf 'migrate() { touch "%s/ran"; }\n' "$tmp" > "$tmp/root/migrations/20990101-present-at-install.sh"
+  out="$tmp/out"
+  (
+    OMACASE_ROOT="$ROOT"
+    # shellcheck source=/dev/null
+    source "$ROOT/lib/common.sh"
+    # shellcheck source=/dev/null
+    source "$ROOT/lib/migrate.sh"
+    OMACASE_ROOT="$tmp/root"
+    OMACASE_STATE="$tmp/state"
+    export OMACASE_DRYRUN=1
+    _migrations_baseline
+    [ ! -e "$tmp/state/migrations-last" ] || exit 1
+    omacase_migrate
+    [ ! -e "$tmp/ran" ]
+  ) > "$out" 2>&1 && grep -q '20990101-present-at-install' "$out"
+}
+
+# Package presence does not prove ownership when a machine can skip releases.
+# Keep the no-automatic-Homebrew-removal rule mechanically enforced.
+test_migrations_never_auto_uninstall_homebrew_packages() {
+  ! find "$ROOT/migrations" -type f -name '*.sh' -exec \
+    grep -En 'brew[[:space:]]+(uninstall|remove|rm)|brew[[:space:]]+bundle[[:space:]]+cleanup' {} + | grep -q .
 }
 
 test_usage_wired_and_compiles() {
@@ -734,7 +800,11 @@ run_test "extras wired into usage, completion, and menu" test_extras_in_usage_co
 run_test "extras list reports sudo-touchid state" test_extras_list_reports_sudo_touchid_state
 run_test "extras mole is declared in list, Brewfile, and completion" test_extras_mole_is_declared_everywhere
 run_test "failed migration halts runner and keeps marker" test_migrate_failure_keeps_marker
-run_test "install baseline prevents migration history replay" test_migrate_baseline_prevents_history_replay
+run_test "install baseline covers every shipped migration" test_migrate_baseline_covers_shipped_history
+run_test "empty migration history uses squash baseline" test_migrate_empty_history_uses_squash_baseline
+run_test "install baseline allows a newer migration" test_migrate_baseline_allows_newer_migration
+run_test "migration dry run uses in-memory baseline" test_migrate_dryrun_uses_in_memory_baseline
+run_test "migrations never auto-uninstall Homebrew packages" test_migrations_never_auto_uninstall_homebrew_packages
 run_test "usage command wired and python compiles" test_usage_wired_and_compiles
 run_test "usage renders fixture records" test_usage_renders_fixture_records
 run_test "launcher build produces a valid bundle and agent" test_launcher_build_produces_valid_bundle
