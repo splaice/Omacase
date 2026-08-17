@@ -428,6 +428,10 @@ _test_stub_convergence_externals() {
   }
   source() {
     case "${1:-}" in
+      */backup.sh)
+        builtin source "$@"
+        _preflight_command_links() { return 0; }
+        return 0 ;;
       */theme.sh)
         omacase_theme() { return 0; }
         can_set_appearance() { return 0; }
@@ -445,6 +449,7 @@ _test_stub_convergence_externals() {
       *) builtin source "$@" ;;
     esac
   }
+  _link_command() { return 0; }
 }
 
 test_partial_brew_bundle_fails_install() {
@@ -522,19 +527,27 @@ test_update_stops_on_non_ledgered_install_failure() {
   local tmp out rc
   tmp="$(mktemp -d)"
   out="$tmp/out"
-  HOME="$tmp/home"
-  OMACASE_STATE="$tmp/state"
-  OMACASE_DATA="$tmp/data"
-  OMACASE_ROOT="$ROOT"
-  mkdir -p "$HOME"
+  mkdir -p "$tmp/home"
   rc=0
-  (
+  TEST_REPO_ROOT="$ROOT" TEST_TMP="$tmp" \
+    HOME="$tmp/home" OMACASE_STATE="$tmp/state" OMACASE_DATA="$tmp/data" \
+    OMACASE_ROOT="$ROOT" bash -e -u -o pipefail -c '
     export OMACASE_UPDATE_REEXECED=1
+    builtin source "$TEST_REPO_ROOT/lib/common.sh"
     source() {
       case "${1:-}" in
         */backup.sh)
           builtin source "$@"
-          _auto_backup() { return 1; }
+          _preflight_command_links() { return 0; }
+          _auto_backup() {
+            false
+            : > "$TEST_TMP/backup-continued"
+          }
+          _link_dotfiles() { : > "$TEST_TMP/dotfiles-ran"; }
+          return 0 ;;
+        */install.sh)
+          builtin source "$@"
+          _link_command() { return 0; }
           return 0 ;;
         */theme.sh)
           omacase_theme() { return 0; }
@@ -564,16 +577,16 @@ test_update_stops_on_non_ledgered_install_failure() {
         *) command bash "$@" ;;
       esac
     }
+    ensure_brew_env() { return 0; }
     # shellcheck source=/dev/null
-    builtin source "$ROOT/lib/common.sh"
-    # shellcheck source=/dev/null
-    builtin source "$ROOT/lib/update.sh"
+    builtin source "$TEST_REPO_ROOT/lib/update.sh"
     omacase_update
-  ) >"$out" 2>&1 || rc=$?
+  ' >"$out" 2>&1
+  rc=$?
   [ "$rc" -ne 0 ] &&
-    grep -q 'Safety backup failed' "$out" &&
     ! grep -q 'omacase up to date' "$out" &&
-    [ ! -e "$HOME/.config/ghostty/config" ] &&
+    [ ! -e "$tmp/backup-continued" ] &&
+    [ ! -e "$tmp/dotfiles-ran" ] &&
     ! grep -q 'omacase_install ||' "$ROOT/lib/update.sh"
 }
 
