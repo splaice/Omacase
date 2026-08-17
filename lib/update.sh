@@ -183,8 +183,11 @@ omacase_update() {
   # themselves in-app, and brew re-downloading them goes through the vendor's
   # versioned URLs — the flakiest channel there is (rotated/retracted builds
   # 500/404 routinely). A vendor hiccup must not mark the whole update PARTIAL
-  # over an app that was never brew's to update.
-  require "brew upgrade" env HOMEBREW_NO_UPGRADE_AUTO_UPDATES_CASKS=1 brew upgrade
+  # over an app that was never brew's to update. Exported (not `env`-prefixed)
+  # so `run`/`require` still invoke `brew` as a plain word; update is the last
+  # step of the process, so the export cannot leak anywhere that matters.
+  export HOMEBREW_NO_UPGRADE_AUTO_UPDATES_CASKS=1
+  require "brew upgrade" brew upgrade
   converged "omacase up to date"
 }
 

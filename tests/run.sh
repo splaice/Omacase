@@ -1153,7 +1153,7 @@ test_recover_legacy_login_items_preserves_nonlegacy_live_paths() {
 # re-fetching them rides the flakiest URLs (WhatsApp 500s) and would mark the
 # whole update PARTIAL over an app brew was never meant to update.
 test_update_skips_auto_update_casks() {
-  grep -q 'HOMEBREW_NO_UPGRADE_AUTO_UPDATES_CASKS=1 brew upgrade' "$ROOT/lib/update.sh"
+  grep -q 'export HOMEBREW_NO_UPGRADE_AUTO_UPDATES_CASKS=1' "$ROOT/lib/update.sh"
 }
 
 # Issue #4: a failed migration must halt the runner and keep the marker, so
