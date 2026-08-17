@@ -669,6 +669,43 @@ test_launcher_seed_dangling_old_link_uses_seed() {
   [ -f "$cfg" ] && [ ! -L "$cfg" ] && grep -qx 'OmniWM' "$cfg"
 }
 
+# Edits through the old symlink dirty the tracked file. Recovery must copy
+# them out and clean the checkout so a destage pull can fast-forward.
+test_recover_legacy_login_items_allows_destage_pull() {
+  local origin clone live
+  origin="$(mktemp -d)"
+  clone="$(mktemp -d)"
+  HOME="$(mktemp -d)/home"
+  live="$HOME/.config/omacase/login-items"
+  git init -q "$origin"
+  git -C "$origin" checkout -q -B main
+  git -C "$origin" config user.email "omacase-test@example.com"
+  git -C "$origin" config user.name "omacase-test"
+  mkdir -p "$origin/home/dot_config/omacase"
+  printf 'OmniWM\n' > "$origin/home/dot_config/omacase/login-items"
+  git -C "$origin" add home/dot_config/omacase/login-items
+  git -C "$origin" commit -q -m 'legacy login-items'
+  git clone -q "$origin" "$clone"
+  mkdir -p "$(dirname "$live")"
+  ln -s "$clone/home/dot_config/omacase/login-items" "$live"
+  printf 'OmniWM\nTodoist\n' > "$clone/home/dot_config/omacase/login-items"
+  mkdir -p "$origin/config/omacase"
+  printf 'OmniWM\n' > "$origin/config/omacase/login-items"
+  git -C "$origin" rm -q home/dot_config/omacase/login-items
+  git -C "$origin" add config/omacase/login-items
+  git -C "$origin" commit -q -m destage
+  # shellcheck source=/dev/null
+  source "$ROOT/lib/common.sh"
+  _recover_legacy_login_items "$clone"
+  git -C "$clone" pull --ff-only >/dev/null 2>&1 &&
+    [ -f "$live" ] && [ ! -L "$live" ] &&
+    grep -qx 'Todoist' "$live" &&
+    [ ! -e "$clone/home/dot_config/omacase/login-items" ] &&
+    grep -q '_recover_legacy_login_items' "$ROOT/boot.sh" &&
+    grep -q '_recover_legacy_login_items' "$ROOT/site/install" &&
+    grep -q '_recover_legacy_login_items' "$ROOT/lib/update.sh"
+}
+
 # Issue #4: a failed migration must halt the runner and keep the marker, so
 # the documented retry-on-next-update behavior is real.
 test_migrate_failure_keeps_marker() {
@@ -1037,6 +1074,7 @@ run_test "data and checkout defaults are separate" test_data_and_checkout_defaul
 run_test "login-items is seed-once user config" test_login_items_is_seed_not_symlink
 run_test "launcher seed replaces managed link with a copy" test_launcher_seed_replaces_managed_link_with_copy
 run_test "launcher seed recovers a dangling pre-move login-items link" test_launcher_seed_dangling_old_link_uses_seed
+run_test "legacy login-items edits survive a destage pull" test_recover_legacy_login_items_allows_destage_pull
 run_test "extras sudo-touchid dry run wraps all mutations" test_extras_sudo_touchid_dry_run_wraps_all_mutations
 run_test "cli keybinds displays KEYBINDS.md" test_cli_keybinds_displays_reference
 run_test "menu lists primary commands and opens keybinds" test_menu_lists_primary_commands_and_routes_keybinds

@@ -16,6 +16,29 @@ PREFIX="${OMACASE_PREFIX:-$HOME/.local/share/omacase/repo}"
 abort() { printf '\033[31m✗ %s\033[0m\n' "$*" >&2; exit 1; }
 info()  { printf '\033[34m➜ %s\033[0m\n' "$*"; }
 
+# Inlined from lib/common.sh: boot.sh cannot source the checkout (the destage
+# is not in the tree yet). Keep this body in lockstep with _recover_legacy_login_items.
+_recover_legacy_login_items() {
+  local root="$1"
+  local rel="home/dot_config/omacase/login-items"
+  local tracked="$root/$rel"
+  local live="$HOME/.config/omacase/login-items"
+  local tmp
+  [ -f "$tracked" ] || [ -L "$tracked" ] || return 0
+
+  if [ -L "$live" ] || [ ! -e "$live" ]; then
+    mkdir -p "$(dirname "$live")"
+    tmp="$(mktemp)"
+    cat "$tracked" > "$tmp"
+    rm -f "$live"
+    mv "$tmp" "$live"
+  fi
+
+  if [ -d "$root/.git" ]; then
+    git -C "$root" checkout -- "$rel" 2>/dev/null || true
+  fi
+}
+
 [ "$(uname -s)" = "Darwin" ] || abort "omacase only runs on macOS."
 [ "$(uname -m)" = "arm64" ] || abort "omacase supports Apple Silicon Macs only."
 
@@ -54,6 +77,7 @@ if [ -z "${OMACASE_PREFIX:-}" ] && [ -d "$HOME/.local/share/omacase/.git" ]; the
 fi
 if [ -d "$PREFIX/.git" ]; then
   info "Updating existing omacase payload at $PREFIX…"
+  _recover_legacy_login_items "$PREFIX"
   git -C "$PREFIX" pull --ff-only
 else
   info "Cloning omacase → $PREFIX…"

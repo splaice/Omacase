@@ -74,6 +74,31 @@ _omacase_zfuncdir() {
   [ -n "$bindir" ] && printf '%s\n' "${bindir%/bin}/share/zsh/site-functions"
 }
 
+# Copy login-items out of a legacy checkout and restore the tracked file so a
+# pull that destages home/dot_config/omacase/login-items can fast-forward.
+# Edits made through the old symlink dirty that tracked path; without this,
+# git pull --ff-only refuses the destage.
+_recover_legacy_login_items() {
+  local root="$1"
+  local rel="home/dot_config/omacase/login-items"
+  local tracked="$root/$rel"
+  local live="$HOME/.config/omacase/login-items"
+  local tmp
+  [ -f "$tracked" ] || [ -L "$tracked" ] || return 0
+
+  if [ -L "$live" ] || [ ! -e "$live" ]; then
+    mkdir -p "$(dirname "$live")"
+    tmp="$(mktemp)"
+    cat "$tracked" > "$tmp"
+    rm -f "$live"
+    mv "$tmp" "$live"
+  fi
+
+  if [ -d "$root/.git" ]; then
+    git -C "$root" checkout -- "$rel" 2>/dev/null || true
+  fi
+}
+
 # True if PATH is a symlink that already points inside this repo or Omacase's
 # generated theme cache.
 _is_omacase_link() {
