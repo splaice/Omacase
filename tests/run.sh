@@ -422,7 +422,7 @@ test_update_fails_when_self_pull_fails() {
     omacase_update
   ) >"$out" 2>&1
   # shellcheck disable=SC2181 # status is intentionally captured after the subshell
-  [ $? -ne 0 ] && grep -q "git pull failed" "$out"
+  [ $? -ne 0 ] && grep -qE 'git (pull|fetch|merge)' "$out"
 }
 
 _test_git_identity() {
@@ -533,6 +533,64 @@ test_update_rollback_restores_recorded_sha() {
     _update_rollback >/dev/null 2>&1
   )
   [ "$(git -C "$clone" rev-parse HEAD)" = "$prev" ]
+}
+
+_test_stable_then_dev_fixture() {
+  # origin: v1.0.0 then a later main commit. clone starts detached on the tag.
+  local origin="$1" clone="$2"
+  git init -q "$origin"
+  _test_git_identity "$origin"
+  git -C "$origin" checkout -q -B main
+  printf 'one\n' > "$origin/file"
+  git -C "$origin" add file
+  git -C "$origin" commit -q -m one
+  git -C "$origin" tag v1.0.0
+  printf 'two\n' > "$origin/file"
+  git -C "$origin" commit -q -am two
+  git clone -q "$origin" "$clone"
+  _test_git_identity "$clone"
+  git -C "$clone" checkout -q v1.0.0
+}
+
+test_update_dev_attaches_from_stable_tag() {
+  local origin clone tip
+  origin="$(mktemp -d)"
+  clone="$(mktemp -d)"
+  _test_stable_then_dev_fixture "$origin" "$clone"
+  tip="$(git -C "$origin" rev-parse HEAD)"
+  ! git -C "$clone" symbolic-ref -q HEAD >/dev/null || return 1
+  (
+    OMACASE_ROOT="$clone"
+    OMACASE_CHANNEL=dev
+    OMACASE_STATE="$(mktemp -d)"
+    HOME="$(mktemp -d)"
+    # shellcheck source=/dev/null
+    source "$ROOT/lib/common.sh"
+    # shellcheck source=/dev/null
+    source "$ROOT/lib/update.sh"
+    _update_attach_dev >/dev/null 2>&1
+  )
+  [ "$(git -C "$clone" symbolic-ref --short HEAD)" = main ] &&
+    [ "$(git -C "$clone" rev-parse HEAD)" = "$tip" ]
+}
+
+test_boot_dev_attaches_from_stable_tag() {
+  local origin clone tip
+  origin="$(mktemp -d)"
+  clone="$(mktemp -d)"
+  _test_stable_then_dev_fixture "$origin" "$clone"
+  tip="$(git -C "$origin" rev-parse HEAD)"
+  ! git -C "$clone" symbolic-ref -q HEAD >/dev/null || return 1
+  (
+    info() { :; }
+    abort() { printf '%s\n' "$*" >&2; return 1; }
+    # shellcheck disable=SC1090
+    eval "$(sed -n '/^_omacase_remote_default_branch()/,/^_omacase_checkout_channel()/{ /^_omacase_checkout_channel()/q; p; }' "$ROOT/boot.sh")"
+    OMACASE_CHANNEL=dev
+    _omacase_attach_dev "$clone" >/dev/null 2>&1
+  )
+  [ "$(git -C "$clone" symbolic-ref --short HEAD)" = main ] &&
+    [ "$(git -C "$clone" rev-parse HEAD)" = "$tip" ]
 }
 
 test_bootstrap_copies_are_identical() {
@@ -1064,6 +1122,8 @@ run_test "update --check does not mutate the worktree" test_update_check_mutates
 run_test "homebrew installer checksum is enforced" test_homebrew_installer_checksum_is_enforced
 run_test "mise tools are pinned to exact versions" test_mise_tools_are_pinned
 run_test "update --rollback restores the recorded SHA" test_update_rollback_restores_recorded_sha
+run_test "update dev attaches a detached stable tag to main" test_update_dev_attaches_from_stable_tag
+run_test "boot dev attaches a detached stable tag to main" test_boot_dev_attaches_from_stable_tag
 run_test "backup domains cover macos/defaults.sh" test_backup_domains_cover_defaults_sh
 run_test "defaults disable Stage Manager" test_stage_manager_is_disabled_by_defaults
 run_test "Homebrew trust is scoped to exact third-party packages" test_brew_trust_is_scoped

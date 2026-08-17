@@ -54,10 +54,39 @@ fi
 # stable (default) checks out the greatest v* tag; OMACASE_CHANNEL=dev tracks
 # the default branch. A missing tag (pre-first-release) stays on the default
 # branch rather than aborting bootstrap.
+_omacase_remote_default_branch() {
+  local root="$1" ref
+  ref="$(git -C "$root" symbolic-ref --quiet --short refs/remotes/origin/HEAD 2>/dev/null || true)"
+  ref="${ref#origin/}"
+  printf '%s\n' "${ref:-main}"
+}
+
+# stable leaves a detached tag checkout. Dev must attach to the remote
+# default branch without reset --hard / checkout -B (those discard work).
+_omacase_attach_dev() {
+  local root="$1" branch
+  branch="$(_omacase_remote_default_branch "$root")"
+  git -C "$root" fetch origin "$branch"
+  if git -C "$root" symbolic-ref -q HEAD >/dev/null; then
+    git -C "$root" merge --ff-only "origin/$branch"
+    return
+  fi
+  info "Attaching detached checkout to origin/$branch (dev channel)…"
+  if git -C "$root" show-ref --verify --quiet "refs/heads/$branch"; then
+    git -C "$root" checkout -q "$branch" \
+      || abort "Could not check out $branch (local changes?). Resolve them or stay on OMACASE_CHANNEL=stable."
+  else
+    git -C "$root" checkout -q --track "origin/$branch" \
+      || abort "Could not attach to origin/$branch (local changes?). Resolve them or stay on OMACASE_CHANNEL=stable."
+  fi
+  git -C "$root" merge --ff-only "origin/$branch" \
+    || abort "git merge --ff-only origin/$branch failed (local changes?). Resolve it before updating."
+}
+
 _omacase_checkout_channel() {
   local root="$1" tag
   if [ "${OMACASE_CHANNEL:-stable}" = dev ]; then
-    git -C "$root" pull --ff-only
+    _omacase_attach_dev "$root"
     return
   fi
   git -C "$root" fetch --tags --depth 1 origin 2>/dev/null || true

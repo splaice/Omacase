@@ -77,13 +77,47 @@ _update_rollback() {
   exec "$OMACASE_ROOT/bin/omacase" install
 }
 
+_update_remote_default_branch() {
+  local ref
+  ref="$(git -C "$OMACASE_ROOT" symbolic-ref --quiet --short refs/remotes/origin/HEAD 2>/dev/null || true)"
+  ref="${ref#origin/}"
+  printf '%s\n' "${ref:-main}"
+}
+
+# stable leaves a detached tag checkout. Dev must attach to the remote
+# default branch without reset --hard / checkout -B (those discard work).
+_update_attach_dev() {
+  local branch
+  branch="$(_update_remote_default_branch)"
+  if is_dryrun; then
+    log "[dry-run] would attach to origin/$branch and fast-forward"
+    return 0
+  fi
+  git -C "$OMACASE_ROOT" fetch origin "$branch" \
+    || abort "git fetch origin $branch failed."
+  if git -C "$OMACASE_ROOT" symbolic-ref -q HEAD >/dev/null; then
+    git -C "$OMACASE_ROOT" merge --ff-only "origin/$branch" \
+      || abort "git merge --ff-only origin/$branch failed (local changes?). Resolve it before updating."
+    return
+  fi
+  info "Attaching detached checkout to origin/$branch (dev channel)…"
+  if git -C "$OMACASE_ROOT" show-ref --verify --quiet "refs/heads/$branch"; then
+    git -C "$OMACASE_ROOT" checkout -q "$branch" \
+      || abort "Could not check out $branch (local changes?). Resolve them or stay on OMACASE_CHANNEL=stable."
+  else
+    git -C "$OMACASE_ROOT" checkout -q --track "origin/$branch" \
+      || abort "Could not attach to origin/$branch (local changes?). Resolve them or stay on OMACASE_CHANNEL=stable."
+  fi
+  git -C "$OMACASE_ROOT" merge --ff-only "origin/$branch" \
+    || abort "git merge --ff-only origin/$branch failed (local changes?). Resolve it before updating."
+}
+
 _update_switch_payload() {
   case "$OMACASE_CHANNEL" in
     dev)
       step "Pulling latest omacase (dev channel)"
       _update_record_prev
-      run git -C "$OMACASE_ROOT" pull --ff-only \
-        || abort "git pull failed (local changes?). Resolve it before updating." ;;
+      _update_attach_dev ;;
     stable)
       step "Fetching omacase release tags (stable channel)"
       run git -C "$OMACASE_ROOT" fetch --tags origin \
