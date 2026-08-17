@@ -430,6 +430,26 @@ test_bootstrap_copies_are_identical() {
   cmp -s "$ROOT/boot.sh" "$ROOT/site/install"
 }
 
+test_macos_version_gate_boundaries() {
+  # shellcheck source=/dev/null
+  source "$ROOT/lib/common.sh"
+  _macos_version_supported "26" &&
+    _macos_version_supported "26.0" &&
+    _macos_version_supported "26.6.1" &&
+    _macos_version_supported "27.1" &&
+    ! _macos_version_supported "25.6" &&
+    ! _macos_version_supported "15.5" &&
+    ! _macos_version_supported "" &&
+    ! _macos_version_supported "beta"
+}
+
+test_boot_and_runtime_share_macos_minimum() {
+  # One number, three files — drift here would let bootstrap and runtime disagree.
+  grep -q 'OMACASE_MACOS_MIN=26' "$ROOT/lib/common.sh" &&
+    grep -q 'MACOS_MIN=26' "$ROOT/boot.sh" &&
+    grep -q 'MACOS_MIN=26' "$ROOT/site/install"
+}
+
 test_backup_domains_cover_defaults_sh() {
   OMACASE_ROOT="$ROOT"
   # shellcheck source=/dev/null
@@ -956,6 +976,8 @@ run_test "herdr is declared in the Brewfile" test_herdr_is_declared_in_brewfile
 run_test "herdr agent hooks cover shipped agent CLIs" test_herdr_hooks_cover_shipped_agents
 run_test "herdr skill is left to herdr, not managed by omacase" test_herdr_skill_is_not_managed_by_omacase
 run_test "site/install matches boot.sh" test_bootstrap_copies_are_identical
+run_test "macos version gate accepts 26+ and rejects below" test_macos_version_gate_boundaries
+run_test "boot and runtime share the macos 26 minimum" test_boot_and_runtime_share_macos_minimum
 run_test "theme manifest lists all themes" test_theme_manifest_lists_all_themes
 run_test "OmniWM seed is valid with nine workspaces" test_omniwm_seed_is_valid_and_has_nine_workspaces
 run_test "Ghostty windows remain manageable by OmniWM" test_ghostty_windows_remain_manageable
