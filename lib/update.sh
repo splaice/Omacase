@@ -15,23 +15,27 @@ omacase_update() {
     fi
   fi
   step "Updating Homebrew"
-  run brew update || true
+  require "brew update" brew update
   source "$OMACASE_ROOT/lib/install.sh"
+  # Nested so install does not call converged (the outer report does). This is a
+  # simple command: set -e stays in effect inside omacase_install. Ledgered
+  # require() failures still return 0 and later upgrade steps still run.
+  OMACASE_NESTED_INSTALL=1
   omacase_install
   # One-time imperative cleanup the declarative apply can't do (e.g. uninstall a
-  # dropped cask). Idempotent + tracked; failure halts migrations but not update.
+  # dropped cask). Idempotent + tracked; failure retries on the next update.
   source "$OMACASE_ROOT/lib/migrate.sh"
-  omacase_migrate || warn "Some migrations did not complete — they'll retry next update."
+  omacase_migrate || OMACASE_INCOMPLETE+=("migrations")
   if [ -n "${OMACASE_SKIP_MISE_UPGRADE:-}" ]; then
     info "Skipping mise tool upgrades (OMACASE_SKIP_MISE_UPGRADE is set)."
   elif have mise; then
     step "Upgrading mise tools (node + npm CLIs)"
     warn "mise tools include npm packages pinned to latest; set OMACASE_SKIP_MISE_UPGRADE=1 to skip."
-    run mise upgrade || warn "mise upgrade had issues."   # bumps latest-pinned npm CLIs
+    require "mise upgrade" mise upgrade
   fi
   step "Upgrading outdated formulae & casks"
-  run brew upgrade || warn "Some upgrades failed."
-  success "omacase up to date."
+  require "brew upgrade" brew upgrade
+  converged "omacase up to date"
 }
 
 # `omacase outdated` — print the number of outdated Homebrew packages.

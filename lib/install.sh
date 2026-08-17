@@ -11,8 +11,7 @@ omacase_install() {
 
   step "1/8  Packages & apps (brew bundle)"
   _brew_trust_declared_third_party
-  run brew bundle --file="$OMACASE_ROOT/Brewfile" \
-    || warn "Some brew items failed; re-run later."
+  require "brew bundle" brew bundle --file="$OMACASE_ROOT/Brewfile"
 
   step "2/8  Link \`omacase\` onto PATH + shell completion"
   _link_command
@@ -52,11 +51,17 @@ omacase_install() {
   _migrations_baseline
 
   step "Done"
-  success "omacase installed."
   warn "Next: run \`omacase doctor\` and grant Accessibility to OmniWM"
   warn "  (plus Automation → System Events so themes can sync macOS Light/Dark)."
   warn "OmniWM also requires Displays have separate Spaces; a logout applies that setting."
   warn "Don't like the result? \`omacase restore\` rolls back to the pre-install snapshot."
+  # When update nests install, the outer converged reports. Returning here
+  # keeps the function a simple command so set -e still applies inside
+  # (a `fn || true` call would disable errexit for _auto_backup etc.).
+  if [ -n "${OMACASE_NESTED_INSTALL:-}" ]; then
+    return 0
+  fi
+  converged "omacase installed"
 }
 
 # Homebrew requires an explicit trust decision before loading third-party
@@ -82,7 +87,7 @@ _brew_trust_declared_third_party() {
 # mise is provided by `brew bundle` and activated in dot_zshrc.
 _mise_install() {
   have mise || { warn "mise not found (brew bundle should install it) — skipping npm CLIs."; return 0; }
-  run mise install -y || warn "mise install had issues — re-run \`mise install\` later."
+  require "mise install" mise install -y
 }
 
 # Grok CLI (xAI) ships as a self-updating native binary that installs into
@@ -150,8 +155,7 @@ _herdr_integrations() {
   local agent
   for agent in claude codex opencode pi grok; do
     have "$agent" || continue
-    run herdr integration install "$agent" \
-      || warn "herdr integration install $agent failed; re-run \`omacase update\`."
+    require "herdr integration ($agent)" herdr integration install "$agent"
   done
 }
 
