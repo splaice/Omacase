@@ -249,7 +249,10 @@ _restore_present_dir() {
   local dir="$1" rel="$2" target="$3"
   local saved dest sub p counterpart
 
-  if _is_omacase_link "$target"; then
+  # Never merge through a symlink: an unrelated current link may point outside
+  # $HOME, and writing $target/<subpath> would overwrite its destination.
+  # Replacing the link itself restores the snapshot without touching that tree.
+  if [ -L "$target" ] || { [ -e "$target" ] && [ ! -d "$target" ]; }; then
     run rm -f "$target"
   fi
   run mkdir -p "$target"

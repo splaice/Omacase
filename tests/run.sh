@@ -326,6 +326,34 @@ test_restore_present_leaf_preserves_sibling() {
     grep -q 'sibling = true' "$sibling"
 }
 
+test_restore_legacy_present_dir_does_not_follow_current_symlink() {
+  local tmp id target external saved
+  tmp="$(mktemp -d)"
+  id="20260101-000000"
+  HOME="$tmp/home"
+  OMACASE_STATE="$tmp/state"
+  OMACASE_ROOT="$ROOT"
+  target="$HOME/.config/ghostty"
+  external="$tmp/external"
+  saved="$OMACASE_STATE/backups/$id/files/.config/ghostty/config"
+  mkdir -p "$HOME/.config" "$external" "$(dirname "$saved")"
+  printf 'saved = true\n' > "$saved"
+  printf 'external = true\n' > "$external/config"
+  printf 'keep me\n' > "$external/user-note.txt"
+  ln -s "$external" "$target"
+  printf 'label=legacy\n' > "$OMACASE_STATE/backups/$id/meta"
+  printf 'PRESENT .config/ghostty\n' > "$OMACASE_STATE/backups/$id/manifest"
+  # shellcheck source=/dev/null
+  source "$ROOT/lib/common.sh"
+  # shellcheck source=/dev/null
+  source "$ROOT/lib/backup.sh"
+  _test_restore "$id"
+  [ ! -L "$target" ] &&
+    grep -q 'saved = true' "$target/config" &&
+    grep -q 'external = true' "$external/config" &&
+    grep -q 'keep me' "$external/user-note.txt"
+}
+
 test_restore_legacy_absent_dir_preserves_sibling() {
   local tmp id note
   tmp="$(mktemp -d)"
@@ -916,6 +944,7 @@ run_test "dotfile reinstall preserves unmanaged siblings" test_dotfile_reinstall
 run_test "manual backup captures live OmniWM settings" test_backup_captures_live_omniwm_settings
 run_test "restore preserves sibling after ABSENT backup" test_restore_preserves_sibling_after_absent_backup
 run_test "restore PRESENT leaf preserves sibling" test_restore_present_leaf_preserves_sibling
+run_test "restore legacy PRESENT dir does not follow current symlink" test_restore_legacy_present_dir_does_not_follow_current_symlink
 run_test "restore legacy ABSENT dir preserves sibling" test_restore_legacy_absent_dir_preserves_sibling
 run_test "restore ABSENT leaf prunes empty parents not .config" test_restore_absent_leaf_prunes_empty_parents_not_config
 run_test "update fails on self-update failure" test_update_fails_when_self_pull_fails
