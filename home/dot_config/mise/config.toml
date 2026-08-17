@@ -3,12 +3,12 @@
 # PATH via its shims.
 #
 # Why these live here and not in the Brewfile: they ship on npm sooner than they
-# reach Homebrew. Pinned to "latest"; `omacase update` runs `mise upgrade` to pull
-# the newest versions the moment they're published — no waiting on a brew bump.
+# reach Homebrew. Versions are exact pins; bump them deliberately (see
+# RELEASING.md). `omacase update` runs `mise upgrade` to converge to the pins.
 # (Self-updating tools like Claude Code stay on their own installer; native
 # binaries like codex stay on Homebrew.)
 [tools]
-node = "lts"                                  # one isolated node; runs the npm: CLIs below
-"npm:@google/gemini-cli"            = "latest" # gemini  — Google Gemini CLI
-"npm:@mermaid-js/mermaid-cli"       = "latest" # mmdc    — Mermaid diagram renderer
-"npm:@earendil-works/pi-coding-agent" = "latest" # pi    — pi.dev coding agent (successor to @mariozechner/*)
+node = "24.19.0"                              # one isolated node; runs the npm: CLIs below
+"npm:@google/gemini-cli"            = "0.55.1" # gemini  — Google Gemini CLI
+"npm:@mermaid-js/mermaid-cli"       = "11.16.0" # mmdc    — Mermaid diagram renderer
+"npm:@earendil-works/pi-coding-agent" = "0.84.2" # pi    — pi.dev coding agent (successor to @mariozechner/*)

@@ -63,7 +63,11 @@ omacase uninstall           remove Omacase-managed config; keep applications
 Set `OMACASE_DRYRUN=1` before `omacase install` to preview changes. Set
 `OMACASE_SKIP_MISE_UPGRADE=1` before `omacase update` to leave mise-managed
 tools at their current versions. Set `OMACASE_INSTALL_GROK=1` to explicitly
-allow xAI's unpinned Grok installer; it is skipped by default.
+allow xAI's unpinned Grok installer; it is skipped by default. Set
+`OMACASE_CHANNEL=dev` to make `omacase update` pull the default branch
+(maintainer machines); the default `stable` channel checks out the latest
+`v*` release tag. `omacase update --check` lists pending changes without
+applying them; `omacase update --rollback` returns to the previous payload.
 
 ## Agent multiplexing
 

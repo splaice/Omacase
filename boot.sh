@@ -31,9 +31,14 @@ if ! command -v brew >/dev/null 2>&1; then
   installer="$(mktemp)"
   trap 'rm -f "$installer"' EXIT
   info "Installing Homebrew…"
+  # Homebrew/install publishes no tags; pin a reviewed commit + sha256.
+  HOMEBREW_INSTALLER_VERSION=cced90146ea6d3057c03a636b668fef177415eb3
+  HOMEBREW_INSTALLER_SHA256=12479a24be3f5307eecac7cde670fad7118640f031229e964f544b1367b52a41
   curl --proto '=https' --tlsv1.2 -fsSL \
-    https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh \
+    "https://raw.githubusercontent.com/Homebrew/install/${HOMEBREW_INSTALLER_VERSION}/install.sh" \
     -o "$installer"
+  printf '%s  %s\n' "$HOMEBREW_INSTALLER_SHA256" "$installer" | shasum -a 256 -c -- >/dev/null 2>&1 \
+    || abort "Homebrew installer checksum mismatch — refusing to run it. (Upstream may have released a new version; update omacase or install Homebrew manually from brew.sh, then re-run.)"
   NONINTERACTIVE=1 /bin/bash "$installer"
   rm -f "$installer"
   trap - EXIT
@@ -46,13 +51,31 @@ else
 fi
 
 # 3. Clone or update the payload.
+# stable (default) checks out the greatest v* tag; OMACASE_CHANNEL=dev tracks
+# the default branch. A missing tag (pre-first-release) stays on the default
+# branch rather than aborting bootstrap.
+_omacase_checkout_channel() {
+  local root="$1" tag
+  if [ "${OMACASE_CHANNEL:-stable}" = dev ]; then
+    git -C "$root" pull --ff-only
+    return
+  fi
+  git -C "$root" fetch --tags --depth 1 origin 2>/dev/null || true
+  tag="$(git -C "$root" tag --list 'v*' --sort=-v:refname | head -1)"
+  if [ -n "$tag" ]; then
+    git -C "$root" checkout -q "$tag"
+  else
+    info "No release tags found; staying on the default branch (set OMACASE_CHANNEL=dev to keep tracking it)."
+  fi
+}
 if [ -d "$PREFIX/.git" ]; then
   info "Updating existing omacase payload at $PREFIX…"
-  git -C "$PREFIX" pull --ff-only
+  _omacase_checkout_channel "$PREFIX"
 else
   info "Cloning omacase → $PREFIX…"
   mkdir -p "$(dirname "$PREFIX")"
-  git clone --depth 1 "$REPO" "$PREFIX"
+  git clone --tags --depth 1 "$REPO" "$PREFIX"
+  _omacase_checkout_channel "$PREFIX"
 fi
 
 # 4. Hand off.

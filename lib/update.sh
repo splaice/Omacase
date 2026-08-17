@@ -1,13 +1,121 @@
 # shellcheck shell=bash
-# `omacase update` — pull latest payload, then re-run the install engine.
+# `omacase update` — move the payload to the selected channel, then re-run
+# the install engine.
+#
+#   OMACASE_CHANNEL=stable (default)  fetch tags, check out the greatest v*
+#   OMACASE_CHANNEL=dev               pull --ff-only on the default branch
+#
+#   omacase update --check            fetch and print pending changes; no checkout
+#   omacase update --rollback         return to the SHA recorded before the
+#                                     last payload switch, then re-run install
+
+OMACASE_CHANNEL="${OMACASE_CHANNEL:-stable}"
+
+_latest_release_tag() {
+  git -C "$OMACASE_ROOT" tag --list 'v*' --sort=-v:refname | head -1
+}
+
+_current_exact_tag() {
+  git -C "$OMACASE_ROOT" describe --tags --exact-match 2>/dev/null || true
+}
+
+_update_record_prev() {
+  is_dryrun && return 0
+  mkdir -p "$OMACASE_STATE"
+  git -C "$OMACASE_ROOT" rev-parse HEAD > "$OMACASE_STATE/update-prev"
+}
+
+_update_target_ref() {
+  if [ "$OMACASE_CHANNEL" = dev ]; then
+    git -C "$OMACASE_ROOT" rev-parse --abbrev-ref --symbolic-full-name '@{u}' 2>/dev/null \
+      || printf '%s\n' origin/main
+  else
+    _latest_release_tag
+  fi
+}
+
+_update_check() {
+  [ -d "$OMACASE_ROOT/.git" ] || abort "No git checkout at $OMACASE_ROOT."
+  if [ "$OMACASE_CHANNEL" = dev ]; then
+    git -C "$OMACASE_ROOT" fetch origin
+  else
+    git -C "$OMACASE_ROOT" fetch --tags origin
+  fi
+  local target current tag
+  target="$(_update_target_ref)"
+  current="$(git -C "$OMACASE_ROOT" rev-parse --short HEAD)"
+  [ -n "$target" ] || abort "No update target (channel=$OMACASE_CHANNEL). Cut a v* tag or set OMACASE_CHANNEL=dev."
+  tag="$(_current_exact_tag)"
+  printf 'channel: %s\n' "$OMACASE_CHANNEL"
+  if [ -n "$tag" ]; then
+    printf 'current: %s (%s)\n' "$current" "$tag"
+  else
+    printf 'current: %s\n' "$current"
+  fi
+  printf 'target:  %s\n' "$target"
+  if [ "$(git -C "$OMACASE_ROOT" rev-parse HEAD)" = "$(git -C "$OMACASE_ROOT" rev-parse "$target^{commit}")" ]; then
+    info "Already up to date."
+    return 0
+  fi
+  local n
+  n="$(git -C "$OMACASE_ROOT" rev-list --count "HEAD..$target" 2>/dev/null || echo 0)"
+  printf 'pending: %s commit(s)\n' "$n"
+  git -C "$OMACASE_ROOT" log --oneline "HEAD..$target"
+  git -C "$OMACASE_ROOT" diff --stat "HEAD..$target"
+}
+
+_update_rollback() {
+  local prev="$OMACASE_STATE/update-prev"
+  [ -f "$prev" ] || abort "No previous update SHA recorded. (omacase update --rollback is one level deep.)"
+  local sha
+  sha="$(cat "$prev")"
+  [ -n "$sha" ] || abort "Empty rollback SHA in $prev."
+  warn "Rolling back payload to $sha"
+  git -C "$OMACASE_ROOT" checkout -q "$sha" \
+    || abort "git checkout $sha failed."
+  is_dryrun && return 0
+  exec "$OMACASE_ROOT/bin/omacase" install
+}
+
+_update_switch_payload() {
+  case "$OMACASE_CHANNEL" in
+    dev)
+      step "Pulling latest omacase (dev channel)"
+      _update_record_prev
+      run git -C "$OMACASE_ROOT" pull --ff-only \
+        || abort "git pull failed (local changes?). Resolve it before updating." ;;
+    stable)
+      step "Fetching omacase release tags (stable channel)"
+      run git -C "$OMACASE_ROOT" fetch --tags origin \
+        || abort "git fetch --tags failed."
+      local tag current
+      tag="$(_latest_release_tag)"
+      [ -n "$tag" ] || abort "No v* release tags found. Cut a release or set OMACASE_CHANNEL=dev."
+      current="$(_current_exact_tag)"
+      if [ "$tag" = "$current" ]; then
+        info "Already on $tag"
+      else
+        _update_record_prev
+        run git -C "$OMACASE_ROOT" checkout -q "$tag" \
+          || abort "git checkout $tag failed."
+      fi ;;
+    *)
+      abort "Unknown OMACASE_CHANNEL='$OMACASE_CHANNEL' (use stable or dev)." ;;
+  esac
+}
 
 omacase_update() {
   ensure_brew_env
   dryrun_banner
+  case "${1:-}" in
+    --check) _update_check; return ;;
+    --rollback) _update_rollback; return ;;
+    "" ) ;;
+    *) abort "unknown update flag: $1 (try --check or --rollback)" ;;
+  esac
   if [ -d "$OMACASE_ROOT/.git" ] && [ -z "${OMACASE_UPDATE_REEXECED:-}" ]; then
-    step "Pulling latest omacase"
-    run git -C "$OMACASE_ROOT" pull --ff-only || abort "git pull failed (local changes?). Resolve it before updating."
-    # Everything sourced so far (common.sh, this file) came from the pre-pull
+    _update_switch_payload
+    # Everything sourced so far (common.sh, this file) came from the pre-switch
     # checkout; re-exec into the fresh tree so the rest of the update runs a
     # single, consistent version instead of a mix of old and new lib files.
     if ! is_dryrun; then
@@ -26,7 +134,7 @@ omacase_update() {
     info "Skipping mise tool upgrades (OMACASE_SKIP_MISE_UPGRADE is set)."
   elif have mise; then
     step "Upgrading mise tools (node + npm CLIs)"
-    warn "mise tools include npm packages pinned to latest; set OMACASE_SKIP_MISE_UPGRADE=1 to skip."
+    warn "mise upgrade converges to the pinned versions; set OMACASE_SKIP_MISE_UPGRADE=1 to skip."
     run mise upgrade || warn "mise upgrade had issues."   # bumps latest-pinned npm CLIs
   fi
   step "Upgrading outdated formulae & casks"

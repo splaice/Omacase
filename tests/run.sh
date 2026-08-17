@@ -411,6 +411,7 @@ test_update_fails_when_self_pull_fails() {
   OMACASE_ROOT="$tmp/repo"
   HOME="$tmp/home"
   OMACASE_STATE="$tmp/state"
+  export OMACASE_CHANNEL=dev
   mkdir -p "$OMACASE_ROOT/.git" "$HOME"
   out="$tmp/out"
   (
@@ -422,6 +423,116 @@ test_update_fails_when_self_pull_fails() {
   ) >"$out" 2>&1
   # shellcheck disable=SC2181 # status is intentionally captured after the subshell
   [ $? -ne 0 ] && grep -q "git pull failed" "$out"
+}
+
+_test_git_identity() {
+  git -C "$1" config user.email "omacase-test@example.com"
+  git -C "$1" config user.name "omacase-test"
+}
+
+test_latest_release_tag_picks_greatest_semver() {
+  local tmp
+  tmp="$(mktemp -d)"
+  git init -q "$tmp"
+  _test_git_identity "$tmp"
+  git -C "$tmp" checkout -q -B main
+  git -C "$tmp" commit --allow-empty -q -m init
+  git -C "$tmp" tag v1.9.0
+  git -C "$tmp" tag v1.10.0
+  git -C "$tmp" tag v2.0.0
+  (
+    OMACASE_ROOT="$tmp"
+    # shellcheck source=/dev/null
+    source "$ROOT/lib/common.sh"
+    # shellcheck source=/dev/null
+    source "$ROOT/lib/update.sh"
+    [ "$(_latest_release_tag)" = v2.0.0 ]
+  )
+}
+
+test_update_check_mutates_nothing() {
+  local origin clone out before after
+  origin="$(mktemp -d)"
+  clone="$(mktemp -d)"
+  out="$(mktemp)"
+  git init -q "$origin"
+  _test_git_identity "$origin"
+  git -C "$origin" checkout -q -B main
+  printf 'a\n' > "$origin/file"
+  git -C "$origin" add file
+  git -C "$origin" commit -q -m first
+  git clone -q "$origin" "$clone"
+  _test_git_identity "$clone"
+  printf 'b\n' > "$origin/file"
+  git -C "$origin" commit -q -am second
+  before="$(git -C "$clone" rev-parse HEAD)"
+  (
+    OMACASE_ROOT="$clone"
+    OMACASE_CHANNEL=dev
+    HOME="$(mktemp -d)"
+    OMACASE_STATE="$HOME/state"
+    # shellcheck source=/dev/null
+    source "$ROOT/lib/common.sh"
+    # shellcheck source=/dev/null
+    source "$ROOT/lib/update.sh"
+    _update_check
+  ) >"$out" 2>&1
+  after="$(git -C "$clone" rev-parse HEAD)"
+  [ "$before" = "$after" ] &&
+    grep -q 'pending:' "$out" &&
+    grep -q 'second' "$out"
+}
+
+test_homebrew_installer_checksum_is_enforced() {
+  local tmp
+  tmp="$(mktemp)"
+  printf 'tampered\n' > "$tmp"
+  ! printf '%s  %s\n' \
+      "12479a24be3f5307eecac7cde670fad7118640f031229e964f544b1367b52a41" \
+      "$tmp" | shasum -a 256 -c -- >/dev/null 2>&1 &&
+    grep -q 'shasum -a 256 -c' "$ROOT/boot.sh" &&
+    grep -q 'shasum -a 256 -c' "$ROOT/site/install" &&
+    grep -q 'Homebrew installer checksum mismatch' "$ROOT/boot.sh"
+}
+
+test_mise_tools_are_pinned() {
+  ! grep -q '@latest' "$ROOT/home/dot_config/mise/config.toml" &&
+    ! grep -Eq 'node = "lts"' "$ROOT/home/dot_config/mise/config.toml"
+}
+
+test_update_rollback_restores_recorded_sha() {
+  local origin clone prev
+  origin="$(mktemp -d)"
+  git init -q "$origin"
+  _test_git_identity "$origin"
+  git -C "$origin" checkout -q -B main
+  printf 'one\n' > "$origin/file"
+  git -C "$origin" add file
+  git -C "$origin" commit -q -m one
+  git -C "$origin" tag v0.1.0
+  printf 'two\n' > "$origin/file"
+  git -C "$origin" commit -q -am two
+  git -C "$origin" tag v0.2.0
+  clone="$(mktemp -d)"
+  git clone -q "$origin" "$clone"
+  _test_git_identity "$clone"
+  git -C "$clone" checkout -q v0.2.0
+  prev="$(git -C "$clone" rev-parse v0.1.0)"
+  mkdir -p "$clone/bin"
+  printf '#!/bin/bash\nexit 0\n' > "$clone/bin/omacase"
+  chmod +x "$clone/bin/omacase"
+  (
+    OMACASE_ROOT="$clone"
+    OMACASE_STATE="$(mktemp -d)"
+    HOME="$(mktemp -d)"
+    printf '%s\n' "$prev" > "$OMACASE_STATE/update-prev"
+    # shellcheck source=/dev/null
+    source "$ROOT/lib/common.sh"
+    # shellcheck source=/dev/null
+    source "$ROOT/lib/update.sh"
+    _update_rollback >/dev/null 2>&1
+  )
+  [ "$(git -C "$clone" rev-parse HEAD)" = "$prev" ]
 }
 
 test_bootstrap_copies_are_identical() {
@@ -948,6 +1059,11 @@ run_test "restore legacy PRESENT dir does not follow current symlink" test_resto
 run_test "restore legacy ABSENT dir preserves sibling" test_restore_legacy_absent_dir_preserves_sibling
 run_test "restore ABSENT leaf prunes empty parents not .config" test_restore_absent_leaf_prunes_empty_parents_not_config
 run_test "update fails on self-update failure" test_update_fails_when_self_pull_fails
+run_test "latest release tag is greatest semver" test_latest_release_tag_picks_greatest_semver
+run_test "update --check does not mutate the worktree" test_update_check_mutates_nothing
+run_test "homebrew installer checksum is enforced" test_homebrew_installer_checksum_is_enforced
+run_test "mise tools are pinned to exact versions" test_mise_tools_are_pinned
+run_test "update --rollback restores the recorded SHA" test_update_rollback_restores_recorded_sha
 run_test "backup domains cover macos/defaults.sh" test_backup_domains_cover_defaults_sh
 run_test "defaults disable Stage Manager" test_stage_manager_is_disabled_by_defaults
 run_test "Homebrew trust is scoped to exact third-party packages" test_brew_trust_is_scoped
