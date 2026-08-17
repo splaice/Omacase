@@ -608,9 +608,65 @@ test_launcher_build_produces_valid_bundle() {
 }
 
 test_launcher_reads_login_items_config() {
-  # The shipped config must list OmniWM, and the launcher script must consult it.
-  grep -qx 'OmniWM' "$ROOT/home/dot_config/omacase/login-items" &&
+  # The shipped seed must list OmniWM, and the launcher script must consult the
+  # user-owned copy (never a tracked home/ symlink).
+  grep -qx 'OmniWM' "$ROOT/config/omacase/login-items" &&
     grep -q 'omacase/login-items' "$ROOT/assets/launcher/OmacaseLauncher.sh"
+}
+
+test_data_and_checkout_defaults_are_separate() {
+  # The public clone path must not equal the runtime data root, or caches land
+  # in the worktree (issue #7).
+  grep -q 'OMACASE_PREFIX:-\$HOME/.local/share/omacase/repo' "$ROOT/boot.sh" &&
+    grep -q 'OMACASE_PREFIX:-\$HOME/.local/share/omacase/repo' "$ROOT/site/install" &&
+    grep -q 'OMACASE_DATA:-\$HOME/.local/share/omacase' "$ROOT/lib/common.sh"
+}
+
+test_login_items_is_seed_not_symlink() {
+  [ -f "$ROOT/config/omacase/login-items" ] &&
+    ! find "$ROOT/home" -name 'login-items' | grep -q . &&
+    grep -q '_launcher_seed_login_items' "$ROOT/lib/launcher.sh"
+}
+
+test_launcher_seed_replaces_managed_link_with_copy() {
+  local tmp cfg seed
+  tmp="$(mktemp -d)"
+  HOME="$tmp/home"
+  OMACASE_STATE="$tmp/state"
+  OMACASE_ROOT="$ROOT"
+  OMACASE_DATA="$tmp/data"
+  cfg="$HOME/.config/omacase/login-items"
+  seed="$ROOT/config/omacase/login-items"
+  mkdir -p "$(dirname "$cfg")"
+  ln -s "$seed" "$cfg"
+  # shellcheck source=/dev/null
+  source "$ROOT/lib/common.sh"
+  # shellcheck source=/dev/null
+  source "$ROOT/lib/launcher.sh"
+  _launcher_seed_login_items
+  [ -f "$cfg" ] && [ ! -L "$cfg" ] &&
+    cmp -s "$cfg" "$seed" &&
+    grep -qx 'OmniWM' "$seed"
+}
+
+# After login-items left home/, existing installs have a dangling symlink to
+# the old path. Seeding must not write an empty file.
+test_launcher_seed_dangling_old_link_uses_seed() {
+  local tmp cfg
+  tmp="$(mktemp -d)"
+  HOME="$tmp/home"
+  OMACASE_STATE="$tmp/state"
+  OMACASE_ROOT="$ROOT"
+  OMACASE_DATA="$tmp/data"
+  cfg="$HOME/.config/omacase/login-items"
+  mkdir -p "$(dirname "$cfg")"
+  ln -s "$OMACASE_ROOT/home/dot_config/omacase/login-items" "$cfg"
+  # shellcheck source=/dev/null
+  source "$ROOT/lib/common.sh"
+  # shellcheck source=/dev/null
+  source "$ROOT/lib/launcher.sh"
+  _launcher_seed_login_items
+  [ -f "$cfg" ] && [ ! -L "$cfg" ] && grep -qx 'OmniWM' "$cfg"
 }
 
 # Issue #4: a failed migration must halt the runner and keep the marker, so
@@ -977,6 +1033,10 @@ run_test "usage renders fixture records" test_usage_renders_fixture_records
 run_test "usage concurrent writes are safe" test_usage_concurrent_writes_are_safe
 run_test "launcher build produces a valid bundle and agent" test_launcher_build_produces_valid_bundle
 run_test "launcher reads the login-items config" test_launcher_reads_login_items_config
+run_test "data and checkout defaults are separate" test_data_and_checkout_defaults_are_separate
+run_test "login-items is seed-once user config" test_login_items_is_seed_not_symlink
+run_test "launcher seed replaces managed link with a copy" test_launcher_seed_replaces_managed_link_with_copy
+run_test "launcher seed recovers a dangling pre-move login-items link" test_launcher_seed_dangling_old_link_uses_seed
 run_test "extras sudo-touchid dry run wraps all mutations" test_extras_sudo_touchid_dry_run_wraps_all_mutations
 run_test "cli keybinds displays KEYBINDS.md" test_cli_keybinds_displays_reference
 run_test "menu lists primary commands and opens keybinds" test_menu_lists_primary_commands_and_routes_keybinds

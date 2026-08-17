@@ -1,0 +1,3 @@
+# Apps OmacaseLauncher opens at login — one `open -a` name per line.
+# Seeded once by install; this copy is yours. `omacase install` never overwrites it.
+OmniWM

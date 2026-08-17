@@ -7,11 +7,11 @@
 # edit HERE and run `cp boot.sh site/install`; tests/run.sh fails on drift.
 #
 # Installs the prerequisites (Xcode CLT, Homebrew), clones the payload to
-# ~/.local/share/omacase, and hands off to `omacase install`.
+# ~/.local/share/omacase/repo, and hands off to `omacase install`.
 set -euo pipefail
 
 REPO="${OMACASE_REPO:-https://github.com/splaice/omacase.git}"
-PREFIX="${OMACASE_PREFIX:-$HOME/.local/share/omacase}"
+PREFIX="${OMACASE_PREFIX:-$HOME/.local/share/omacase/repo}"
 
 abort() { printf '\033[31m✗ %s\033[0m\n' "$*" >&2; exit 1; }
 info()  { printf '\033[34m➜ %s\033[0m\n' "$*"; }
@@ -46,6 +46,12 @@ else
 fi
 
 # 3. Clone or update the payload.
+# Older public installs cloned into the data root itself. Keep using that
+# checkout rather than forking a second copy next to its caches.
+if [ -z "${OMACASE_PREFIX:-}" ] && [ -d "$HOME/.local/share/omacase/.git" ]; then
+  PREFIX="$HOME/.local/share/omacase"
+  info "Using existing checkout at $PREFIX (pre-repo/ layout)."
+fi
 if [ -d "$PREFIX/.git" ]; then
   info "Updating existing omacase payload at $PREFIX…"
   git -C "$PREFIX" pull --ff-only

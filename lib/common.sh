@@ -74,6 +74,18 @@ _omacase_zfuncdir() {
   [ -n "$bindir" ] && printf '%s\n' "${bindir%/bin}/share/zsh/site-functions"
 }
 
+# True if PATH is a symlink that already points inside this repo or Omacase's
+# generated theme cache.
+_is_omacase_link() {
+  local t="$1" dest
+  [ -L "$t" ] || return 1
+  dest="$(readlink "$t")"
+  case "$dest" in
+    "$OMACASE_ROOT"/*|"$OMACASE_DATA"/generated/themes/*) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
 # --- dry run -----------------------------------------------------------------
 # Set OMACASE_DRYRUN=1 to print mutating commands instead of running them.
 # Wrap every side-effecting command (brew, ln, defaults, services…)

@@ -67,7 +67,27 @@ _launcher_icon() {
   } || true
 }
 
+# Seed ~/.config/omacase/login-items once. Old installs linked the tracked
+# file; convert that link to a real user-owned copy so edits stay out of git.
+_launcher_seed_login_items() {
+  local cfg="$HOME/.config/omacase/login-items"
+  local seed="$OMACASE_ROOT/config/omacase/login-items"
+  if [ -L "$cfg" ] && _is_omacase_link "$cfg"; then
+    # Prefer the link's current bytes (edits made through the symlink).
+    # If the dest vanished (git mv off home/), fall back to the new seed.
+    local dest content
+    dest="$(readlink "$cfg")"
+    content="$(cat "$cfg" 2>/dev/null || cat "$dest" 2>/dev/null || cat "$seed" 2>/dev/null || true)"
+    run rm -f "$cfg"
+    is_dryrun || printf '%s\n' "$content" > "$cfg"
+  fi
+  [ -e "$cfg" ] && return 0
+  run mkdir -p "$(dirname "$cfg")"
+  run cp "$seed" "$cfg"
+}
+
 _launcher_install() {
+  _launcher_seed_login_items
   _launcher_build
   local domain
   domain="gui/$(id -u)"
