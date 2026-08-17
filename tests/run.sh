@@ -608,6 +608,31 @@ test_usage_renders_fixture_records() {
     printf '%s' "$out" | grep -q '└'
 }
 
+# Issue #5: concurrent refreshes share the state dir; writes must never fail or
+# publish partial JSON. The old fixed-tmp-name code fails this at Path.replace.
+test_usage_concurrent_writes_are_safe() {
+  local tmp
+  tmp="$(mktemp -d)"
+  OMACASE_STATE="$tmp" python3 - "$ROOT/lib/usage.py" <<'PY' || return 1
+import importlib.util, json, multiprocessing, sys
+spec = importlib.util.spec_from_file_location("usage", sys.argv[1])
+usage = importlib.util.module_from_spec(spec); spec.loader.exec_module(usage)
+usage.STATE_DIR.mkdir(parents=True, exist_ok=True)
+def worker(n):
+    for i in range(25):
+        for agent in ("claude", "codex", "grok"):
+            usage._write_record(agent, {"agent": agent, "worker": n, "i": i})
+# stdin scripts cannot be re-exec'd under spawn (macOS default).
+ctx = multiprocessing.get_context("fork")
+procs = [ctx.Process(target=worker, args=(n,)) for n in range(4)]
+[p.start() for p in procs]; [p.join() for p in procs]
+assert all(p.exitcode == 0 for p in procs), "a concurrent writer crashed"
+for agent in ("claude", "codex", "grok"):
+    json.loads((usage.STATE_DIR / f"{agent}.json").read_text())  # complete JSON
+assert not list(usage.STATE_DIR.glob(".*.tmp")), "tmp orphans left behind"
+PY
+}
+
 test_extras_mole_is_declared_everywhere() {
   "$ROOT/bin/omacase" extras list | grep -qE '^[[:space:]]+mole[[:space:]]' &&
     grep -qE '^brew "mole"' "$ROOT/Brewfile" &&
@@ -807,6 +832,7 @@ run_test "migration dry run uses in-memory baseline" test_migrate_dryrun_uses_in
 run_test "migrations never auto-uninstall Homebrew packages" test_migrations_never_auto_uninstall_homebrew_packages
 run_test "usage command wired and python compiles" test_usage_wired_and_compiles
 run_test "usage renders fixture records" test_usage_renders_fixture_records
+run_test "usage concurrent writes are safe" test_usage_concurrent_writes_are_safe
 run_test "launcher build produces a valid bundle and agent" test_launcher_build_produces_valid_bundle
 run_test "launcher reads the login-items config" test_launcher_reads_login_items_config
 run_test "extras sudo-touchid dry run wraps all mutations" test_extras_sudo_touchid_dry_run_wraps_all_mutations
