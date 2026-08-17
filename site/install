@@ -47,6 +47,10 @@ _recover_legacy_login_items() {
 
 [ "$(uname -s)" = "Darwin" ] || abort "omacase only runs on macOS."
 [ "$(uname -m)" = "arm64" ] || abort "omacase supports Apple Silicon Macs only."
+MACOS_MIN=26
+v="$(sw_vers -productVersion 2>/dev/null)"; major="${v%%.*}"
+case "$major" in ''|*[!0-9]*) major=0 ;; esac
+[ "$major" -ge "$MACOS_MIN" ] || abort "omacase requires macOS $MACOS_MIN or later (detected: ${v:-unknown})."
 
 # 1. Xcode Command Line Tools (provides git + compilers Homebrew needs).
 if ! xcode-select -p >/dev/null 2>&1; then

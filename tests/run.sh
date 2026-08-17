@@ -399,6 +399,197 @@ test_restore_absent_leaf_prunes_empty_parents_not_config() {
     [ -d "$HOME/.config" ]
 }
 
+test_require_ledgers_failure_and_continues() {
+  (
+    # shellcheck source=/dev/null
+    source "$ROOT/lib/common.sh"
+    boom() { return 1; }
+    require "step-a" boom >/dev/null 2>&1
+    require "step-b" true >/dev/null 2>&1
+    [ "${#OMACASE_INCOMPLETE[@]}" -eq 1 ] && ! converged "done" >/dev/null 2>&1
+  )
+}
+
+# Keep install/update integration tests offline and off the live machine.
+_test_stub_convergence_externals() {
+  brew() { return 0; }
+  mise() { return 0; }
+  herdr() { return 0; }
+  defaults() { return 0; }
+  killall() { return 0; }
+  osascript() { return 0; }
+  launchctl() { return 0; }
+  git() { return 0; }
+  bash() {
+    case "${1:-}" in
+      */macos/defaults.sh) return 0 ;;
+      *) command bash "$@" ;;
+    esac
+  }
+  source() {
+    case "${1:-}" in
+      */backup.sh)
+        builtin source "$@"
+        _preflight_command_links() { return 0; }
+        return 0 ;;
+      */theme.sh)
+        omacase_theme() { return 0; }
+        can_set_appearance() { return 0; }
+        return 0 ;;
+      */wm.sh)
+        omacase_wm() { return 0; }
+        return 0 ;;
+      */migrate.sh)
+        _migrations_baseline() { return 0; }
+        omacase_migrate() { return 0; }
+        return 0 ;;
+      */install.sh)
+        omacase_install() { return 0; }
+        return 0 ;;
+      *) builtin source "$@" ;;
+    esac
+  }
+  _link_command() { return 0; }
+}
+
+test_partial_brew_bundle_fails_install() {
+  local tmp out
+  tmp="$(mktemp -d)"
+  out="$tmp/out"
+  HOME="$tmp/home"
+  OMACASE_STATE="$tmp/state"
+  OMACASE_DATA="$tmp/data"
+  OMACASE_ROOT="$ROOT"
+  mkdir -p "$HOME"
+  (
+    # shellcheck source=/dev/null
+    source "$ROOT/lib/common.sh"
+    # shellcheck source=/dev/null
+    source "$ROOT/lib/install.sh"
+    _test_stub_convergence_externals
+    brew() { [ "${1:-}" = bundle ] && return 1; return 0; }
+    omacase_install
+  ) >"$out" 2>&1
+  # shellcheck disable=SC2181 # status is intentionally captured after the subshell
+  [ $? -ne 0 ] && grep -q 'PARTIAL' "$out" && grep -q 'brew bundle' "$out"
+}
+
+test_partial_brew_upgrade_fails_update() {
+  local tmp out
+  tmp="$(mktemp -d)"
+  out="$tmp/out"
+  HOME="$tmp/home"
+  OMACASE_STATE="$tmp/state"
+  OMACASE_DATA="$tmp/data"
+  OMACASE_ROOT="$ROOT"
+  mkdir -p "$HOME"
+  (
+    export OMACASE_UPDATE_REEXECED=1
+    # shellcheck source=/dev/null
+    source "$ROOT/lib/common.sh"
+    # shellcheck source=/dev/null
+    source "$ROOT/lib/update.sh"
+    _test_stub_convergence_externals
+    brew() { [ "${1:-}" = upgrade ] && return 1; return 0; }
+    omacase_update
+  ) >"$out" 2>&1
+  # shellcheck disable=SC2181 # status is intentionally captured after the subshell
+  [ $? -ne 0 ] && grep -q 'PARTIAL' "$out" && grep -q 'brew upgrade' "$out"
+}
+
+test_partial_brew_update_fails_update() {
+  local tmp out
+  tmp="$(mktemp -d)"
+  out="$tmp/out"
+  HOME="$tmp/home"
+  OMACASE_STATE="$tmp/state"
+  OMACASE_DATA="$tmp/data"
+  OMACASE_ROOT="$ROOT"
+  mkdir -p "$HOME"
+  (
+    export OMACASE_UPDATE_REEXECED=1
+    # shellcheck source=/dev/null
+    source "$ROOT/lib/common.sh"
+    # shellcheck source=/dev/null
+    source "$ROOT/lib/update.sh"
+    _test_stub_convergence_externals
+    brew() { [ "${1:-}" = update ] && return 1; return 0; }
+    omacase_update
+  ) >"$out" 2>&1
+  # shellcheck disable=SC2181 # status is intentionally captured after the subshell
+  [ $? -ne 0 ] && grep -q 'PARTIAL' "$out" && grep -q 'brew update' "$out"
+}
+
+# `omacase_install || true` disables errexit inside install, so a failed
+# _auto_backup would still link dotfiles. Nested install must stay a simple
+# command so set -e still applies to non-ledgered steps.
+test_update_stops_on_non_ledgered_install_failure() {
+  local tmp out rc
+  tmp="$(mktemp -d)"
+  out="$tmp/out"
+  mkdir -p "$tmp/home"
+  rc=0
+  TEST_REPO_ROOT="$ROOT" TEST_TMP="$tmp" \
+    HOME="$tmp/home" OMACASE_STATE="$tmp/state" OMACASE_DATA="$tmp/data" \
+    OMACASE_ROOT="$ROOT" bash -e -u -o pipefail -c '
+    export OMACASE_UPDATE_REEXECED=1
+    builtin source "$TEST_REPO_ROOT/lib/common.sh"
+    source() {
+      case "${1:-}" in
+        */backup.sh)
+          builtin source "$@"
+          _preflight_command_links() { return 0; }
+          _auto_backup() {
+            false
+            : > "$TEST_TMP/backup-continued"
+          }
+          _link_dotfiles() { : > "$TEST_TMP/dotfiles-ran"; }
+          return 0 ;;
+        */install.sh)
+          builtin source "$@"
+          _link_command() { return 0; }
+          return 0 ;;
+        */theme.sh)
+          omacase_theme() { return 0; }
+          can_set_appearance() { return 0; }
+          return 0 ;;
+        */wm.sh)
+          omacase_wm() { return 0; }
+          return 0 ;;
+        */migrate.sh)
+          _migrations_baseline() { return 0; }
+          omacase_migrate() { return 0; }
+          return 0 ;;
+        *) builtin source "$@" ;;
+      esac
+    }
+    brew() { return 0; }
+    mise() { return 0; }
+    herdr() { return 0; }
+    defaults() { return 0; }
+    killall() { return 0; }
+    osascript() { return 0; }
+    launchctl() { return 0; }
+    git() { return 0; }
+    bash() {
+      case "${1:-}" in
+        */macos/defaults.sh) return 0 ;;
+        *) command bash "$@" ;;
+      esac
+    }
+    ensure_brew_env() { return 0; }
+    # shellcheck source=/dev/null
+    builtin source "$TEST_REPO_ROOT/lib/update.sh"
+    omacase_update
+  ' >"$out" 2>&1
+  rc=$?
+  [ "$rc" -ne 0 ] &&
+    ! grep -q 'omacase up to date' "$out" &&
+    [ ! -e "$tmp/backup-continued" ] &&
+    [ ! -e "$tmp/dotfiles-ran" ] &&
+    ! grep -q 'omacase_install ||' "$ROOT/lib/update.sh"
+}
+
 test_update_fails_when_self_pull_fails() {
   # omacase_update's ensure_brew_env aborts before the pull on anything but
   # Apple Silicon + /opt/homebrew — the abort message would satisfy the
@@ -428,6 +619,26 @@ test_bootstrap_copies_are_identical() {
   # Both are live curl|bash entry points; boot.sh is the source of truth and
   # site/install must be an exact copy (see boot.sh header).
   cmp -s "$ROOT/boot.sh" "$ROOT/site/install"
+}
+
+test_macos_version_gate_boundaries() {
+  # shellcheck source=/dev/null
+  source "$ROOT/lib/common.sh"
+  _macos_version_supported "26" &&
+    _macos_version_supported "26.0" &&
+    _macos_version_supported "26.6.1" &&
+    _macos_version_supported "27.1" &&
+    ! _macos_version_supported "25.6" &&
+    ! _macos_version_supported "15.5" &&
+    ! _macos_version_supported "" &&
+    ! _macos_version_supported "beta"
+}
+
+test_boot_and_runtime_share_macos_minimum() {
+  # One number, three files — drift here would let bootstrap and runtime disagree.
+  grep -q 'OMACASE_MACOS_MIN=26' "$ROOT/lib/common.sh" &&
+    grep -q 'MACOS_MIN=26' "$ROOT/boot.sh" &&
+    grep -q 'MACOS_MIN=26' "$ROOT/site/install"
 }
 
 test_backup_domains_cover_defaults_sh() {
@@ -1103,6 +1314,11 @@ run_test "restore PRESENT leaf preserves sibling" test_restore_present_leaf_pres
 run_test "restore legacy PRESENT dir does not follow current symlink" test_restore_legacy_present_dir_does_not_follow_current_symlink
 run_test "restore legacy ABSENT dir preserves sibling" test_restore_legacy_absent_dir_preserves_sibling
 run_test "restore ABSENT leaf prunes empty parents not .config" test_restore_absent_leaf_prunes_empty_parents_not_config
+run_test "require ledgers a failure and continues" test_require_ledgers_failure_and_continues
+run_test "partial brew bundle fails install" test_partial_brew_bundle_fails_install
+run_test "partial brew upgrade fails update" test_partial_brew_upgrade_fails_update
+run_test "partial brew update fails update" test_partial_brew_update_fails_update
+run_test "update stops on non-ledgered install failure" test_update_stops_on_non_ledgered_install_failure
 run_test "update fails on self-update failure" test_update_fails_when_self_pull_fails
 run_test "backup domains cover macos/defaults.sh" test_backup_domains_cover_defaults_sh
 run_test "defaults disable Stage Manager" test_stage_manager_is_disabled_by_defaults
@@ -1112,6 +1328,8 @@ run_test "herdr is declared in the Brewfile" test_herdr_is_declared_in_brewfile
 run_test "herdr agent hooks cover shipped agent CLIs" test_herdr_hooks_cover_shipped_agents
 run_test "herdr skill is left to herdr, not managed by omacase" test_herdr_skill_is_not_managed_by_omacase
 run_test "site/install matches boot.sh" test_bootstrap_copies_are_identical
+run_test "macos version gate accepts 26+ and rejects below" test_macos_version_gate_boundaries
+run_test "boot and runtime share the macos 26 minimum" test_boot_and_runtime_share_macos_minimum
 run_test "theme manifest lists all themes" test_theme_manifest_lists_all_themes
 run_test "OmniWM seed is valid with nine workspaces" test_omniwm_seed_is_valid_and_has_nine_workspaces
 run_test "Ghostty windows remain manageable by OmniWM" test_ghostty_windows_remain_manageable
