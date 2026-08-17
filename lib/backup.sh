@@ -64,11 +64,12 @@ _managed_theme_targets() {
 }
 
 # Snapshot the exact leaf files Omacase links, plus generated theme fragments
-# and OmniWM's live, user-editable settings (seeded once, never overwritten).
+# and seeded-once user config (OmniWM settings, login-items).
 _backup_targets() {
   _managed_file_targets
   _managed_theme_targets
   echo "$HOME/.config/omniwm/settings.toml"
+  echo "$HOME/.config/omacase/login-items"
 }
 
 # Restore manifests created by earlier Omacase releases can contain top-level
@@ -81,18 +82,6 @@ _legacy_restore_targets() {
     "$HOME/.config/borders" \
     "$HOME/.config/karabiner" \
     "$HOME/.config/sketchybar"
-}
-
-# True if PATH is a symlink that already points inside this repo or Omacase's
-# generated theme cache.
-_is_omacase_link() {
-  local t="$1" dest
-  [ -L "$t" ] || return 1
-  dest="$(readlink "$t")"
-  case "$dest" in
-    "$OMACASE_ROOT"/*|"$OMACASE_DATA"/generated/themes/*) return 0 ;;
-    *) return 1 ;;
-  esac
 }
 
 # True if $1 or any ancestor (up to $HOME) is our link. Old-style installs

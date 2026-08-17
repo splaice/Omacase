@@ -399,6 +399,197 @@ test_restore_absent_leaf_prunes_empty_parents_not_config() {
     [ -d "$HOME/.config" ]
 }
 
+test_require_ledgers_failure_and_continues() {
+  (
+    # shellcheck source=/dev/null
+    source "$ROOT/lib/common.sh"
+    boom() { return 1; }
+    require "step-a" boom >/dev/null 2>&1
+    require "step-b" true >/dev/null 2>&1
+    [ "${#OMACASE_INCOMPLETE[@]}" -eq 1 ] && ! converged "done" >/dev/null 2>&1
+  )
+}
+
+# Keep install/update integration tests offline and off the live machine.
+_test_stub_convergence_externals() {
+  brew() { return 0; }
+  mise() { return 0; }
+  herdr() { return 0; }
+  defaults() { return 0; }
+  killall() { return 0; }
+  osascript() { return 0; }
+  launchctl() { return 0; }
+  git() { return 0; }
+  bash() {
+    case "${1:-}" in
+      */macos/defaults.sh) return 0 ;;
+      *) command bash "$@" ;;
+    esac
+  }
+  source() {
+    case "${1:-}" in
+      */backup.sh)
+        builtin source "$@"
+        _preflight_command_links() { return 0; }
+        return 0 ;;
+      */theme.sh)
+        omacase_theme() { return 0; }
+        can_set_appearance() { return 0; }
+        return 0 ;;
+      */wm.sh)
+        omacase_wm() { return 0; }
+        return 0 ;;
+      */migrate.sh)
+        _migrations_baseline() { return 0; }
+        omacase_migrate() { return 0; }
+        return 0 ;;
+      */install.sh)
+        omacase_install() { return 0; }
+        return 0 ;;
+      *) builtin source "$@" ;;
+    esac
+  }
+  _link_command() { return 0; }
+}
+
+test_partial_brew_bundle_fails_install() {
+  local tmp out
+  tmp="$(mktemp -d)"
+  out="$tmp/out"
+  HOME="$tmp/home"
+  OMACASE_STATE="$tmp/state"
+  OMACASE_DATA="$tmp/data"
+  OMACASE_ROOT="$ROOT"
+  mkdir -p "$HOME"
+  (
+    # shellcheck source=/dev/null
+    source "$ROOT/lib/common.sh"
+    # shellcheck source=/dev/null
+    source "$ROOT/lib/install.sh"
+    _test_stub_convergence_externals
+    brew() { [ "${1:-}" = bundle ] && return 1; return 0; }
+    omacase_install
+  ) >"$out" 2>&1
+  # shellcheck disable=SC2181 # status is intentionally captured after the subshell
+  [ $? -ne 0 ] && grep -q 'PARTIAL' "$out" && grep -q 'brew bundle' "$out"
+}
+
+test_partial_brew_upgrade_fails_update() {
+  local tmp out
+  tmp="$(mktemp -d)"
+  out="$tmp/out"
+  HOME="$tmp/home"
+  OMACASE_STATE="$tmp/state"
+  OMACASE_DATA="$tmp/data"
+  OMACASE_ROOT="$ROOT"
+  mkdir -p "$HOME"
+  (
+    export OMACASE_UPDATE_REEXECED=1
+    # shellcheck source=/dev/null
+    source "$ROOT/lib/common.sh"
+    # shellcheck source=/dev/null
+    source "$ROOT/lib/update.sh"
+    _test_stub_convergence_externals
+    brew() { [ "${1:-}" = upgrade ] && return 1; return 0; }
+    omacase_update
+  ) >"$out" 2>&1
+  # shellcheck disable=SC2181 # status is intentionally captured after the subshell
+  [ $? -ne 0 ] && grep -q 'PARTIAL' "$out" && grep -q 'brew upgrade' "$out"
+}
+
+test_partial_brew_update_fails_update() {
+  local tmp out
+  tmp="$(mktemp -d)"
+  out="$tmp/out"
+  HOME="$tmp/home"
+  OMACASE_STATE="$tmp/state"
+  OMACASE_DATA="$tmp/data"
+  OMACASE_ROOT="$ROOT"
+  mkdir -p "$HOME"
+  (
+    export OMACASE_UPDATE_REEXECED=1
+    # shellcheck source=/dev/null
+    source "$ROOT/lib/common.sh"
+    # shellcheck source=/dev/null
+    source "$ROOT/lib/update.sh"
+    _test_stub_convergence_externals
+    brew() { [ "${1:-}" = update ] && return 1; return 0; }
+    omacase_update
+  ) >"$out" 2>&1
+  # shellcheck disable=SC2181 # status is intentionally captured after the subshell
+  [ $? -ne 0 ] && grep -q 'PARTIAL' "$out" && grep -q 'brew update' "$out"
+}
+
+# `omacase_install || true` disables errexit inside install, so a failed
+# _auto_backup would still link dotfiles. Nested install must stay a simple
+# command so set -e still applies to non-ledgered steps.
+test_update_stops_on_non_ledgered_install_failure() {
+  local tmp out rc
+  tmp="$(mktemp -d)"
+  out="$tmp/out"
+  mkdir -p "$tmp/home"
+  rc=0
+  TEST_REPO_ROOT="$ROOT" TEST_TMP="$tmp" \
+    HOME="$tmp/home" OMACASE_STATE="$tmp/state" OMACASE_DATA="$tmp/data" \
+    OMACASE_ROOT="$ROOT" bash -e -u -o pipefail -c '
+    export OMACASE_UPDATE_REEXECED=1
+    builtin source "$TEST_REPO_ROOT/lib/common.sh"
+    source() {
+      case "${1:-}" in
+        */backup.sh)
+          builtin source "$@"
+          _preflight_command_links() { return 0; }
+          _auto_backup() {
+            false
+            : > "$TEST_TMP/backup-continued"
+          }
+          _link_dotfiles() { : > "$TEST_TMP/dotfiles-ran"; }
+          return 0 ;;
+        */install.sh)
+          builtin source "$@"
+          _link_command() { return 0; }
+          return 0 ;;
+        */theme.sh)
+          omacase_theme() { return 0; }
+          can_set_appearance() { return 0; }
+          return 0 ;;
+        */wm.sh)
+          omacase_wm() { return 0; }
+          return 0 ;;
+        */migrate.sh)
+          _migrations_baseline() { return 0; }
+          omacase_migrate() { return 0; }
+          return 0 ;;
+        *) builtin source "$@" ;;
+      esac
+    }
+    brew() { return 0; }
+    mise() { return 0; }
+    herdr() { return 0; }
+    defaults() { return 0; }
+    killall() { return 0; }
+    osascript() { return 0; }
+    launchctl() { return 0; }
+    git() { return 0; }
+    bash() {
+      case "${1:-}" in
+        */macos/defaults.sh) return 0 ;;
+        *) command bash "$@" ;;
+      esac
+    }
+    ensure_brew_env() { return 0; }
+    # shellcheck source=/dev/null
+    builtin source "$TEST_REPO_ROOT/lib/update.sh"
+    omacase_update
+  ' >"$out" 2>&1
+  rc=$?
+  [ "$rc" -ne 0 ] &&
+    ! grep -q 'omacase up to date' "$out" &&
+    [ ! -e "$tmp/backup-continued" ] &&
+    [ ! -e "$tmp/dotfiles-ran" ] &&
+    ! grep -q 'omacase_install ||' "$ROOT/lib/update.sh"
+}
+
 test_update_fails_when_self_pull_fails() {
   # omacase_update's ensure_brew_env aborts before the pull on anything but
   # Apple Silicon + /opt/homebrew — the abort message would satisfy the
@@ -599,6 +790,26 @@ test_bootstrap_copies_are_identical() {
   cmp -s "$ROOT/boot.sh" "$ROOT/site/install"
 }
 
+test_macos_version_gate_boundaries() {
+  # shellcheck source=/dev/null
+  source "$ROOT/lib/common.sh"
+  _macos_version_supported "26" &&
+    _macos_version_supported "26.0" &&
+    _macos_version_supported "26.6.1" &&
+    _macos_version_supported "27.1" &&
+    ! _macos_version_supported "25.6" &&
+    ! _macos_version_supported "15.5" &&
+    ! _macos_version_supported "" &&
+    ! _macos_version_supported "beta"
+}
+
+test_boot_and_runtime_share_macos_minimum() {
+  # One number, three files — drift here would let bootstrap and runtime disagree.
+  grep -q 'OMACASE_MACOS_MIN=26' "$ROOT/lib/common.sh" &&
+    grep -q 'MACOS_MIN=26' "$ROOT/boot.sh" &&
+    grep -q 'MACOS_MIN=26' "$ROOT/site/install"
+}
+
 test_backup_domains_cover_defaults_sh() {
   OMACASE_ROOT="$ROOT"
   # shellcheck source=/dev/null
@@ -777,9 +988,165 @@ test_launcher_build_produces_valid_bundle() {
 }
 
 test_launcher_reads_login_items_config() {
-  # The shipped config must list OmniWM, and the launcher script must consult it.
-  grep -qx 'OmniWM' "$ROOT/home/dot_config/omacase/login-items" &&
+  # The shipped seed must list OmniWM, and the launcher script must consult the
+  # user-owned copy (never a tracked home/ symlink).
+  grep -qx 'OmniWM' "$ROOT/config/omacase/login-items" &&
     grep -q 'omacase/login-items' "$ROOT/assets/launcher/OmacaseLauncher.sh"
+}
+
+test_data_and_checkout_defaults_are_separate() {
+  # The public clone path must not equal the runtime data root, or caches land
+  # in the worktree (issue #7).
+  grep -q 'OMACASE_PREFIX:-\$HOME/.local/share/omacase/repo' "$ROOT/boot.sh" &&
+    grep -q 'OMACASE_PREFIX:-\$HOME/.local/share/omacase/repo' "$ROOT/site/install" &&
+    grep -q 'OMACASE_DATA:-\$HOME/.local/share/omacase' "$ROOT/lib/common.sh"
+}
+
+test_login_items_is_seed_not_symlink() {
+  [ -f "$ROOT/config/omacase/login-items" ] &&
+    ! find "$ROOT/home" -name 'login-items' | grep -q . &&
+    grep -q '_launcher_seed_login_items' "$ROOT/lib/launcher.sh"
+}
+
+test_launcher_seed_replaces_managed_link_with_copy() {
+  local tmp cfg seed
+  tmp="$(mktemp -d)"
+  HOME="$tmp/home"
+  OMACASE_STATE="$tmp/state"
+  OMACASE_ROOT="$ROOT"
+  OMACASE_DATA="$tmp/data"
+  cfg="$HOME/.config/omacase/login-items"
+  seed="$ROOT/config/omacase/login-items"
+  mkdir -p "$(dirname "$cfg")"
+  ln -s "$seed" "$cfg"
+  # shellcheck source=/dev/null
+  source "$ROOT/lib/common.sh"
+  # shellcheck source=/dev/null
+  source "$ROOT/lib/launcher.sh"
+  _launcher_seed_login_items
+  [ -f "$cfg" ] && [ ! -L "$cfg" ] &&
+    cmp -s "$cfg" "$seed" &&
+    grep -qx 'OmniWM' "$seed"
+}
+
+# After login-items left home/, existing installs have a dangling symlink to
+# the old path. Seeding must not write an empty file.
+test_launcher_seed_dangling_old_link_uses_seed() {
+  local tmp cfg
+  tmp="$(mktemp -d)"
+  HOME="$tmp/home"
+  OMACASE_STATE="$tmp/state"
+  OMACASE_ROOT="$ROOT"
+  OMACASE_DATA="$tmp/data"
+  cfg="$HOME/.config/omacase/login-items"
+  mkdir -p "$(dirname "$cfg")"
+  ln -s "$OMACASE_ROOT/home/dot_config/omacase/login-items" "$cfg"
+  # shellcheck source=/dev/null
+  source "$ROOT/lib/common.sh"
+  # shellcheck source=/dev/null
+  source "$ROOT/lib/launcher.sh"
+  _launcher_seed_login_items
+  [ -f "$cfg" ] && [ ! -L "$cfg" ] && grep -qx 'OmniWM' "$cfg"
+}
+
+# Edits through the old symlink dirty the tracked file. Recovery must copy
+# them out and clean the checkout so a destage pull can fast-forward.
+test_recover_legacy_login_items_allows_destage_pull() {
+  local origin clone live
+  origin="$(mktemp -d)"
+  clone="$(mktemp -d)"
+  HOME="$(mktemp -d)/home"
+  live="$HOME/.config/omacase/login-items"
+  git init -q "$origin"
+  git -C "$origin" checkout -q -B main
+  git -C "$origin" config user.email "omacase-test@example.com"
+  git -C "$origin" config user.name "omacase-test"
+  mkdir -p "$origin/home/dot_config/omacase"
+  printf 'OmniWM\n' > "$origin/home/dot_config/omacase/login-items"
+  git -C "$origin" add home/dot_config/omacase/login-items
+  git -C "$origin" commit -q -m 'legacy login-items'
+  git clone -q "$origin" "$clone"
+  mkdir -p "$(dirname "$live")"
+  ln -s "$clone/home/dot_config/omacase/login-items" "$live"
+  printf 'OmniWM\nTodoist\n' > "$clone/home/dot_config/omacase/login-items"
+  mkdir -p "$origin/config/omacase"
+  printf 'OmniWM\n' > "$origin/config/omacase/login-items"
+  git -C "$origin" rm -q home/dot_config/omacase/login-items
+  git -C "$origin" add config/omacase/login-items
+  git -C "$origin" commit -q -m destage
+  # shellcheck source=/dev/null
+  source "$ROOT/lib/common.sh"
+  _recover_legacy_login_items "$clone"
+  git -C "$clone" pull --ff-only >/dev/null 2>&1 &&
+    [ -f "$live" ] && [ ! -L "$live" ] &&
+    grep -qx 'Todoist' "$live" &&
+    [ ! -e "$clone/home/dot_config/omacase/login-items" ] &&
+    grep -q '_recover_legacy_login_items' "$ROOT/boot.sh" &&
+    grep -q '_recover_legacy_login_items' "$ROOT/site/install" &&
+    grep -q '_recover_legacy_login_items' "$ROOT/lib/update.sh"
+}
+
+test_recover_legacy_login_items_honors_dryrun() {
+  local tmp root live tracked before
+  tmp="$(mktemp -d)"
+  root="$tmp/repo"
+  HOME="$tmp/home"
+  live="$HOME/.config/omacase/login-items"
+  tracked="$root/home/dot_config/omacase/login-items"
+  mkdir -p "$(dirname "$live")" "$(dirname "$tracked")"
+  git init -q "$root"
+  git -C "$root" config user.email "omacase-test@example.com"
+  git -C "$root" config user.name "omacase-test"
+  printf 'OmniWM\n' > "$tracked"
+  git -C "$root" add home/dot_config/omacase/login-items
+  git -C "$root" commit -q -m legacy
+  ln -s "$tracked" "$live"
+  printf 'OmniWM\nTodoist\n' > "$tracked"
+  before="$(git -C "$root" status --short)"
+  OMACASE_DRYRUN=1
+  # shellcheck source=/dev/null
+  source "$ROOT/lib/common.sh"
+  _recover_legacy_login_items "$root" >/dev/null
+  [ -L "$live" ] &&
+    [ "$(readlink "$live")" = "$tracked" ] &&
+    [ "$(git -C "$root" status --short)" = "$before" ] &&
+    grep -qx 'Todoist' "$tracked"
+}
+
+test_recover_legacy_login_items_preserves_nonlegacy_live_paths() {
+  local tmp root tracked live external
+  tmp="$(mktemp -d)"
+  root="$tmp/repo"
+  HOME="$tmp/home"
+  tracked="$root/home/dot_config/omacase/login-items"
+  live="$HOME/.config/omacase/login-items"
+  external="$tmp/external-login-items"
+  mkdir -p "$(dirname "$tracked")" "$(dirname "$live")"
+  git init -q "$root"
+  git -C "$root" config user.email "omacase-test@example.com"
+  git -C "$root" config user.name "omacase-test"
+  printf 'tracked default\n' > "$tracked"
+  git -C "$root" add home/dot_config/omacase/login-items
+  git -C "$root" commit -q -m legacy
+  printf 'tracked local edit\n' > "$tracked"
+  printf 'external user config\n' > "$external"
+  ln -s "$external" "$live"
+  # shellcheck source=/dev/null
+  source "$ROOT/lib/common.sh"
+  _recover_legacy_login_items "$root"
+  [ -L "$live" ] &&
+    [ "$(readlink "$live")" = "$external" ] &&
+    grep -qx 'external user config' "$live" &&
+    grep -qx 'tracked local edit' "$tracked" &&
+    [ -n "$(git -C "$root" status --short)" ] || return 1
+
+  rm -f "$live"
+  printf 'real user config\n' > "$live"
+  _recover_legacy_login_items "$root"
+  [ -f "$live" ] && [ ! -L "$live" ] &&
+    grep -qx 'real user config' "$live" &&
+    grep -qx 'tracked local edit' "$tracked" &&
+    [ -n "$(git -C "$root" status --short)" ]
 }
 
 # Issue #4: a failed migration must halt the runner and keep the marker, so
@@ -1116,6 +1483,11 @@ run_test "restore PRESENT leaf preserves sibling" test_restore_present_leaf_pres
 run_test "restore legacy PRESENT dir does not follow current symlink" test_restore_legacy_present_dir_does_not_follow_current_symlink
 run_test "restore legacy ABSENT dir preserves sibling" test_restore_legacy_absent_dir_preserves_sibling
 run_test "restore ABSENT leaf prunes empty parents not .config" test_restore_absent_leaf_prunes_empty_parents_not_config
+run_test "require ledgers a failure and continues" test_require_ledgers_failure_and_continues
+run_test "partial brew bundle fails install" test_partial_brew_bundle_fails_install
+run_test "partial brew upgrade fails update" test_partial_brew_upgrade_fails_update
+run_test "partial brew update fails update" test_partial_brew_update_fails_update
+run_test "update stops on non-ledgered install failure" test_update_stops_on_non_ledgered_install_failure
 run_test "update fails on self-update failure" test_update_fails_when_self_pull_fails
 run_test "latest release tag is greatest semver" test_latest_release_tag_picks_greatest_semver
 run_test "update --check does not mutate the worktree" test_update_check_mutates_nothing
@@ -1132,6 +1504,8 @@ run_test "herdr is declared in the Brewfile" test_herdr_is_declared_in_brewfile
 run_test "herdr agent hooks cover shipped agent CLIs" test_herdr_hooks_cover_shipped_agents
 run_test "herdr skill is left to herdr, not managed by omacase" test_herdr_skill_is_not_managed_by_omacase
 run_test "site/install matches boot.sh" test_bootstrap_copies_are_identical
+run_test "macos version gate accepts 26+ and rejects below" test_macos_version_gate_boundaries
+run_test "boot and runtime share the macos 26 minimum" test_boot_and_runtime_share_macos_minimum
 run_test "theme manifest lists all themes" test_theme_manifest_lists_all_themes
 run_test "OmniWM seed is valid with nine workspaces" test_omniwm_seed_is_valid_and_has_nine_workspaces
 run_test "Ghostty windows remain manageable by OmniWM" test_ghostty_windows_remain_manageable
@@ -1153,6 +1527,13 @@ run_test "usage renders fixture records" test_usage_renders_fixture_records
 run_test "usage concurrent writes are safe" test_usage_concurrent_writes_are_safe
 run_test "launcher build produces a valid bundle and agent" test_launcher_build_produces_valid_bundle
 run_test "launcher reads the login-items config" test_launcher_reads_login_items_config
+run_test "data and checkout defaults are separate" test_data_and_checkout_defaults_are_separate
+run_test "login-items is seed-once user config" test_login_items_is_seed_not_symlink
+run_test "launcher seed replaces managed link with a copy" test_launcher_seed_replaces_managed_link_with_copy
+run_test "launcher seed recovers a dangling pre-move login-items link" test_launcher_seed_dangling_old_link_uses_seed
+run_test "legacy login-items edits survive a destage pull" test_recover_legacy_login_items_allows_destage_pull
+run_test "legacy login-items recovery honors dry-run" test_recover_legacy_login_items_honors_dryrun
+run_test "legacy recovery preserves nonlegacy live config" test_recover_legacy_login_items_preserves_nonlegacy_live_paths
 run_test "extras sudo-touchid dry run wraps all mutations" test_extras_sudo_touchid_dry_run_wraps_all_mutations
 run_test "cli keybinds displays KEYBINDS.md" test_cli_keybinds_displays_reference
 run_test "menu lists primary commands and opens keybinds" test_menu_lists_primary_commands_and_routes_keybinds
