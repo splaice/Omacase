@@ -40,6 +40,7 @@ usage: omacase <command> [args]
   message            Toggle a centered iMessage overlay at 80% (alias: messages)
   todoist            Toggle a centered Todoist overlay
   usage [update|json]  Agent usage dashboard — token burn + plan limits (Claude, Codex, Grok)
+  tools              List every tool Omacase installs, one line each (alias: list-tools)
   keybinds           Display the OmniWM and Omacase key reference
   doctor             Check permissions and missing grants
   backup [label]     Snapshot current dotfiles & macOS defaults
@@ -77,6 +78,7 @@ case "$cmd" in
   message|messages) source "$OMACASE_ROOT/lib/wm.sh";     omacase_message   "$@" ;;
   todoist)        source "$OMACASE_ROOT/lib/wm.sh";       omacase_todoist   "$@" ;;
   usage)          source "$OMACASE_ROOT/lib/usage.sh";    omacase_usage   "$@" ;;
+  tools|list-tools) source "$OMACASE_ROOT/lib/tools.sh";  omacase_tools   "$@" ;;
   keybinds)       source "$OMACASE_ROOT/lib/keybinds.sh"; omacase_keybinds  "$@" ;;
   doctor)         source "$OMACASE_ROOT/lib/doctor.sh";   omacase_doctor  "$@" ;;
   backup)         source "$OMACASE_ROOT/lib/backup.sh";   omacase_backup  "$@" ;;

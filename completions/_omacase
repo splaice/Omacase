@@ -42,6 +42,8 @@ _omacase() {
         'messages:toggle a centered iMessage overlay'
         'todoist:toggle a centered Todoist overlay'
         'usage:agent usage dashboard — token burn + plan limits'
+        'tools:list every tool Omacase installs, one line each'
+        'list-tools:list every tool Omacase installs, one line each'
         'keybinds:display the OmniWM and Omacase key reference'
         'doctor:check permissions and missing grants'
         'backup:snapshot current dotfiles & macOS defaults'

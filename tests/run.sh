@@ -845,6 +845,26 @@ test_grok_installer_requires_opt_in() {
     grep -q "Skipping Grok CLI's unpinned upstream installer" "$ROOT/lib/install.sh"
 }
 
+# `omacase tools` renders descriptions from Brewfile comments; an entry
+# without one would render blank, so the comment is part of the contract.
+test_every_brewfile_entry_has_a_description() {
+  ! grep -E '^(brew|cask) "' "$ROOT/Brewfile" | grep -v '#' | grep -q .
+}
+
+test_tools_lists_brewfile_and_mise_entries() {
+  local out declared rendered
+  out="$("$ROOT/bin/omacase" tools)"
+  declared="$(grep -cE '^(brew|cask) "' "$ROOT/Brewfile")"
+  rendered="$(printf '%s\n' "$out" | grep -cE '^  [a-z0-9]' || true)"
+  # Brewfile entries + 3 npm CLIs (or the not-linked hint) + 2 self-managed.
+  [ "$rendered" -ge $((declared + 2)) ] &&
+    printf '%s' "$out" | grep -q 'Terminal & shell' &&
+    printf '%s' "$out" | grep -qE '^  eza ' &&
+    printf '%s' "$out" | grep -qE '^  claude ' &&
+    "$ROOT/bin/omacase" help | grep -qE '^[[:space:]]+tools[[:space:]]' &&
+    grep -q "'tools:" "$ROOT/completions/_omacase"
+}
+
 test_herdr_is_declared_in_brewfile() {
   grep -qE '^brew "herdr"' "$ROOT/Brewfile"
 }
@@ -1507,6 +1527,8 @@ run_test "backup domains cover macos/defaults.sh" test_backup_domains_cover_defa
 run_test "defaults disable Stage Manager" test_stage_manager_is_disabled_by_defaults
 run_test "Homebrew trust is scoped to exact third-party packages" test_brew_trust_is_scoped
 run_test "Grok installer requires explicit opt-in" test_grok_installer_requires_opt_in
+run_test "every Brewfile entry has a description" test_every_brewfile_entry_has_a_description
+run_test "tools lists Brewfile and mise entries" test_tools_lists_brewfile_and_mise_entries
 run_test "herdr is declared in the Brewfile" test_herdr_is_declared_in_brewfile
 run_test "herdr agent hooks cover shipped agent CLIs" test_herdr_hooks_cover_shipped_agents
 run_test "herdr skill is left to herdr, not managed by omacase" test_herdr_skill_is_not_managed_by_omacase

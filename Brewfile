@@ -39,8 +39,8 @@ brew "fastfetch"         # branded system summary (`omacase menu` → About); co
 brew "neovim"            # + LazyVim (seeded via dotfiles) — the editor
 brew "mise"              # runtime version manager (node/python/ruby) + npm: CLIs
 brew "uv"                # fast Python package/tool manager (hosts mlx-lm for the planned local LLM)
-brew "direnv"
-brew "lazygit"
+brew "direnv"           # per-directory env vars (.envrc), hooked into zsh
+brew "lazygit"          # git TUI (`lg`)
 brew "gh"                # GitHub CLI
 brew "just"              # command runner (justfiles)
 
@@ -72,11 +72,10 @@ cask "the-unarchiver"    # archives beyond zip (stock Archive Utility handles li
 # Messaging. Native apps rather than `omacase webapp` shells: these want
 # background notifications, and the desktop clients carry features the web
 # versions do not.
-cask "discord"
-cask "signal"
-cask "telegram"
-cask "whatsapp"
-
+cask "discord"          # Discord — community & voice chat
+cask "signal"           # Signal — private messaging
+cask "telegram"         # Telegram — messaging
+cask "whatsapp"         # WhatsApp — messaging (self-updates; brew upgrade skips it)
 # --- Dictation --------------------------------------------------------------
 cask "fluidvoice" # offline voice-to-text (local model); needs Mic + Accessibility
 
@@ -86,8 +85,7 @@ brew "terminal-notifier" # reliable native notifications for `omacase notify` (o
 # (Omacase manages its own dotfiles via symlinks — no chezmoi dependency.)
 
 # --- Fonts ------------------------------------------------------------------
-cask "font-jetbrains-mono-nerd-font"
-
+cask "font-jetbrains-mono-nerd-font" # terminal/editor font with glyph icons
 # --- Browsers ---------------------------------------------------------------
 # Brave is the dedicated `omacase webapp` browser (signed; opens chromeless
 # app windows) so ⌘Q on a web app never quits your daily/default browser.
@@ -96,4 +94,4 @@ cask "brave-browser" # Chromium + PWAs; pairs with Safari "Add to Dock"
 # the web-dev reference engine (and where Claude in Chrome runs). Safari stays
 # stock. Only the stable channel ships — a default set has no business
 # installing two channels of one browser.
-cask "google-chrome"
+cask "google-chrome"    # Chrome — secondary browser (web apps)

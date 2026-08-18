@@ -56,6 +56,7 @@ omacase backup [label]      snapshot managed state and live OmniWM settings
 omacase restore [id]        restore a snapshot
 omacase migrate             run one-time changeovers
 omacase usage [update]      agent usage dashboard — token burn + plan limits (Claude, Codex, Grok)
+omacase tools               list every tool Omacase installs, one line each
 omacase extras [name]       optional opt-in tweaks: sudo-touchid, mole, usage-tracker (never run by install)
 omacase uninstall           remove Omacase-managed config; keep applications
 ```
