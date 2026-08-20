@@ -22,7 +22,8 @@ _font_installed_version() { cat "$OMACASE_FONT_DIR/$_FONT_MARKER" 2>/dev/null ||
 # `require` ledgers it — Ghostty falls back to JetBrains Mono meanwhile.
 _font_install() {
   if [ "$(_font_installed_version)" = "$OMACASE_FONT_VERSION" ]; then
-    is_dryrun || success "IoskeleyMono $OMACASE_FONT_VERSION already installed."
+    # Same voice as the `brew bundle` lines just above it: nothing happened.
+    is_dryrun || log "Using ioskeley-mono ($OMACASE_FONT_VERSION)"
     return 0
   fi
   if is_dryrun; then
