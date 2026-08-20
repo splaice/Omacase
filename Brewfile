@@ -20,7 +20,6 @@ brew "eza"               # ls
 brew "bat"               # cat
 brew "fd"                # find
 brew "ripgrep"           # grep
-brew "zoxide"            # cd
 brew "fzf"               # fuzzy finder
 brew "btop"              # full terminal system monitor (OmniWM also has a compact native stats popup)
 brew "yazi"              # TUI file manager (`omacase files` opens it as an optional popup)
@@ -29,7 +28,6 @@ brew "git-delta"         # git diffs
 brew "herdr"             # agent-aware multiplexer; sessions survive disconnect (`herdr --remote` for SSH)
 brew "zsh-completions"   # extra completion defs beyond zsh's bundled set (wired in dot_zshrc)
 brew "glow"              # markdown rendered in the terminal (read READMEs where you are)
-brew "dust"              # du
 brew "mole"              # `mo` — deep clean + thorough app uninstaller (`omacase extras mole`; `mo clean --dry-run` previews)
 brew "jq"                # JSON wrangling
 brew "tldr"              # example-first man pages
@@ -38,8 +36,6 @@ brew "fastfetch"         # branded system summary (`omacase menu` → About); co
 # --- Editor & dev -----------------------------------------------------------
 brew "neovim"            # + LazyVim (seeded via dotfiles) — the editor
 brew "uv"                # fast Python package/tool manager (hosts mlx-lm for the planned local LLM)
-brew "direnv"           # per-directory env vars (.envrc), hooked into zsh
-brew "lazygit"          # git TUI (`lg`)
 brew "gh"                # GitHub CLI
 brew "just"              # command runner (justfiles)
 
@@ -64,7 +60,6 @@ cask "spotify"           # music (Apple Music is stock)
 cask "obsidian"          # notes / knowledge base
 cask "1password"         # password manager
 cask "todoist-app"       # tasks
-cask "the-unarchiver"    # archives beyond zip (stock Archive Utility handles little else)
 
 # Messaging. Native apps rather than `omacase webapp` shells: these want
 # background notifications, and the desktop clients carry features the web

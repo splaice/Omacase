@@ -44,16 +44,13 @@ alias find='fd'
 alias grep='rg'
 alias vim='nvim'
 alias vi='nvim'
-alias lg='lazygit'
 # glow renders markdown with the omacase style — ANSI palette indices, so it
 # tracks the active theme like eza/ls does.
 alias glow='command glow -s "$HOME/.config/glow/omacase-glow.json"'
 
 # Tools that hook the shell.
 command -v starship >/dev/null && eval "$(starship init zsh)"
-command -v zoxide   >/dev/null && eval "$(zoxide init zsh)"
 command -v atuin    >/dev/null && eval "$(atuin init zsh)"
-command -v direnv   >/dev/null && eval "$(direnv hook zsh)"
 [ -f /opt/homebrew/opt/fzf/shell/key-bindings.zsh ] && source /opt/homebrew/opt/fzf/shell/key-bindings.zsh
 [ -f /opt/homebrew/opt/fzf/shell/completion.zsh ]   && source /opt/homebrew/opt/fzf/shell/completion.zsh   # fuzzy paths anywhere: `vim **<Tab>`
 
