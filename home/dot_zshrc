@@ -1,6 +1,10 @@
 # omacase zsh — modern CLI defaults. Managed by Omacase.
 if [ -x /opt/homebrew/bin/brew ]; then eval "$(/opt/homebrew/bin/brew shellenv)"; fi
 
+# Local, unmanaged environment (API keys, per-machine exports). Optional — this
+# file is shared by every Omacase install, so a missing ~/.env is not an error.
+[ -f "$HOME/.env" ] && source "$HOME/.env"
+
 export EDITOR=nvim
 bindkey -e   # keep emacs line-editing (^P/^N history, ^A/^E/^R) — EDITOR=nvim would otherwise make zsh default to vi keymap
 export PATH="$HOME/.local/bin:$PATH"   # user bins (`omacase` itself is linked into Homebrew's bin by `omacase install`)
@@ -44,6 +48,8 @@ alias find='fd'
 alias grep='rg'
 alias vim='nvim'
 alias vi='nvim'
+# `hr <host>` attaches to a remote herdr server (see Brewfile: Tailscale + herdr).
+alias hr='herdr --remote'
 # glow renders markdown with the omacase style — ANSI palette indices, so it
 # tracks the active theme like eza/ls does.
 alias glow='command glow -s "$HOME/.config/glow/omacase-glow.json"'
