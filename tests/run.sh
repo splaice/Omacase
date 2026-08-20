@@ -839,8 +839,7 @@ test_stage_manager_is_disabled_by_defaults() {
 
 test_brew_trust_is_scoped() {
   ! grep -q 'HOMEBREW_NO_REQUIRE_TAP_TRUST' "$ROOT/lib/install.sh" &&
-    grep -q 'brew trust --cask BarutSRB/tap/omniwm' "$ROOT/lib/install.sh" &&
-    grep -q 'brew trust --formula finbarr/tap/yolobox' "$ROOT/lib/install.sh"
+    grep -q 'brew trust --cask BarutSRB/tap/omniwm' "$ROOT/lib/install.sh"
 }
 
 test_grok_installer_requires_opt_in() {

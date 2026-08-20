@@ -17,7 +17,7 @@ omacase_tools() {
     /^(brew|cask) "/ {
       line = $0
       name = line; sub(/^(brew|cask) "/, "", name); sub(/".*$/, "", name)
-      n = split(name, parts, "/"); name = parts[n]   # finbarr/tap/yolobox -> yolobox
+      n = split(name, parts, "/"); name = parts[n]   # user/tap/name -> name
       desc = ""
       if (match(line, /# /)) { desc = substr(line, RSTART + 2) }
       if (!printed) { printf "\n%s%s%s\n", bold, section, reset; printed = 1 }

@@ -51,8 +51,6 @@ brew "just"              # command runner (justfiles)
 # explicitly enabled with OMACASE_INSTALL_GROK=1, so neither is declared here.)
 cask "codex"             # OpenAI Codex CLI (official Rust binary; depends on ripgrep)
 brew "opencode"          # opencode — terminal AI coding agent (homebrew-core)
-tap  "finbarr/tap"
-brew "finbarr/tap/yolobox" # run AI coding agents in a sandboxed container
 
 # --- Networking -------------------------------------------------------------
 # Tailscale is what makes the remote half of herdr usable: `herdr --remote

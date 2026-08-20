@@ -70,20 +70,14 @@ omacase_install() {
 }
 
 # Homebrew requires an explicit trust decision before loading third-party
-# packages. Trust only the two exact items in the Brewfile instead of disabling
-# enforcement for the entire bundle or every package in their taps.
+# packages. Trust only the exact item the Brewfile declares instead of disabling
+# enforcement for the entire bundle or every package in its tap.
 _brew_trust_declared_third_party() {
   if run brew tap BarutSRB/tap; then
     run brew trust --cask BarutSRB/tap/omniwm || \
       warn "Could not trust the OmniWM cask; Homebrew may skip it."
   else
     warn "Could not add the OmniWM Homebrew tap."
-  fi
-  if run brew tap finbarr/tap; then
-    run brew trust --formula finbarr/tap/yolobox || \
-      warn "Could not trust the yolobox formula; Homebrew may skip it."
-  else
-    warn "Could not add the yolobox Homebrew tap."
   fi
 }
 
