@@ -1669,6 +1669,54 @@ test_font_uninstall_removes_only_marked_dir() {
   )
 }
 
+# The closing "Next steps" block is conditional: silent when nothing is
+# pending; when it speaks, it names the reason (e.g. OmniWM changed this run).
+_test_install_quiet_harness() {
+  # $1 tmp; $2 omniwm-version sequence for successive _omniwm_version calls
+  export HOME="$1/home" OMACASE_STATE="$1/state" OMACASE_DATA="$1/data" OMACASE_ROOT="$ROOT" OMNIWM_SEQ="$1/omniwm-seq"
+  mkdir -p "$HOME" "$OMACASE_STATE"
+  printf '%s\n' $2 > "$OMNIWM_SEQ"
+  # shellcheck source=/dev/null
+  source "$ROOT/lib/common.sh"
+  # shellcheck source=/dev/null
+  source "$ROOT/lib/install.sh"
+  _test_stub_convergence_externals
+  defaults() { echo 0; }                       # spaces + stage manager satisfied
+  can_set_appearance() { return 0; }
+  _omniwm_version() {                          # pops one version per call (file-backed: calls run in $(...))
+    head -1 "$OMNIWM_SEQ"; sed -i '' '1d' "$OMNIWM_SEQ"
+  }
+}
+
+test_install_next_steps_silent_when_nothing_pending() {
+  local tmp; tmp="$(mktemp -d)"
+  (
+    _test_install_quiet_harness "$tmp" "0.6.2 0.6.2"
+    echo seeded > "$OMACASE_STATE/last-backup"   # no fresh snapshot this run
+    omacase_install
+  ) >"$tmp/out" 2>&1
+  ! grep -q 'Next steps' "$tmp/out" && ! grep -q 'omacase doctor' "$tmp/out" && ! grep -q 'omacase restore' "$tmp/out"
+}
+
+test_install_next_steps_explain_their_reason() {
+  local tmp; tmp="$(mktemp -d)"
+  (
+    _test_install_quiet_harness "$tmp" "0.6.1 0.6.2"   # OmniWM upgraded during the run
+    echo seeded > "$OMACASE_STATE/last-backup"
+    omacase_install
+  ) >"$tmp/out" 2>&1
+  grep -q 'Next steps' "$tmp/out" &&
+    grep -q 'OmniWM was upgraded (0.6.1 → 0.6.2)' "$tmp/out" &&
+    grep -q 'omacase doctor' "$tmp/out" || return 1
+  # A fresh snapshot (first ever run) earns the restore hint — and only that.
+  local tmp2; tmp2="$(mktemp -d)"
+  (
+    _test_install_quiet_harness "$tmp2" "0.6.2 0.6.2"
+    omacase_install
+  ) >"$tmp2/out" 2>&1
+  grep -q 'omacase restore' "$tmp2/out" && ! grep -q 'omacase doctor' "$tmp2/out"
+}
+
 test_theme_accent_snaps_to_nearest_preset() {
   OMACASE_ROOT="$ROOT"
   # shellcheck source=/dev/null
@@ -1768,6 +1816,8 @@ run_test "menu lists app and overlay commands" test_menu_lists_app_and_overlay_c
 run_test "theme renderer creates generated fragments" test_theme_renderer_creates_fragments
 run_test "theme accent snaps to nearest macOS preset" test_theme_accent_snaps_to_nearest_preset
 run_test "theme switch notifies; install re-apply is quiet" test_theme_switch_notifies_but_install_reapply_is_quiet
+run_test "install Next steps is silent when nothing is pending" test_install_next_steps_silent_when_nothing_pending
+run_test "install Next steps names its reason" test_install_next_steps_explain_their_reason
 run_test "font pin is checksummed and wired" test_font_pin_is_checksummed_and_wired
 run_test "font install verifies checksum and is idempotent" test_font_install_verifies_checksum_and_is_idempotent
 run_test "font uninstall removes only the marked dir" test_font_uninstall_removes_only_marked_dir

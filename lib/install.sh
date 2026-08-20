@@ -8,6 +8,11 @@ omacase_install() {
   dryrun_banner
   source "$OMACASE_ROOT/lib/backup.sh"
   _preflight_command_links
+  # Remembered so the closing "Next steps" can say *why* it speaks (OmniWM
+  # changed this run? a fresh snapshot was taken?) — and stay silent otherwise.
+  local omniwm_before backup_before
+  omniwm_before="$(_omniwm_version)"
+  backup_before="$(cat "$OMACASE_STATE/last-backup" 2>/dev/null || true)"
 
   step "1/8  Packages, apps & terminal font (brew bundle + IoskeleyMono)"
   # Same policy as `omacase update`: `brew bundle` upgrades casks via `brew
@@ -44,9 +49,8 @@ omacase_install() {
   # QUIET: re-applying the saved theme is convergence, not a switch — no banner.
   OMACASE_BACKUP_READY=1 OMACASE_THEME_QUIET=1 omacase_theme "${saved_theme:-catppuccin-mocha}"
   # Theme switching flips macOS Light/Dark; that needs Automation consent, which
-  # the line above just prompted for on a fresh machine. Flag it if still blocked.
-  is_dryrun || can_set_appearance || \
-    warn "Grant your terminal Automation → System Events so themes can sync macOS Light/Dark (\`omacase doctor\` re-checks)."
+  # the line above just prompted for on a fresh machine. If it is still blocked,
+  # the closing "Next steps" says so.
 
   step "8/8  Window manager"
   source "$OMACASE_ROOT/lib/wm.sh"
@@ -58,10 +62,7 @@ omacase_install() {
   _migrations_baseline
 
   step "Done"
-  warn "Next: run \`omacase doctor\` and grant Accessibility to OmniWM"
-  warn "  (plus Automation → System Events so themes can sync macOS Light/Dark)."
-  warn "OmniWM also requires Displays have separate Spaces; a logout applies that setting."
-  warn "Don't like the result? \`omacase restore\` rolls back to the pre-install snapshot."
+  _install_next_steps "$omniwm_before" "$backup_before"
   # When update nests install, the outer converged reports. Returning here
   # keeps the function a simple command so set -e still applies inside
   # (a `fn || true` call would disable errexit for _auto_backup etc.).
@@ -69,6 +70,58 @@ omacase_install() {
     return 0
   fi
   converged "omacase installed"
+}
+
+_omniwm_version() {
+  defaults read /Applications/OmniWM.app/Contents/Info.plist CFBundleShortVersionString 2>/dev/null || true
+}
+
+# Closing notes, printed ONLY when there is a concrete reason — each names the
+# reason and the fix. Nothing pending → nothing printed, so a routine
+# `omacase update` ends quietly instead of implying something is wrong.
+#   - OmniWM newly installed/upgraded this run → macOS may need Accessibility
+#     (re)granted (grants are tied to the app binary).
+#   - Terminal lacks Automation → System Events consent (theme Light/Dark sync).
+#   - "Displays have separate Spaces" set but not yet active (needs a logout).
+#   - Stage Manager on (hides OmniWM tiles).
+#   - A fresh pre-change snapshot was taken this run → how to roll it back.
+_install_next_steps() {
+  local omniwm_before="$1" backup_before="$2"
+  local notes count=0 doctor=0 v spans stage backup_now n
+  notes=()
+  v="$(_omniwm_version)"
+  if [ -n "$v" ] && [ "$v" != "$omniwm_before" ]; then
+    if [ -z "$omniwm_before" ]; then
+      notes[$count]="OmniWM $v was just installed — grant it Accessibility (System Settings → Privacy & Security) so it can manage windows."
+    else
+      notes[$count]="OmniWM was upgraded ($omniwm_before → $v) — macOS may require Accessibility to be re-granted."
+    fi
+    count=$((count + 1)); doctor=1
+  fi
+  if ! is_dryrun && ! can_set_appearance; then
+    notes[$count]="Your terminal lacks Automation → System Events consent, so theme switches can't flip macOS Light/Dark."
+    count=$((count + 1)); doctor=1
+  fi
+  spans="$(defaults read com.apple.spaces spans-displays 2>/dev/null || echo 1)"
+  if [ "$spans" != 0 ]; then
+    notes[$count]="\"Displays have separate Spaces\" was set for OmniWM but needs one logout to take effect."
+    count=$((count + 1)); doctor=1
+  fi
+  stage="$(defaults read com.apple.WindowManager GloballyEnabled 2>/dev/null || echo 0)"
+  if [ "$stage" != 0 ]; then
+    notes[$count]="Stage Manager is on and can hide OmniWM tiles — turn it off in Control Center."
+    count=$((count + 1)); doctor=1
+  fi
+  backup_now="$(cat "$OMACASE_STATE/last-backup" 2>/dev/null || true)"
+  if [ -n "$backup_now" ] && [ "$backup_now" != "$backup_before" ]; then
+    notes[$count]="Don't like the result? \`omacase restore\` rolls back to the snapshot taken before this run."
+    count=$((count + 1))
+  fi
+  [ "$count" -gt 0 ] || return 0
+  step "Next steps"
+  for n in "${notes[@]}"; do warn "$n"; done
+  [ "$doctor" -eq 1 ] && warn "\`omacase doctor\` re-checks these and deep-links the right Settings panes."
+  return 0
 }
 
 # Homebrew requires an explicit trust decision before loading third-party
