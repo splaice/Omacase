@@ -10,6 +10,10 @@ omacase_install() {
   _preflight_command_links
 
   step "1/8  Packages & apps (brew bundle)"
+  # Same policy as `omacase update`: `brew bundle` upgrades casks via `brew
+  # upgrade --cask`, so self-updating apps (WhatsApp, Chrome, …) are left to
+  # update themselves here too — see the rationale in lib/update.sh.
+  export HOMEBREW_NO_UPGRADE_AUTO_UPDATES_CASKS=1
   _brew_trust_declared_third_party
   sudo_prime   # one admin prompt for every cask that needs it; no-op when none do
   require "brew bundle" brew bundle --file="$OMACASE_ROOT/Brewfile"
