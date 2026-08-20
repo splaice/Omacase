@@ -178,6 +178,7 @@ omacase_update() {
   # Nested so install does not call converged (the outer report does). This is a
   # simple command: set -e stays in effect inside omacase_install. Ledgered
   # require() failures still return 0 and later upgrade steps still run.
+  # shellcheck disable=SC2034 # read by omacase_install (lib/install.sh) in this shell
   OMACASE_NESTED_INSTALL=1
   omacase_install
   # One-time imperative cleanup the declarative apply can't do (e.g. uninstall a

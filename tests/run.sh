@@ -1176,7 +1176,7 @@ test_recover_legacy_login_items_preserves_nonlegacy_live_paths() {
 # whole update PARTIAL over an app brew was never meant to update.
 # sudo priming: one admin prompt per run, only when a cask needs it. A fake
 # `sudo` logs its argv; `brew` is stubbed per scenario; SUDO_ASKPASS stands in
-# for a terminal so the check runs the same under CI.
+# for a terminal so the check runs the same non-interactively (just test).
 _test_sudo_prime_env() {
   export OMACASE_ROOT="$ROOT" SUDO_ASKPASS=/usr/bin/true
   export SUDO_LOG="$1"

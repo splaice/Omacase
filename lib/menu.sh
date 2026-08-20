@@ -62,6 +62,7 @@ _menu_webapp() {
   source "$OMACASE_ROOT/lib/actions.sh"
   local choice
   local -a apps
+  # shellcheck disable=SC2154 # set by lib/actions.sh, sourced just above
   read -r -a apps <<< "$_webapp_names"
   choice="$(gum_choose "Web app" "${apps[@]}" "Back")" || return
   [ "$choice" = "Back" ] || omacase_webapp "$choice"
