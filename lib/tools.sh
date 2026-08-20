@@ -25,6 +25,9 @@ omacase_tools() {
     }
   ' "$OMACASE_ROOT/Brewfile"
 
+  printf '\n%s%s%s\n' "$bold" "Pinned release assets" "$reset"
+  printf '  %-22s %s\n' "ioskeley-mono" "IoskeleyMono Term Nerd Font — Ghostty's font; version+sha256 pinned in lib/fonts.sh → ~/Library/Fonts"
+
   printf '\n%s%s%s\n' "$bold" "Self-managed installers" "$reset"
   printf '  %-22s %s\n' "claude" "Claude Code — installs and updates itself"
   printf '  %-22s %s\n' "grok" "xAI Grok CLI — opt-in (OMACASE_INSTALL_GROK=1), self-updates"

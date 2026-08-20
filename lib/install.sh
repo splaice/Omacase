@@ -9,7 +9,7 @@ omacase_install() {
   source "$OMACASE_ROOT/lib/backup.sh"
   _preflight_command_links
 
-  step "1/8  Packages & apps (brew bundle)"
+  step "1/8  Packages, apps & terminal font (brew bundle + IoskeleyMono)"
   # Same policy as `omacase update`: `brew bundle` upgrades casks via `brew
   # upgrade --cask`, so self-updating apps (WhatsApp, Chrome, …) are left to
   # update themselves here too — see the rationale in lib/update.sh.
@@ -17,6 +17,8 @@ omacase_install() {
   _brew_trust_declared_third_party
   sudo_prime   # one admin prompt for every cask that needs it; no-op when none do
   require "brew bundle" brew bundle --file="$OMACASE_ROOT/Brewfile"
+  source "$OMACASE_ROOT/lib/fonts.sh"
+  require "IoskeleyMono font" _font_install
 
   step "2/8  Link \`omacase\` onto PATH + shell completion"
   _link_command
@@ -271,6 +273,10 @@ omacase_uninstall() {
     target="$(_dot_target "${f#"$src"/}")"
     { _is_omacase_link "$target" && run rm -f "$target"; } || true
   done < <(find "$src" -type f ! -name '.DS_Store' ! -name '*.pyc' ! -path '*/__pycache__/*')
+
+  # The terminal font lives outside home/ (a pinned release asset in
+  # ~/Library/Fonts); its marker proves it is ours.
+  source "$OMACASE_ROOT/lib/fonts.sh"; _font_uninstall
 
   # Theme symlinks are created by `omacase theme`, not from home/ — walk the
   # same fragment|target list theme.sh links.

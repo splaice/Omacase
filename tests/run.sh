@@ -445,6 +445,10 @@ _test_stub_convergence_externals() {
       */install.sh)
         omacase_install() { return 0; }
         return 0 ;;
+      */fonts.sh)   # keep convergence tests offline; fonts.sh has its own tests
+        _font_install() { return 0; }
+        _font_uninstall() { return 0; }
+        return 0 ;;
       *) builtin source "$@" ;;
     esac
   }
@@ -1602,6 +1606,69 @@ test_theme_switch_notifies_but_install_reapply_is_quiet() {
     grep -q 'OMACASE_THEME_QUIET=1 omacase_theme' "$ROOT/lib/install.sh"
 }
 
+# Terminal font: a pinned, checksummed release asset (lib/fonts.sh). The pin
+# must be a version + 64-hex sha256; install wires it through `require`;
+# uninstall removes only a marked directory; Ghostty names it with a fallback.
+test_font_pin_is_checksummed_and_wired() {
+  grep -qE '^OMACASE_FONT_VERSION=v[0-9]+\.[0-9]+\.[0-9]+$' "$ROOT/lib/fonts.sh" &&
+    grep -qE '^OMACASE_FONT_SHA256=[0-9a-f]{64}$' "$ROOT/lib/fonts.sh" &&
+    grep -q 'require "IoskeleyMono font" _font_install' "$ROOT/lib/install.sh" &&
+    grep -q '_font_uninstall' "$ROOT/lib/install.sh" &&
+    grep -q '^font-family = "IoskeleyMonoTerm Nerd Font Mono"$' "$ROOT/home/dot_config/ghostty/config" &&
+    grep -q '^font-family = "JetBrainsMono Nerd Font"$' "$ROOT/home/dot_config/ghostty/config"
+}
+
+_test_font_env() {
+  export OMACASE_ROOT="$ROOT" HOME="$1/home" OMACASE_FONT_DIR="$1/fonts"
+  mkdir -p "$HOME"
+  # shellcheck source=/dev/null
+  source "$ROOT/lib/common.sh"
+  # shellcheck source=/dev/null
+  source "$ROOT/lib/fonts.sh"
+}
+
+test_font_install_verifies_checksum_and_is_idempotent() {
+  local tmp; tmp="$(mktemp -d)"
+  # Build a fake release zip with the upstream layout and pin ITS checksum.
+  mkdir -p "$tmp/rel/Normal" && printf 'ttf' > "$tmp/rel/Normal/Fake-Regular.ttf"
+  (cd "$tmp/rel" && zip -qr ../good.zip Normal)
+  local good_sha; good_sha="$(shasum -a 256 "$tmp/good.zip" | cut -d' ' -f1)"
+  (
+    _test_font_env "$tmp"
+    # Distinct name: _font_install has its own `local tmp`, which bash's dynamic
+    # scoping would otherwise expose to this stub.
+    FONT_TEST_ZIP="$tmp/good.zip"
+    curl() { cp "$FONT_TEST_ZIP" "${@: -1}"; }    # last arg is -o <dest>
+    # shellcheck disable=SC2034 # read by _font_install (lib/fonts.sh) in this subshell
+    OMACASE_FONT_SHA256="$good_sha"
+    _font_install >/dev/null 2>&1 &&
+      [ -f "$OMACASE_FONT_DIR/Fake-Regular.ttf" ] &&
+      [ "$(cat "$OMACASE_FONT_DIR/.omacase-version")" = "$OMACASE_FONT_VERSION" ] || exit 1
+    # Second run: marker matches → curl must not be called.
+    curl() { echo "curl called on a current install" >&2; exit 99; }
+    _font_install >/dev/null 2>&1
+  ) || return 1
+  (
+    _test_font_env "$tmp"
+    rm -rf "$OMACASE_FONT_DIR"
+    curl() { printf 'tampered' > "${@: -1}"; }   # wrong bytes → checksum fails
+    ! _font_install >"$tmp/out" 2>&1 && grep -q 'checksum mismatch' "$tmp/out" && [ ! -d "$OMACASE_FONT_DIR" ]
+  )
+}
+
+test_font_uninstall_removes_only_marked_dir() {
+  local tmp; tmp="$(mktemp -d)"
+  (
+    _test_font_env "$tmp"
+    mkdir -p "$OMACASE_FONT_DIR" && touch "$OMACASE_FONT_DIR/Other.ttf"   # unmarked: not ours
+    _font_uninstall >/dev/null 2>&1
+    [ -f "$OMACASE_FONT_DIR/Other.ttf" ] || exit 1
+    printf 'v0.0.0\n' > "$OMACASE_FONT_DIR/.omacase-version"               # marked: ours
+    _font_uninstall >/dev/null 2>&1
+    [ ! -d "$OMACASE_FONT_DIR" ]
+  )
+}
+
 test_theme_accent_snaps_to_nearest_preset() {
   OMACASE_ROOT="$ROOT"
   # shellcheck source=/dev/null
@@ -1701,6 +1768,9 @@ run_test "menu lists app and overlay commands" test_menu_lists_app_and_overlay_c
 run_test "theme renderer creates generated fragments" test_theme_renderer_creates_fragments
 run_test "theme accent snaps to nearest macOS preset" test_theme_accent_snaps_to_nearest_preset
 run_test "theme switch notifies; install re-apply is quiet" test_theme_switch_notifies_but_install_reapply_is_quiet
+run_test "font pin is checksummed and wired" test_font_pin_is_checksummed_and_wired
+run_test "font install verifies checksum and is idempotent" test_font_install_verifies_checksum_and_is_idempotent
+run_test "font uninstall removes only the marked dir" test_font_uninstall_removes_only_marked_dir
 
 if [ "$FAILURES" -gt 0 ]; then
   printf '%s test(s) failed\n' "$FAILURES" >&2

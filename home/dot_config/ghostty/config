@@ -1,6 +1,11 @@
 # omacase Ghostty config. Theme is swapped by `omacase theme` via the
 # config-file include below. Omarchy-derived themes are generated into
 # ~/.local/share/omacase/generated/themes/<name>/ghostty.
+# IoskeleyMono (Term + Nerd Font build) is installed by `omacase install` from
+# a pinned release (lib/fonts.sh). Ghostty treats repeated font-family lines as
+# a fallback chain: JetBrains Mono covers the moments before the font lands and
+# any glyph it lacks.
+font-family = "IoskeleyMonoTerm Nerd Font Mono"
 font-family = "JetBrainsMono Nerd Font"
 font-size = 14
 font-thicken = true

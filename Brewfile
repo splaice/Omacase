@@ -82,7 +82,7 @@ brew "terminal-notifier" # reliable native notifications for `omacase notify` (o
 # (Omacase manages its own dotfiles via symlinks — no chezmoi dependency.)
 
 # --- Fonts ------------------------------------------------------------------
-cask "font-jetbrains-mono-nerd-font" # terminal/editor font with glyph icons
+cask "font-jetbrains-mono-nerd-font" # fallback terminal/editor font with glyph icons (IoskeleyMono is the default — lib/fonts.sh)
 # --- Browsers ---------------------------------------------------------------
 # Brave is the dedicated `omacase webapp` browser (signed; opens chromeless
 # app windows) so ⌘Q on a web app never quits your daily/default browser.

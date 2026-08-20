@@ -27,6 +27,15 @@ installer needs a bump:
 A checksum mismatch fails closed and tells the user to update Omacase or
 install Homebrew by hand from brew.sh.
 
+## Font pin (IoskeleyMono)
+
+`lib/fonts.sh` pins the IoskeleyMono release (`OMACASE_FONT_VERSION`) and the
+sha256 of its `IoskeleyMono-Term-NerdFont.zip`. To bump:
+
+1. `V=vX.Y.Z; curl -fsSL https://github.com/ahatem/IoskeleyMono/releases/download/$V/IoskeleyMono-Term-NerdFont.zip | shasum -a 256`
+2. Update `OMACASE_FONT_VERSION` and `OMACASE_FONT_SHA256` in `lib/fonts.sh`.
+3. `just check`, commit. Existing installs pick it up on the next `omacase update`.
+
 ## Tool versions
 
 Everything Omacase installs comes from Homebrew (Brewfile pins names, not

@@ -18,4 +18,5 @@ channel (for example a Homebrew formula). TLS protects transport.
 | Claude Code | **Vendor-rolling** | Self-updating, vendor-signed. Not declared anywhere. |
 | Grok CLI | **Vendor-rolling, opt-in** | `OMACASE_INSTALL_GROK=1`. Installer is unversioned; a checksum would break on every vendor release with no signal to us. Opt-in is the control. |
 | Omarchy theme assets (`$OMACASE_DATA/upstream`) | Content, not code | Parsed as TOML / images, never executed. |
+| IoskeleyMono font (GitHub release → `~/Library/Fonts`) | **Pinned** version + sha256 in `lib/fonts.sh` | Content, not code. Checksum mismatch fails closed; Ghostty falls back to JetBrains Mono. |
 | herdr tap | Maintainer-owned | Declared third-party tap, trusted by exact formula/cask name. |
