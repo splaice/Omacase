@@ -37,7 +37,6 @@ brew "fastfetch"         # branded system summary (`omacase menu` → About); co
 
 # --- Editor & dev -----------------------------------------------------------
 brew "neovim"            # + LazyVim (seeded via dotfiles) — the editor
-brew "mise"              # runtime version manager (node/python/ruby) + npm: CLIs
 brew "uv"                # fast Python package/tool manager (hosts mlx-lm for the planned local LLM)
 brew "direnv"           # per-directory env vars (.envrc), hooked into zsh
 brew "lazygit"          # git TUI (`lg`)
@@ -45,11 +44,11 @@ brew "gh"                # GitHub CLI
 brew "just"              # command runner (justfiles)
 
 # --- AI coding & local LLM --------------------------------------------------
-# Native binaries → Homebrew. (Fast-moving npm AI CLIs — gemini, mermaid, pi —
-# are mise `npm:` tools instead; see home/dot_config/mise/config.toml. Claude
-# Code and the Grok CLI self-manage via their own installers — Grok can be
-# explicitly enabled with OMACASE_INSTALL_GROK=1, so neither is declared here.)
+# Everything here comes from Homebrew. (Claude Code and the Grok CLI self-manage
+# via their own installers — Grok can be explicitly enabled with
+# OMACASE_INSTALL_GROK=1 — so neither is declared here.)
 cask "codex"             # OpenAI Codex CLI (official Rust binary; depends on ripgrep)
+brew "pi-coding-agent"   # pi — pi.dev coding agent (homebrew-core; brings its own node)
 brew "opencode"          # opencode — terminal AI coding agent (homebrew-core)
 
 # --- Networking -------------------------------------------------------------

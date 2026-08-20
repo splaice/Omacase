@@ -27,8 +27,8 @@ installer needs a bump:
 A checksum mismatch fails closed and tells the user to update Omacase or
 install Homebrew by hand from brew.sh.
 
-## mise / npm pins
+## Tool versions
 
-`home/dot_config/mise/config.toml` uses exact versions. `mise outdated` lists
-candidates. Bump pins in a dedicated commit; do not restore `@latest`.
-Do not pin tools that self-update by design (Claude Code, grok).
+Everything Omacase installs comes from Homebrew (Brewfile pins names, not
+versions) except the self-updating installers (Claude Code, opt-in grok).
+There is no separate pin file to bump.

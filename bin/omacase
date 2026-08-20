@@ -22,7 +22,7 @@ Omacase — opinionated tiling macOS, managed from one command
 usage: omacase <command> [args]
 
   install            Full idempotent setup (re-runnable)
-  update             Apply latest payload (stable tag or dev pull) + brew + mise [--check|--rollback]
+  update             Apply latest payload (stable tag or dev pull) + brew [--check|--rollback]
   outdated           Print the count of outdated Homebrew packages
   migrate            Apply pending one-time migrations (also run by update)
   theme [name]       Apply a theme everywhere (no name = list/pick)

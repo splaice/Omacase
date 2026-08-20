@@ -185,13 +185,6 @@ omacase_update() {
   # dropped cask). Idempotent + tracked; failure retries on the next update.
   source "$OMACASE_ROOT/lib/migrate.sh"
   omacase_migrate || OMACASE_INCOMPLETE+=("migrations")
-  if [ -n "${OMACASE_SKIP_MISE_UPGRADE:-}" ]; then
-    info "Skipping mise tool upgrades (OMACASE_SKIP_MISE_UPGRADE is set)."
-  elif have mise; then
-    step "Upgrading mise tools (node + npm CLIs)"
-    warn "mise upgrade converges to the pinned versions; set OMACASE_SKIP_MISE_UPGRADE=1 to skip."
-    require "mise upgrade" mise upgrade
-  fi
   step "Upgrading outdated formulae & casks"
   require "brew upgrade" brew upgrade
   converged "omacase up to date"

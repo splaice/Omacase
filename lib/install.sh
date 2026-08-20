@@ -27,8 +27,7 @@ omacase_install() {
   step "4/8  Dotfiles (symlinks)"
   _link_dotfiles
 
-  step "5/8  Tool runtimes & AI CLIs (mise + optional grok) + herdr agent hooks"
-  _mise_install
+  step "5/8  AI CLIs (optional grok) + herdr agent hooks"
   _grok_install
   _herdr_integrations
 
@@ -80,14 +79,6 @@ _brew_trust_declared_third_party() {
   else
     warn "Could not add the OmniWM Homebrew tap."
   fi
-}
-
-# Install the tools declared in ~/.config/mise/config.toml (node + the npm: CLIs
-# that ship faster on npm than Homebrew). Idempotent — converges to the config.
-# mise is provided by `brew bundle` and activated in dot_zshrc.
-_mise_install() {
-  have mise || { warn "mise not found (brew bundle should install it) — skipping npm CLIs."; return 0; }
-  require "mise install" mise install -y
 }
 
 # Grok CLI (xAI) ships as a self-updating native binary that installs into
@@ -146,7 +137,7 @@ _grok_strip_zshrc_block() {
 # running an agent is just an anonymous shell to herdr.
 #
 # Only agents actually on PATH get a hook, so this tracks whatever the Brewfile
-# and mise config currently ship (plus opt-in grok). herdr owns the whole
+# currently ships (plus opt-in grok). herdr owns the whole
 # lifecycle — install is idempotent and versioned, so re-running upgrades a
 # stale hook in place; `herdr integration status` reports what is current, and
 # `herdr integration uninstall <agent>` removes one.

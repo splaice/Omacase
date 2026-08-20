@@ -413,7 +413,6 @@ test_require_ledgers_failure_and_continues() {
 # Keep install/update integration tests offline and off the live machine.
 _test_stub_convergence_externals() {
   brew() { return 0; }
-  mise() { return 0; }
   herdr() { return 0; }
   defaults() { return 0; }
   killall() { return 0; }
@@ -567,7 +566,6 @@ test_update_stops_on_non_ledgered_install_failure() {
       esac
     }
     brew() { return 0; }
-    mise() { return 0; }
     herdr() { return 0; }
     defaults() { return 0; }
     killall() { return 0; }
@@ -687,11 +685,6 @@ test_homebrew_installer_checksum_is_enforced() {
     grep -q 'shasum -a 256 -c' "$ROOT/boot.sh" &&
     grep -q 'shasum -a 256 -c' "$ROOT/site/install" &&
     grep -q 'Homebrew installer checksum mismatch' "$ROOT/boot.sh"
-}
-
-test_mise_tools_are_pinned() {
-  ! grep -q '@latest' "$ROOT/home/dot_config/mise/config.toml" &&
-    ! grep -Eq 'node = "lts"' "$ROOT/home/dot_config/mise/config.toml"
 }
 
 test_update_rollback_restores_recorded_sha() {
@@ -853,12 +846,12 @@ test_every_brewfile_entry_has_a_description() {
   ! grep -E '^(brew|cask) "' "$ROOT/Brewfile" | grep -v '#' | grep -q .
 }
 
-test_tools_lists_brewfile_and_mise_entries() {
+test_tools_lists_brewfile_entries() {
   local out declared rendered
   out="$("$ROOT/bin/omacase" tools)"
   declared="$(grep -cE '^(brew|cask) "' "$ROOT/Brewfile")"
   rendered="$(printf '%s\n' "$out" | grep -cE '^  [a-z0-9]' || true)"
-  # Brewfile entries + 3 npm CLIs (or the not-linked hint) + 2 self-managed.
+  # Brewfile entries + 2 self-managed installers.
   [ "$rendered" -ge $((declared + 2)) ] &&
     printf '%s' "$out" | grep -q 'Terminal & shell' &&
     printf '%s' "$out" | grep -qE '^  eza ' &&
@@ -873,7 +866,7 @@ test_herdr_is_declared_in_brewfile() {
 
 # Every agent CLI Omacase ships must also get a herdr agent hook, or that agent
 # shows up in herdr as an anonymous shell with no lifecycle state. The declared
-# set is derived from where each CLI actually comes from (Brewfile / mise /
+# set is derived from where each CLI actually comes from (Brewfile /
 # opt-in installer), so dropping one of those without updating the hook loop —
 # or vice versa — fails here.
 test_herdr_hooks_cover_shipped_agents() {
@@ -882,7 +875,7 @@ test_herdr_hooks_cover_shipped_agents() {
   [ -n "$hooked" ] || return 1
   grep -q 'cask "codex"'    "$ROOT/Brewfile" && declared="$declared codex"
   grep -q 'brew "opencode"' "$ROOT/Brewfile" && declared="$declared opencode"
-  grep -q 'pi-coding-agent' "$ROOT/home/dot_config/mise/config.toml" && declared="$declared pi"
+  grep -q 'brew "pi-coding-agent"' "$ROOT/Brewfile" && declared="$declared pi"
   grep -q 'OMACASE_INSTALL_GROK' "$ROOT/lib/install.sh" && declared="$declared grok"
   # claude self-manages via its own installer, so it is never declared elsewhere.
   for agent in $declared claude; do
@@ -1652,7 +1645,6 @@ run_test "update fails on self-update failure" test_update_fails_when_self_pull_
 run_test "latest release tag is greatest semver" test_latest_release_tag_picks_greatest_semver
 run_test "update --check does not mutate the worktree" test_update_check_mutates_nothing
 run_test "homebrew installer checksum is enforced" test_homebrew_installer_checksum_is_enforced
-run_test "mise tools are pinned to exact versions" test_mise_tools_are_pinned
 run_test "update --rollback restores the recorded SHA" test_update_rollback_restores_recorded_sha
 run_test "update dev attaches a detached stable tag to main" test_update_dev_attaches_from_stable_tag
 run_test "boot dev attaches a detached stable tag to main" test_boot_dev_attaches_from_stable_tag
@@ -1661,7 +1653,7 @@ run_test "defaults disable Stage Manager" test_stage_manager_is_disabled_by_defa
 run_test "Homebrew trust is scoped to exact third-party packages" test_brew_trust_is_scoped
 run_test "Grok installer requires explicit opt-in" test_grok_installer_requires_opt_in
 run_test "every Brewfile entry has a description" test_every_brewfile_entry_has_a_description
-run_test "tools lists Brewfile and mise entries" test_tools_lists_brewfile_and_mise_entries
+run_test "tools lists Brewfile entries" test_tools_lists_brewfile_entries
 run_test "herdr is declared in the Brewfile" test_herdr_is_declared_in_brewfile
 run_test "herdr agent hooks cover shipped agent CLIs" test_herdr_hooks_cover_shipped_agents
 run_test "herdr skill is left to herdr, not managed by omacase" test_herdr_skill_is_not_managed_by_omacase

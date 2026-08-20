@@ -20,7 +20,7 @@ _omacase() {
     command)
       local -a subcommands=(
         'install:full idempotent setup (re-runnable)'
-        'update:apply latest payload + brew + mise (--check / --rollback)'
+        'update:apply latest payload + brew (--check / --rollback)'
         'migrate:apply pending one-time migrations (also run by update)'
         'outdated:print the count of outdated Homebrew packages'
         'theme:apply a theme everywhere (no name = list/pick)'
