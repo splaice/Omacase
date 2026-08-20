@@ -159,8 +159,21 @@ omacase_update() {
       OMACASE_UPDATE_REEXECED=1 exec "$OMACASE_ROOT/bin/omacase" update "$@"
     fi
   fi
+  # Skip casks marked auto_updates (WhatsApp, Chrome, …): those apps update
+  # themselves in-app, and brew re-downloading them goes through the vendor's
+  # versioned URLs — the flakiest channel there is (rotated/retracted builds
+  # 500/404 routinely). A vendor hiccup must not mark the whole update PARTIAL
+  # over an app that was never brew's to update. Exported once, up front (not
+  # `env`-prefixed) so `run`/`require` still invoke `brew` as a plain word and
+  # so `brew bundle` (install), the sudo_prime pending-cask check, and `brew
+  # upgrade` all apply the same policy. The nested install is the only other
+  # consumer, and it wants the same rule.
+  export HOMEBREW_NO_UPGRADE_AUTO_UPDATES_CASKS=1
   step "Updating Homebrew"
   require "brew update" brew update
+  # Now that brew knows what's outdated: one admin prompt for the whole run
+  # (only when a cask actually needs it), instead of one per sudo-ing cask.
+  sudo_prime
   source "$OMACASE_ROOT/lib/install.sh"
   # Nested so install does not call converged (the outer report does). This is a
   # simple command: set -e stays in effect inside omacase_install. Ledgered
@@ -179,14 +192,6 @@ omacase_update() {
     require "mise upgrade" mise upgrade
   fi
   step "Upgrading outdated formulae & casks"
-  # Skip casks marked auto_updates (WhatsApp, Chrome, …): those apps update
-  # themselves in-app, and brew re-downloading them goes through the vendor's
-  # versioned URLs — the flakiest channel there is (rotated/retracted builds
-  # 500/404 routinely). A vendor hiccup must not mark the whole update PARTIAL
-  # over an app that was never brew's to update. Exported (not `env`-prefixed)
-  # so `run`/`require` still invoke `brew` as a plain word; update is the last
-  # step of the process, so the export cannot leak anywhere that matters.
-  export HOMEBREW_NO_UPGRADE_AUTO_UPDATES_CASKS=1
   require "brew upgrade" brew upgrade
   converged "omacase up to date"
 }

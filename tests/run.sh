@@ -450,6 +450,9 @@ _test_stub_convergence_externals() {
     esac
   }
   _link_command() { return 0; }
+  # Never touch real sudo from a test; priming has its own tests below.
+  sudo() { return 0; }
+  _SUDO_PRIMED=1
 }
 
 test_partial_brew_bundle_fails_install() {
@@ -1172,6 +1175,101 @@ test_recover_legacy_login_items_preserves_nonlegacy_live_paths() {
 # Self-updating casks (auto_updates true) are the vendor's job; brew
 # re-fetching them rides the flakiest URLs (WhatsApp 500s) and would mark the
 # whole update PARTIAL over an app brew was never meant to update.
+# sudo priming: one admin prompt per run, only when a cask needs it. A fake
+# `sudo` logs its argv; `brew` is stubbed per scenario; SUDO_ASKPASS stands in
+# for a terminal so the check runs the same under CI.
+_test_sudo_prime_env() {
+  export OMACASE_ROOT="$ROOT" SUDO_ASKPASS=/usr/bin/true
+  export SUDO_LOG="$1"
+  # shellcheck source=/dev/null
+  source "$ROOT/lib/common.sh"
+  sudo() {
+    printf '%s\n' "$*" >> "$SUDO_LOG"
+    # `sudo -n -v` fails (no cached credential) until an interactive `sudo -v`
+    # has run; afterwards the cache is warm.
+    case "$*" in
+      "-n -v") grep -qx -- '-v' "$SUDO_LOG" ;;
+      *) return 0 ;;
+    esac
+  }
+}
+
+test_sudo_prime_noop_when_nothing_cask_side_moves() {
+  local tmp; tmp="$(mktemp -d)"
+  (
+    _test_sudo_prime_env "$tmp/sudo.log"
+    brew() {
+      case "$1" in
+        outdated) return 0 ;;  # nothing outdated
+        list) sed -nE 's/^cask[[:space:]]+"([^"]+)".*/\1/p' "$ROOT/Brewfile" | sed 's|.*/||' ;;
+      esac
+    }
+    sudo_prime >/dev/null 2>&1
+    [ ! -e "$tmp/sudo.log" ] && [ -z "$_SUDO_KEEPALIVE_PID" ]
+  )
+}
+
+test_sudo_prime_asks_once_and_keeps_alive() {
+  local tmp; tmp="$(mktemp -d)"
+  (
+    _test_sudo_prime_env "$tmp/sudo.log"
+    brew() {
+      case "$1" in
+        outdated) echo tailscale-app ;;
+        list) sed -nE 's/^cask[[:space:]]+"([^"]+)".*/\1/p' "$ROOT/Brewfile" | sed 's|.*/||' ;;
+      esac
+    }
+    sudo_prime >"$tmp/out" 2>&1
+    sudo_prime >>"$tmp/out" 2>&1   # second call (nested install) must not re-ask
+    pid="$_SUDO_KEEPALIVE_PID"
+    alive=0; [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null && alive=1
+    _sudo_keepalive_stop
+    [ "$alive" = 1 ] &&
+      [ "$(grep -cx -- '-v' "$tmp/sudo.log")" -eq 1 ] &&
+      grep -q 'tailscale-app' "$tmp/out" &&
+      grep -q 'sudo-touchid' "$tmp/out"
+  )
+}
+
+test_sudo_prime_skips_prompt_when_already_cached() {
+  local tmp; tmp="$(mktemp -d)"
+  (
+    _test_sudo_prime_env "$tmp/sudo.log"
+    sudo() { printf '%s\n' "$*" >> "$SUDO_LOG"; return 0; }   # cache already warm
+    brew() { case "$1" in outdated) echo tailscale-app ;; list) return 0 ;; esac; }
+    sudo_prime >"$tmp/out" 2>&1
+    _sudo_keepalive_stop
+    ! grep -qx -- '-v' "$tmp/sudo.log" && ! grep -q 'Authenticating' "$tmp/out"
+  )
+}
+
+test_sudo_prime_dry_run_never_calls_sudo() {
+  local tmp; tmp="$(mktemp -d)"
+  (
+    _test_sudo_prime_env "$tmp/sudo.log"
+    export OMACASE_DRYRUN=1
+    brew() { case "$1" in outdated) echo tailscale-app ;; list) return 0 ;; esac; }
+    sudo_prime >"$tmp/out" 2>&1
+    [ ! -e "$tmp/sudo.log" ] && grep -q 'dry-run' "$tmp/out" && [ -z "$_SUDO_KEEPALIVE_PID" ]
+  )
+}
+
+test_sudo_prime_is_wired_before_cask_work() {
+  # update: policy export, then brew update, then prime, then the nested install.
+  local exp upd prime inst
+  exp="$(grep -n 'export HOMEBREW_NO_UPGRADE_AUTO_UPDATES_CASKS=1' "$ROOT/lib/update.sh" | cut -d: -f1)"
+  upd="$(grep -n 'require "brew update"' "$ROOT/lib/update.sh" | cut -d: -f1)"
+  prime="$(grep -n '^  sudo_prime' "$ROOT/lib/update.sh" | cut -d: -f1)"
+  inst="$(grep -n '^  omacase_install$' "$ROOT/lib/update.sh" | cut -d: -f1)"
+  [ -n "$exp" ] && [ -n "$upd" ] && [ -n "$prime" ] && [ -n "$inst" ] &&
+    [ "$exp" -lt "$upd" ] && [ "$upd" -lt "$prime" ] && [ "$prime" -lt "$inst" ] || return 1
+  # install: prime precedes brew bundle.
+  local iprime bundle
+  iprime="$(grep -n '^  sudo_prime' "$ROOT/lib/install.sh" | cut -d: -f1)"
+  bundle="$(grep -n 'require "brew bundle"' "$ROOT/lib/install.sh" | cut -d: -f1)"
+  [ -n "$iprime" ] && [ -n "$bundle" ] && [ "$iprime" -lt "$bundle" ]
+}
+
 test_update_skips_auto_update_casks() {
   grep -q 'export HOMEBREW_NO_UPGRADE_AUTO_UPDATES_CASKS=1' "$ROOT/lib/update.sh"
 }
@@ -1546,6 +1644,11 @@ run_test "extras wired into usage, completion, and menu" test_extras_in_usage_co
 run_test "extras list reports sudo-touchid state" test_extras_list_reports_sudo_touchid_state
 run_test "extras mole is declared in list, Brewfile, and completion" test_extras_mole_is_declared_everywhere
 run_test "brew upgrade skips self-updating casks" test_update_skips_auto_update_casks
+run_test "sudo prime is a no-op when nothing cask-side moves" test_sudo_prime_noop_when_nothing_cask_side_moves
+run_test "sudo prime asks once and keeps the timestamp alive" test_sudo_prime_asks_once_and_keeps_alive
+run_test "sudo prime skips the prompt when already cached" test_sudo_prime_skips_prompt_when_already_cached
+run_test "sudo prime dry run never calls sudo" test_sudo_prime_dry_run_never_calls_sudo
+run_test "sudo prime runs before any cask work" test_sudo_prime_is_wired_before_cask_work
 run_test "failed migration halts runner and keeps marker" test_migrate_failure_keeps_marker
 run_test "install baseline covers every shipped migration" test_migrate_baseline_covers_shipped_history
 run_test "empty migration history uses squash baseline" test_migrate_empty_history_uses_squash_baseline

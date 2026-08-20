@@ -70,6 +70,13 @@ allow xAI's unpinned Grok installer; it is skipped by default. Set
 `v*` release tag. `omacase update --check` lists pending changes without
 applying them; `omacase update --rollback` returns to the previous payload.
 
+Omacase never needs admin rights itself; Homebrew does for some casks (pkg
+installers, launch daemons, root-owned app bundles). When a run will touch one
+of those, `omacase install`/`update` authenticate **once** up front and keep
+that authorization alive for the rest of the run; formulae-only runs never ask.
+`omacase extras sudo-touchid` makes that one prompt a Touch ID and shares it
+across terminals for an hour.
+
 ## Agent multiplexing
 
 `herdr` is the agent-aware multiplexer. `omacase install` wires up the **state

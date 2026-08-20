@@ -11,6 +11,7 @@ omacase_install() {
 
   step "1/8  Packages & apps (brew bundle)"
   _brew_trust_declared_third_party
+  sudo_prime   # one admin prompt for every cask that needs it; no-op when none do
   require "brew bundle" brew bundle --file="$OMACASE_ROOT/Brewfile"
 
   step "2/8  Link \`omacase\` onto PATH + shell completion"

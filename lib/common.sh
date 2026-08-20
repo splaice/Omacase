@@ -135,6 +135,68 @@ _is_omacase_link() {
   esac
 }
 
+# --- sudo priming -------------------------------------------------------------
+# Omacase itself never escalates. Homebrew does — as a string of separate `sudo`
+# calls while installing/upgrading casks (pkg installers, launchctl/pkgutil
+# uninstall stanzas, app bundles it cannot write). Under macOS's stock policy
+# (5-minute, per-tty timestamp) a long brew run re-prompts between them.
+# sudo_prime asks once up front and refreshes the timestamp in the background
+# until this process exits, so every later `sudo` hits the cache. Only casks
+# ever need it: a formulae-only run never asks. (`omacase extras sudo-touchid`
+# turns the one prompt into a Touch ID shared across terminals for an hour.)
+_SUDO_PRIMED=""
+_SUDO_KEEPALIVE_PID=""
+
+# Cask tokens this run may install or upgrade: outdated installed casks plus
+# Brewfile casks not installed yet. Empty = nothing cask-side moves. Read-only;
+# honors whatever HOMEBREW_* upgrade policy the caller has exported so the
+# answer matches what `brew bundle`/`brew upgrade` will actually touch.
+_pending_casks() {
+  local declared installed t
+  HOMEBREW_NO_AUTO_UPDATE=1 brew outdated --cask --quiet 2>/dev/null || true
+  installed="$(brew list --cask -1 2>/dev/null || true)"
+  declared="$(sed -nE 's/^cask[[:space:]]+"([^"]+)".*/\1/p' "$OMACASE_ROOT/Brewfile")"
+  for t in $declared; do
+    grep -qx "${t##*/}" <<< "$installed" || printf '%s\n' "$t"
+  done
+}
+
+_sudo_keepalive_stop() {
+  [ -n "$_SUDO_KEEPALIVE_PID" ] && kill "$_SUDO_KEEPALIVE_PID" 2>/dev/null
+  _SUDO_KEEPALIVE_PID=""
+  return 0
+}
+
+# sudo_prime — idempotent per process (update nests install; prime once).
+sudo_prime() {
+  [ -n "$_SUDO_PRIMED" ] && return 0
+  _SUDO_PRIMED=1
+  # No way to ask: not a terminal and no askpass helper. Leave it to brew.
+  { [ -t 0 ] || [ -n "${SUDO_ASKPASS:-}" ]; } || return 0
+  local pending
+  pending="$(_pending_casks | tr '\n' ' ')"
+  pending="${pending% }"
+  [ -n "$pending" ] || return 0
+  if is_dryrun; then
+    log "[dry-run] would authenticate once for Homebrew casks that may need admin rights: $pending"
+    return 0
+  fi
+  # Already cached (e.g. the sudo-touchid extra's shared hour): refresh silently.
+  if ! sudo -n -v 2>/dev/null; then
+    step "Homebrew may need admin rights for: $pending"
+    info "Authenticating once for this run (\`omacase extras sudo-touchid\` makes it a Touch ID, shared across terminals for an hour)."
+    if ! sudo -v; then
+      warn "sudo authentication failed — Homebrew will ask itself for casks that need it."
+      return 0
+    fi
+  fi
+  # Refresh the stock 5-minute, per-tty timestamp until this process exits.
+  # `$$` is the main shell even inside the subshell; `sudo -n` never prompts.
+  ( while kill -0 "$$" 2>/dev/null; do sudo -n -v 2>/dev/null || exit 0; sleep 50; done ) >/dev/null 2>&1 &
+  _SUDO_KEEPALIVE_PID=$!
+  trap _sudo_keepalive_stop EXIT
+}
+
 # --- convergence ledger -------------------------------------------------------
 # Required steps that fail are recorded (not fatal) so independent work
 # continues; the entry point reports partial convergence and exits nonzero.
