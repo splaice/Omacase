@@ -40,7 +40,8 @@ omacase_install() {
   # ${:-} (not `|| echo`): an existing-but-empty state file would otherwise
   # yield "" and drop a non-interactive install into the theme picker.
   local saved_theme; saved_theme="$(cat "$OMACASE_STATE/theme" 2>/dev/null || true)"
-  OMACASE_BACKUP_READY=1 omacase_theme "${saved_theme:-catppuccin-mocha}"
+  # QUIET: re-applying the saved theme is convergence, not a switch — no banner.
+  OMACASE_BACKUP_READY=1 OMACASE_THEME_QUIET=1 omacase_theme "${saved_theme:-catppuccin-mocha}"
   # Theme switching flips macOS Light/Dark; that needs Automation consent, which
   # the line above just prompted for on a fresh machine. Flag it if still blocked.
   is_dryrun || can_set_appearance || \

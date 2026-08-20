@@ -1573,6 +1573,42 @@ EOF
     grep -q 'return "sample-nvim"' "$out/nvim.lua"
 }
 
+# `omacase theme X` announces the switch with a banner; install/update re-apply
+# the saved theme silently (OMACASE_THEME_QUIET).
+_test_theme_apply_harness() {
+  # Everything side-effecting is stubbed; only the notify decision is under test.
+  export OMACASE_ROOT="$ROOT" OMACASE_STATE="$1/state" NOTIFY_LOG="$1/notify.log"
+  # shellcheck source=/dev/null
+  source "$ROOT/lib/common.sh"
+  # shellcheck source=/dev/null
+  source "$ROOT/lib/theme.sh"
+  ensure_brew_env() { :; }
+  _theme_known() { return 0; }
+  _theme_materialize() { printf '%s\n' "$1/src"; }
+  _theme_links() { :; }
+  _theme_appearance() { :; }
+  _theme_claudecode() { :; }
+  _theme_reload() { :; }
+  _theme_wallpaper() { :; }
+  notify() { printf '%s\n' "$*" >> "$NOTIFY_LOG"; }
+}
+
+test_theme_switch_notifies_but_install_reapply_is_quiet() {
+  local tmp; tmp="$(mktemp -d)"
+  (
+    _test_theme_apply_harness "$tmp"
+    OMACASE_BACKUP_READY=1 omacase_theme sample >/dev/null 2>&1
+    grep -q 'Switched to sample' "$NOTIFY_LOG"
+  ) || return 1
+  rm -f "$tmp/notify.log"
+  (
+    _test_theme_apply_harness "$tmp"
+    OMACASE_BACKUP_READY=1 OMACASE_THEME_QUIET=1 omacase_theme sample >/dev/null 2>&1
+    [ ! -e "$NOTIFY_LOG" ]
+  ) &&
+    grep -q 'OMACASE_THEME_QUIET=1 omacase_theme' "$ROOT/lib/install.sh"
+}
+
 test_theme_accent_snaps_to_nearest_preset() {
   OMACASE_ROOT="$ROOT"
   # shellcheck source=/dev/null
@@ -1672,6 +1708,7 @@ run_test "menu lists primary commands and opens keybinds" test_menu_lists_primar
 run_test "menu lists app and overlay commands" test_menu_lists_app_and_overlay_commands
 run_test "theme renderer creates generated fragments" test_theme_renderer_creates_fragments
 run_test "theme accent snaps to nearest macOS preset" test_theme_accent_snaps_to_nearest_preset
+run_test "theme switch notifies; install re-apply is quiet" test_theme_switch_notifies_but_install_reapply_is_quiet
 
 if [ "$FAILURES" -gt 0 ]; then
   printf '%s test(s) failed\n' "$FAILURES" >&2

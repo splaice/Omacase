@@ -57,7 +57,11 @@ omacase_theme() {
   _theme_reload
   _theme_wallpaper "$name"
   success "Theme '$name' applied."
-  is_dryrun || notify --subtitle "Theme" --sound Glass "Switched to $name"
+  # A user-initiated switch gets a banner; install/update re-apply the saved
+  # theme as a convergence step and set OMACASE_THEME_QUIET to stay silent.
+  if ! is_dryrun && [ -z "${OMACASE_THEME_QUIET:-}" ]; then
+    notify --subtitle "Theme" --sound Glass "Switched to $name"
+  fi
 }
 
 _theme_field() {
