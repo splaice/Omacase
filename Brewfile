@@ -58,6 +58,12 @@ cask "tailscale-app"     # mesh VPN / private network
 # own shortcuts remain untouched; its app rules decide which windows float.
 cask "spotify"           # music (Apple Music is stock)
 cask "obsidian"          # notes / knowledge base
+# Markdown Preview is the desktop *reader* for .md: native AppKit/WebKit, MIT,
+# opens instantly, offers to be the default .md handler, and bundles a Quick
+# Look extension (Finder spacebar / Spotlight) plus the `mdp` CLI — Homebrew
+# links it, so `mdp README.md` / `mdp .` work from any shell. glow (above)
+# remains the in-terminal reader; this is the window you open files in.
+cask "markdown-preview"  # Markdown viewer + Quick Look extension + `mdp` CLI (not an editor)
 cask "1password"         # password manager
 cask "todoist-app"       # tasks
 
