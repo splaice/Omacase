@@ -384,6 +384,20 @@ _set_desktop_picture() {
   else
     warn "Couldn't set wallpaper (grant Automation → System Events to your terminal)."
   fi
+  _sync_wallpaper_store "$live"
+}
+
+# System Events only reaches the current Space on each display connected right
+# now. Every other Space × display (and the SystemDefault that displays macOS
+# hasn't met yet inherit) keeps its own entry in WallpaperAgent's store, so an
+# external monitor plugged in later would show a stale picture. Rewrite every
+# entry, then restart WallpaperAgent (launchd relaunches it) so it re-reads
+# the store. Best-effort.
+_sync_wallpaper_store() {
+  local live="$1" store="$HOME/Library/Application Support/com.apple.wallpaper/Store/Index.plist"
+  [ -f "$store" ] && have python3 || return 0
+  python3 -I "$OMACASE_ROOT/lib/wallpaper_store.py" "$live" "$store" >/dev/null 2>&1 || return 0
+  killall WallpaperAgent 2>/dev/null || true
 }
 
 # `omacase wallpaper [list|next|prev|<n>]` — choose among the active theme's

@@ -1717,6 +1717,43 @@ test_install_next_steps_explain_their_reason() {
   grep -q 'omacase restore' "$tmp2/out" && ! grep -q 'omacase doctor' "$tmp2/out"
 }
 
+test_wallpaper_store_rewrites_every_space_and_display() {
+  local tmp store
+  tmp="$(mktemp -d)"
+  store="$tmp/Index.plist"
+  # A store with stale pictures on an unvisited Space, a disconnected display,
+  # and the SystemDefault new displays inherit; plus an idle-only scope.
+  python3 -I - "$store" <<'PY'
+import plistlib, sys
+def entry(name):
+    cfg = plistlib.dumps({"type": "imageFile", "url": {"relative": "file:///old/" + name}}, fmt=plistlib.FMT_BINARY)
+    return {"Type": "individual", "Desktop": {"Content": {"Choices": [
+        {"Provider": "com.apple.wallpaper.choice.image", "Files": [], "Configuration": cfg}]}}}
+store = {
+    "AllSpacesAndDisplays": {"Type": "idle", "Idle": {}},
+    "SystemDefault": entry("a.jpg"),
+    "Displays": {"D1": entry("b.jpg")},
+    "Spaces": {"S1": {"Default": entry("c.jpg"), "Displays": {"D1": entry("d.jpg"), "D2": entry("e.jpg")}}},
+}
+plistlib.dump(store, open(sys.argv[1], "wb"), fmt=plistlib.FMT_BINARY)
+PY
+  [ "$(python3 -I "$ROOT/lib/wallpaper_store.py" "$tmp/new pic.jpg" "$store")" = 5 ] &&
+    python3 -I - "$store" "$tmp/new pic.jpg" <<'PY'
+import plistlib, sys, urllib.parse
+store = plistlib.load(open(sys.argv[1], "rb"))
+want = "file://" + urllib.parse.quote(sys.argv[2])
+scopes = [store["SystemDefault"], store["Displays"]["D1"], store["Spaces"]["S1"]["Default"],
+          *store["Spaces"]["S1"]["Displays"].values()]
+for scope in scopes:
+    cfg = plistlib.loads(scope["Desktop"]["Content"]["Choices"][0]["Configuration"])
+    assert cfg["url"]["relative"] == want, cfg
+assert "Desktop" not in store["AllSpacesAndDisplays"]
+PY
+  local rc=$?
+  rm -rf "$tmp"
+  return "$rc"
+}
+
 test_theme_accent_snaps_to_nearest_preset() {
   OMACASE_ROOT="$ROOT"
   # shellcheck source=/dev/null
@@ -1815,6 +1852,7 @@ run_test "menu lists primary commands and opens keybinds" test_menu_lists_primar
 run_test "menu lists app and overlay commands" test_menu_lists_app_and_overlay_commands
 run_test "theme renderer creates generated fragments" test_theme_renderer_creates_fragments
 run_test "theme accent snaps to nearest macOS preset" test_theme_accent_snaps_to_nearest_preset
+run_test "wallpaper reaches every Space and display" test_wallpaper_store_rewrites_every_space_and_display
 run_test "theme switch notifies; install re-apply is quiet" test_theme_switch_notifies_but_install_reapply_is_quiet
 run_test "install Next steps is silent when nothing is pending" test_install_next_steps_silent_when_nothing_pending
 run_test "install Next steps names its reason" test_install_next_steps_explain_their_reason
