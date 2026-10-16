@@ -1,0 +1,38 @@
+# GrokDay — Starship prompt (used as $STARSHIP_CONFIG via theme.toml).
+# Mirrors Grok Build's TUI roles: paths orange, accent violet, semantic green/red.
+"$schema" = 'https://starship.rs/config-schema.json'
+add_newline = true
+palette = 'grokday'
+format = '$directory$git_branch$git_status$nodejs$python$character'
+
+[palettes.grokday]
+blue = '#2f64d2'
+green = '#378e23'
+red = '#cd3048'
+mauve = '#7d4bc6'
+yellow = '#a27612'
+orange = '#c3691e'
+
+[directory]
+style = 'bold orange'
+truncation_length = 3
+truncate_to_repo = true
+
+[git_branch]
+symbol = ' '
+style = 'bold mauve'
+
+[git_status]
+style = 'bold red'
+
+[nodejs]
+symbol = ' '
+style = 'green'
+
+[python]
+symbol = ' '
+style = 'yellow'
+
+[character]
+success_symbol = '[➜](bold mauve)'
+error_symbol = '[➜](bold red)'

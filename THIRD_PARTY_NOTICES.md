@@ -20,6 +20,21 @@ Downloaded Omarchy artifacts are cached under `~/.local/share/omacase/upstream/`
 and `~/.local/share/omacase/backgrounds/`; generated local app fragments are
 written under `~/.local/share/omacase/generated/themes/`.
 
+## Grok Build themes
+
+The GrokNight and GrokDay themes (`themes/groknight/`, `themes/grokday/`, and
+`home/dot_config/nvim/grok.nvim/`) reproduce the color palettes of xAI's
+Grok Build CLI, released under the Apache License 2.0. ANSI slot mapping
+follows the GrokNight/GrokDay ports in kovidgoyal/kitty-themes (Apache-2.0).
+
+https://github.com/xai-org/grok-build
+
+The bundled GrokNight wallpaper is derived from NASA's public-domain black hole
+visualization ("Black Hole Accretion Disk Visualization", SVS 13326).
+Credit: NASA's Goddard Space Flight Center/Jeremy Schnittman.
+
+https://svs.gsfc.nasa.gov/13326
+
 ## OmniWM
 
 Omacase installs and seeds OmniWM as its window environment. OmniWM is an

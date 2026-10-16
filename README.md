@@ -33,7 +33,7 @@ asks.
 | Editor | **Neovim / LazyVim** |
 | Applications | **Homebrew + Brewfile** |
 | Dotfiles | Omacase-owned symlinks from `home/` |
-| Themes | 21 coordinated themes for terminal, CLI, editor, prompt, macOS appearance/accent, and wallpaper |
+| Themes | 23 coordinated themes for terminal, CLI, editor, prompt, macOS appearance/accent, and wallpaper |
 | Recovery | Snapshots of managed config, live OmniWM settings, and touched macOS defaults |
 
 Omacase seeds `~/.config/omniwm/settings.toml` only when it does not exist.

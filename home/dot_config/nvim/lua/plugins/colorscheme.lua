@@ -58,6 +58,16 @@ return {
   -- home/dot_config/nvim/; lazy loads it from the config dir by `dir`.
   { dir = vim.fn.stdpath("config") .. "/techno-viking.nvim", name = "techno-viking", lazy = false, priority = 1000 },
 
+  -- GrokNight / GrokDay — a LOCAL plugin (grok.nvim/) that feeds Grok Build's
+  -- palette through tokyonight's highlight engine.
+  {
+    dir = vim.fn.stdpath("config") .. "/grok.nvim",
+    name = "grok",
+    lazy = false,
+    priority = 1000,
+    dependencies = { "folke/tokyonight.nvim" },
+  },
+
   -- Activate whichever colorscheme matches the system theme.
   { "LazyVim/LazyVim", opts = { colorscheme = colorscheme } },
 }

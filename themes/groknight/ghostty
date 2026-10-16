@@ -1,0 +1,29 @@
+# GrokNight — Ghostty colors (neutral gray + Tokyo Night accents).
+# Source: xai-org/grok-build theme/groknight.rs (Apache-2.0); ANSI mapping per the
+# kitty-themes GrokNight.conf port.
+background = 0a0a0a
+foreground = e1e1e1
+selection-background = 323237
+selection-foreground = e1e1e1
+cursor-color = bb9af7
+cursor-text = 0a0a0a
+
+# Normal colors (0-7)
+palette = 0=#111111
+palette = 1=#f7768e
+palette = 2=#9ece6a
+palette = 3=#e0af68
+palette = 4=#7aa2f7
+palette = 5=#bb9af7
+palette = 6=#1abc9c
+palette = 7=#c8c8c8
+
+# Bright colors (8-15)
+palette = 8=#6c6c6c
+palette = 9=#f7768e
+palette = 10=#8bc34a
+palette = 11=#ff9e64
+palette = 12=#7aa2f7
+palette = 13=#9d7cd8
+palette = 14=#3a95ab
+palette = 15=#e1e1e1

@@ -40,8 +40,10 @@ isn't bundled already).
    plus at least one `background.jpg` (more backgrounds → `omacase wallpaper`
    cycles them). Keep JPEGs ≲1 MB (`magick in.jpg -strip -quality 78 out.jpg`).
 3. If the colorscheme is custom, ship it as a local plugin like
-   `home/dot_config/nvim/techno-viking.nvim/` and register it in
-   `home/dot_config/nvim/lua/plugins/colorscheme.lua`.
+   `home/dot_config/nvim/techno-viking.nvim/` (hand-written highlight groups) or
+   `home/dot_config/nvim/grok.nvim/` (a palette fed through tokyonight's engine —
+   the low-maintenance route when a theme is a recolor of an existing scheme) and
+   register it in `home/dot_config/nvim/lua/plugins/colorscheme.lua`.
 
 ## Checks
 
