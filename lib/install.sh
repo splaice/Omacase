@@ -19,7 +19,6 @@ omacase_install() {
   # upgrade --cask`, so self-updating apps (WhatsApp, Chrome, …) are left to
   # update themselves here too — see the rationale in lib/update.sh.
   export HOMEBREW_NO_UPGRADE_AUTO_UPDATES_CASKS=1
-  _brew_trust_declared_third_party
   sudo_prime   # one admin prompt for every cask that needs it; no-op when none do
   require "brew bundle" brew bundle --file="$OMACASE_ROOT/Brewfile"
   source "$OMACASE_ROOT/lib/fonts.sh"
@@ -122,18 +121,6 @@ _install_next_steps() {
   for n in "${notes[@]}"; do warn "$n"; done
   [ "$doctor" -eq 1 ] && warn "\`omacase doctor\` re-checks these and deep-links the right Settings panes."
   return 0
-}
-
-# Homebrew requires an explicit trust decision before loading third-party
-# packages. Trust only the exact item the Brewfile declares instead of disabling
-# enforcement for the entire bundle or every package in its tap.
-_brew_trust_declared_third_party() {
-  if run brew tap BarutSRB/tap; then
-    run brew trust --cask BarutSRB/tap/omniwm || \
-      warn "Could not trust the OmniWM cask; Homebrew may skip it."
-  else
-    warn "Could not add the OmniWM Homebrew tap."
-  fi
 }
 
 # Grok CLI (xAI) ships as a self-updating native binary that installs into

@@ -834,9 +834,9 @@ test_stage_manager_is_disabled_by_defaults() {
     "$ROOT/macos/defaults.sh"
 }
 
-test_brew_trust_is_scoped() {
-  ! grep -q 'HOMEBREW_NO_REQUIRE_TAP_TRUST' "$ROOT/lib/install.sh" &&
-    grep -q 'brew trust --cask BarutSRB/tap/omniwm' "$ROOT/lib/install.sh"
+test_brew_official_sources_only() {
+  ! grep -qE '^[[:space:]]*tap[[:space:]]' "$ROOT/Brewfile" &&
+    ! grep -qE 'brew (tap|trust)|HOMEBREW_NO_REQUIRE_TAP_TRUST' "$ROOT/lib/install.sh"
 }
 
 test_grok_installer_requires_opt_in() {
@@ -1802,7 +1802,7 @@ run_test "update dev attaches a detached stable tag to main" test_update_dev_att
 run_test "boot dev attaches a detached stable tag to main" test_boot_dev_attaches_from_stable_tag
 run_test "backup domains cover macos/defaults.sh" test_backup_domains_cover_defaults_sh
 run_test "defaults disable Stage Manager" test_stage_manager_is_disabled_by_defaults
-run_test "Homebrew trust is scoped to exact third-party packages" test_brew_trust_is_scoped
+run_test "Homebrew packages come only from official repos (no taps)" test_brew_official_sources_only
 run_test "Grok installer requires explicit opt-in" test_grok_installer_requires_opt_in
 run_test "every Brewfile entry has a description" test_every_brewfile_entry_has_a_description
 run_test "tools lists Brewfile entries" test_tools_lists_brewfile_entries

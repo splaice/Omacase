@@ -4,7 +4,6 @@
 # Edit, then `omacase update` (or `brew bundle`) to converge.
 
 # --- Window management & desktop -------------------------------------------
-tap "BarutSRB/tap"
 cask "omniwm" # native Niri + Hyprland Dwindle WM, workspace bar, borders, quake terminal
 
 # --- The "make Mac behave" set ---------------------------------------------
