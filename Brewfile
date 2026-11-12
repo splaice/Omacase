@@ -30,7 +30,6 @@ brew "zsh-completions"   # extra completion defs beyond zsh's bundled set (wired
 brew "glow"              # markdown rendered in the terminal (read READMEs where you are)
 brew "mole"              # `mo` — deep clean + thorough app uninstaller (`omacase extras mole`; `mo clean --dry-run` previews)
 brew "jq"                # JSON wrangling
-brew "tldr"              # example-first man pages
 brew "fastfetch"         # branded system summary (`omacase menu` → About); config in home/
 
 # --- Editor & dev -----------------------------------------------------------
