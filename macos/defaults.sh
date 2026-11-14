@@ -40,6 +40,20 @@ run defaults write com.apple.spaces spans-displays -bool false
 info "Window management: disable Stage Manager so all tiled windows remain visible"
 run defaults write com.apple.WindowManager GloballyEnabled -bool false
 
+info "Launcher: release ⌘Space / ⌥⌘Space from Spotlight so Sol can own ⌘Space"
+# Symbolic hotkeys 64 (Show Spotlight search, ⌘Space) and 65 (Finder search
+# window, ⌥⌘Space) are disabled; Spotlight itself (indexing, Finder search,
+# the menu-bar icon) stays. Re-enable in System Settings → Keyboard → Keyboard
+# Shortcuts → Spotlight. activateSettings applies it without a logout.
+_spotlight_hotkey_off() { # <id> <char> <keycode> <modifiers>
+  run defaults write com.apple.symbolichotkeys AppleSymbolicHotKeys -dict-add "$1" \
+    "<dict><key>enabled</key><false/><key>value</key><dict><key>parameters</key><array><integer>$2</integer><integer>$3</integer><integer>$4</integer></array><key>type</key><string>standard</string></dict></dict>"
+}
+_spotlight_hotkey_off 64 32 49 1048576     # ⌘Space
+_spotlight_hotkey_off 65 65535 49 1572864  # ⌥⌘Space
+_activate=/System/Library/PrivateFrameworks/SystemAdministration.framework/Resources/activateSettings
+[ -x "$_activate" ] && { run "$_activate" -u || true; }
+
 info "Screenshots: PNG into ~/Screenshots, no drop shadow"
 run mkdir -p "$HOME/Screenshots"
 run defaults write com.apple.screencapture location -string "$HOME/Screenshots"

@@ -7,8 +7,11 @@
 cask "omniwm" # native Niri + Hyprland Dwindle WM, workspace bar, borders, quake terminal
 
 # --- The "make Mac behave" set ---------------------------------------------
-# Launcher is macOS Spotlight (⌘Space) — Tahoe's Spotlight has actions,
-# clipboard history, and Quick Keys built in, so no third-party launcher.
+# Launcher is Sol (⌘Space) — a fast, free, open-source launcher / command
+# palette (app search, clipboard history, emoji, window snapping, scratchpad).
+# macos/defaults.sh releases ⌘Space from Spotlight so Sol can take it; pick
+# "⌘ Space" in Sol's onboarding. Spotlight indexing/search still works.
+cask "sol"               # launcher — replaces Spotlight on ⌘Space
 # OmniWM owns its keyboard shortcuts directly.
 # Menu bar is stock macOS — no third-party menu-bar manager.
 

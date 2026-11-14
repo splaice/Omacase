@@ -36,12 +36,14 @@ Settings → Hotkeys screen is authoritative and supports changing every binding
 
 | Keys | Action |
 |---|---|
-| `⌘ Space` | Spotlight |
+| `⌘ Space` | Sol (launcher) |
 | `⌘ Tab` | macOS app switcher |
 | `⌃⌘ Space` | Emoji & Symbols |
 
-Spotlight is the launcher, unmodified. Omacase adds no launcher applications of
-its own; run `omacase menu` for its TUI, or bind any `omacase` subcommand as an
+[Sol](https://sol.ospfranco.com/) is the launcher. Omacase turns off Spotlight's
+`⌘ Space` and `⌥⌘ Space` shortcuts, and you choose `⌘ Space` in Sol's onboarding
+(Sol starts on `⌥ Space`). Spotlight indexing and Finder search keep working.
+Run `omacase menu` for the Omacase TUI, or bind any `omacase` subcommand as an
 OmniWM shortcut.
 
 ## Terminal

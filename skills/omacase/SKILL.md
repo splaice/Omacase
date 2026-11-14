@@ -11,7 +11,7 @@ to the Omacase-managed Mac environment.
 ## Main operations
 
 - `omacase install` — idempotently apply packages, dotfiles, defaults, theme,
-  OmniWM first-run seed, login launch, and Spotlight helpers.
+  OmniWM first-run seed, login launch, and the Sol launcher (⌘Space).
 - `omacase update` — pull, reapply, migrate, and update packages/tools.
 - `omacase doctor` — inspect OmniWM, its IPC, separate Spaces, permissions,
   command links, backups, and macOS window-management settings.

@@ -23,6 +23,7 @@ OMACASE_DEFAULTS_DOMAINS=(
   com.apple.dock
   com.apple.spaces
   com.apple.WindowManager
+  com.apple.symbolichotkeys
   com.apple.screencapture
   com.apple.AppleMultitouchTrackpad
   com.apple.driver.AppleBluetoothMultitouch.trackpad

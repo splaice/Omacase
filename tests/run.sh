@@ -834,6 +834,12 @@ test_stage_manager_is_disabled_by_defaults() {
     "$ROOT/macos/defaults.sh"
 }
 
+test_sol_replaces_spotlight_hotkey() {
+  grep -qE '^cask "sol"' "$ROOT/Brewfile" &&
+    grep -qE '_spotlight_hotkey_off 64 ' "$ROOT/macos/defaults.sh" &&
+    grep -qE '_spotlight_hotkey_off 65 ' "$ROOT/macos/defaults.sh"
+}
+
 test_brew_official_sources_only() {
   ! grep -qE '^[[:space:]]*tap[[:space:]]' "$ROOT/Brewfile" &&
     ! grep -qE 'brew (tap|trust)|HOMEBREW_NO_REQUIRE_TAP_TRUST' "$ROOT/lib/install.sh"
@@ -1802,6 +1808,7 @@ run_test "update dev attaches a detached stable tag to main" test_update_dev_att
 run_test "boot dev attaches a detached stable tag to main" test_boot_dev_attaches_from_stable_tag
 run_test "backup domains cover macos/defaults.sh" test_backup_domains_cover_defaults_sh
 run_test "defaults disable Stage Manager" test_stage_manager_is_disabled_by_defaults
+run_test "Sol replaces Spotlight on ⌘Space" test_sol_replaces_spotlight_hotkey
 run_test "Homebrew packages come only from official repos (no taps)" test_brew_official_sources_only
 run_test "Grok installer requires explicit opt-in" test_grok_installer_requires_opt_in
 run_test "every Brewfile entry has a description" test_every_brewfile_entry_has_a_description

@@ -105,23 +105,28 @@ omacase_doctor() {
   These need a manual toggle in System Settings → Privacy & Security.
   No script can grant them — that's the OS security model, by design.
 
-    Accessibility      : OmniWM
+    Accessibility      : OmniWM, Sol
     Input Monitoring   : only if you enable OmniWM's optional system Hyper key
     Automation         : terminal → System Events (theme Light/Dark sync)
     Full Disk Access   : (optional) terminal, for some defaults writes
 EOF
 
-  step "Launcher (Spotlight — built in, no third-party app)"
+  step "Launcher (Sol — replaces Spotlight on ⌘Space)"
+  if [ -d /Applications/Sol.app ]; then success "Sol installed"
+  else warn "Sol not installed — run: brew install --cask sol"; issues=$((issues + 1)); fi
+  if /usr/libexec/PlistBuddy -c 'Print :AppleSymbolicHotKeys:64:enabled' \
+       "$HOME/Library/Preferences/com.apple.symbolichotkeys.plist" 2>/dev/null | grep -qiE '^(1|true)$'; then
+    warn "Spotlight still owns ⌘Space — re-run macos/defaults.sh (omacase install)"
+    issues=$((issues + 1))
+  else success "Spotlight's ⌘Space shortcut is released"; fi
   cat <<'EOF'
-  macOS Spotlight is the launcher / command palette. On Tahoe it also has a
-  clipboard manager, Actions (App Intents), and auto-learned Quick Keys.
-    ⌘ Space        →  Spotlight (launcher / search / actions / clipboard)
+  Sol is the launcher / command palette (apps, clipboard, emoji, scratchpad).
+    ⌘ Space        →  Sol (pick "⌘ Space" in Sol's onboarding or Settings → General)
     ⌃⌘ Space       →  Emoji & Symbols (Character Viewer)
     ⌘ Tab          →  Switch apps (macOS app switcher)
-  If ⌘Space doesn't open Spotlight (e.g. a launcher had taken it), re-enable it:
-  System Settings → Keyboard → Keyboard Shortcuts → Spotlight → "Show Spotlight search".
-  OmniWM owns the window-management shortcuts; Omacase installs no launcher
-  applications and does not intercept normal keyboard input.
+  Sol needs Accessibility access and launches itself at login (Sol setting).
+  To go back to Spotlight: System Settings → Keyboard → Keyboard Shortcuts →
+  Spotlight → "Show Spotlight search", and set Sol to another hotkey.
 EOF
   if confirm "Open the Accessibility settings pane now?"; then
     open "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility" || true

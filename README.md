@@ -28,7 +28,7 @@ asks.
 | Layer | Choice |
 |---|---|
 | Window environment | **OmniWM** — Dwindle default, nine workspaces, borders, workspace bar, overview, quake terminal |
-| Launcher | **Spotlight** (stock) |
+| Launcher | **Sol** on ⌘Space (replaces Spotlight's shortcut) |
 | Terminal | **Ghostty**, zsh, Starship, herdr, and a modern CLI set |
 | Editor | **Neovim / LazyVim** |
 | Applications | **Homebrew + Brewfile** |
