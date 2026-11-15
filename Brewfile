@@ -84,7 +84,10 @@ brew "terminal-notifier" # reliable native notifications for `omacase notify` (o
 # (Omacase manages its own dotfiles via symlinks — no chezmoi dependency.)
 
 # --- Fonts ------------------------------------------------------------------
-cask "font-jetbrains-mono-nerd-font" # fallback terminal/editor font with glyph icons (IoskeleyMono is the default — lib/fonts.sh)
+# Ghostty's fallback chain, in order (home/dot_config/ghostty/config).
+cask "font-maple-mono-nf"    # Maple Mono NF — main terminal font + Nerd Font icons
+cask "font-juliamono"        # JuliaMono — fills in symbols Maple lacks
+cask "font-noto-color-emoji" # Noto Color Emoji — emoji
 # --- Browsers ---------------------------------------------------------------
 # Brave is the dedicated `omacase webapp` browser (signed; opens chromeless
 # app windows) so ⌘Q on a web app never quits your daily/default browser.

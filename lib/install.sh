@@ -14,15 +14,13 @@ omacase_install() {
   omniwm_before="$(_omniwm_version)"
   backup_before="$(cat "$OMACASE_STATE/last-backup" 2>/dev/null || true)"
 
-  step "1/8  Packages, apps & terminal font (brew bundle + IoskeleyMono)"
+  step "1/8  Packages, apps & fonts (brew bundle)"
   # Same policy as `omacase update`: `brew bundle` upgrades casks via `brew
   # upgrade --cask`, so self-updating apps (WhatsApp, Chrome, …) are left to
   # update themselves here too — see the rationale in lib/update.sh.
   export HOMEBREW_NO_UPGRADE_AUTO_UPDATES_CASKS=1
   sudo_prime   # one admin prompt for every cask that needs it; no-op when none do
   require "brew bundle" brew bundle --file="$OMACASE_ROOT/Brewfile"
-  source "$OMACASE_ROOT/lib/fonts.sh"
-  require "IoskeleyMono font" _font_install
 
   step "2/8  Link \`omacase\` onto PATH + shell completion"
   _link_command
@@ -314,9 +312,10 @@ omacase_uninstall() {
     { _is_omacase_link "$target" && run rm -f "$target"; } || true
   done < <(find "$src" -type f ! -name '.DS_Store' ! -name '*.pyc' ! -path '*/__pycache__/*')
 
-  # The terminal font lives outside home/ (a pinned release asset in
-  # ~/Library/Fonts); its marker proves it is ours.
-  source "$OMACASE_ROOT/lib/fonts.sh"; _font_uninstall
+  # Legacy: the retired IoskeleyMono release install. Its marker proves it is
+  # ours (fonts are Homebrew casks now; migrations remove it on update).
+  local legacy_font="$HOME/Library/Fonts/IoskeleyMono-Term-NerdFont"
+  if [ -f "$legacy_font/.omacase-version" ]; then run rm -rf "$legacy_font"; fi
 
   # Theme symlinks are created by `omacase theme`, not from home/ — walk the
   # same fragment|target list theme.sh links.

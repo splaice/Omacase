@@ -445,10 +445,6 @@ _test_stub_convergence_externals() {
       */install.sh)
         omacase_install() { return 0; }
         return 0 ;;
-      */fonts.sh)   # keep convergence tests offline; fonts.sh has its own tests
-        _font_install() { return 0; }
-        _font_uninstall() { return 0; }
-        return 0 ;;
       *) builtin source "$@" ;;
     esac
   }
@@ -1612,67 +1608,35 @@ test_theme_switch_notifies_but_install_reapply_is_quiet() {
     grep -q 'OMACASE_THEME_QUIET=1 omacase_theme' "$ROOT/lib/install.sh"
 }
 
-# Terminal font: a pinned, checksummed release asset (lib/fonts.sh). The pin
-# must be a version + 64-hex sha256; install wires it through `require`;
-# uninstall removes only a marked directory; Ghostty names it with a fallback.
-test_font_pin_is_checksummed_and_wired() {
-  grep -qE '^OMACASE_FONT_VERSION=v[0-9]+\.[0-9]+\.[0-9]+$' "$ROOT/lib/fonts.sh" &&
-    grep -qE '^OMACASE_FONT_SHA256=[0-9a-f]{64}$' "$ROOT/lib/fonts.sh" &&
-    grep -q 'require "IoskeleyMono font" _font_install' "$ROOT/lib/install.sh" &&
-    grep -q '_font_uninstall' "$ROOT/lib/install.sh" &&
-    grep -q '^font-family = "IoskeleyMonoTerm Nerd Font Mono"$' "$ROOT/home/dot_config/ghostty/config" &&
-    grep -q '^font-family = "JetBrainsMono Nerd Font"$' "$ROOT/home/dot_config/ghostty/config"
+# Ghostty's font chain: Maple Mono NF → JuliaMono → Noto Color Emoji, every
+# face a Homebrew cask, and nothing left of the retired pinned-release install.
+test_ghostty_font_chain_from_brewfile() {
+  local cfg="$ROOT/home/dot_config/ghostty/config"
+  [ "$(grep -E '^font-family = ' "$cfg")" = 'font-family = "Maple Mono NF"
+font-family = "JuliaMono"
+font-family = "Noto Color Emoji"' ] &&
+    grep -qE '^cask "font-maple-mono-nf"' "$ROOT/Brewfile" &&
+    grep -qE '^cask "font-juliamono"' "$ROOT/Brewfile" &&
+    grep -qE '^cask "font-noto-color-emoji"' "$ROOT/Brewfile" &&
+    [ ! -e "$ROOT/lib/fonts.sh" ] &&
+    ! grep -rq 'fonts\.sh' "$ROOT/lib" "$ROOT/bin"
 }
 
-_test_font_env() {
-  export OMACASE_ROOT="$ROOT" HOME="$1/home" OMACASE_FONT_DIR="$1/fonts"
-  mkdir -p "$HOME"
-  # shellcheck source=/dev/null
-  source "$ROOT/lib/common.sh"
-  # shellcheck source=/dev/null
-  source "$ROOT/lib/fonts.sh"
-}
-
-test_font_install_verifies_checksum_and_is_idempotent() {
-  local tmp; tmp="$(mktemp -d)"
-  # Build a fake release zip with the upstream layout and pin ITS checksum.
-  mkdir -p "$tmp/rel/Normal" && printf 'ttf' > "$tmp/rel/Normal/Fake-Regular.ttf"
-  (cd "$tmp/rel" && zip -qr ../good.zip Normal)
-  local good_sha; good_sha="$(shasum -a 256 "$tmp/good.zip" | cut -d' ' -f1)"
-  (
-    _test_font_env "$tmp"
-    # Distinct name: _font_install has its own `local tmp`, which bash's dynamic
-    # scoping would otherwise expose to this stub.
-    FONT_TEST_ZIP="$tmp/good.zip"
-    curl() { cp "$FONT_TEST_ZIP" "${@: -1}"; }    # last arg is -o <dest>
-    # shellcheck disable=SC2034 # read by _font_install (lib/fonts.sh) in this subshell
-    OMACASE_FONT_SHA256="$good_sha"
-    _font_install >/dev/null 2>&1 &&
-      [ -f "$OMACASE_FONT_DIR/Fake-Regular.ttf" ] &&
-      [ "$(cat "$OMACASE_FONT_DIR/.omacase-version")" = "$OMACASE_FONT_VERSION" ] || exit 1
-    # Second run: marker matches → curl must not be called.
-    curl() { echo "curl called on a current install" >&2; exit 99; }
-    _font_install >/dev/null 2>&1
-  ) || return 1
-  (
-    _test_font_env "$tmp"
-    rm -rf "$OMACASE_FONT_DIR"
-    curl() { printf 'tampered' > "${@: -1}"; }   # wrong bytes → checksum fails
-    ! _font_install >"$tmp/out" 2>&1 && grep -q 'checksum mismatch' "$tmp/out" && [ ! -d "$OMACASE_FONT_DIR" ]
-  )
-}
-
-test_font_uninstall_removes_only_marked_dir() {
+# The retired IoskeleyMono dir is removed only when Omacase's marker proves it.
+test_migration_removes_only_marked_ioskeley_dir() {
   local tmp; tmp="$(mktemp -d)"
   (
-    _test_font_env "$tmp"
-    mkdir -p "$OMACASE_FONT_DIR" && touch "$OMACASE_FONT_DIR/Other.ttf"   # unmarked: not ours
-    _font_uninstall >/dev/null 2>&1
-    [ -f "$OMACASE_FONT_DIR/Other.ttf" ] || exit 1
-    printf 'v0.0.0\n' > "$OMACASE_FONT_DIR/.omacase-version"               # marked: ours
-    _font_uninstall >/dev/null 2>&1
-    [ ! -d "$OMACASE_FONT_DIR" ]
+    export OMACASE_ROOT="$ROOT" HOME="$tmp/home"
+    source "$ROOT/lib/common.sh"
+    have() { return 1; }
+    source "$ROOT/migrations/20261114120000-ghostty-fonts-from-homebrew.sh"
+    d="$HOME/Library/Fonts/IoskeleyMono-Term-NerdFont"
+    mkdir -p "$d" && touch "$d/Other.ttf"           # unmarked: not ours
+    migrate >/dev/null 2>&1 && [ -f "$d/Other.ttf" ] || exit 1
+    printf 'v2.1.0\n' > "$d/.omacase-version"       # marked: ours
+    migrate >/dev/null 2>&1 && [ ! -d "$d" ]
   )
+  local rc=$?; rm -rf "$tmp"; return $rc
 }
 
 # The closing "Next steps" block is conditional: silent when nothing is
@@ -1863,9 +1827,8 @@ run_test "wallpaper reaches every Space and display" test_wallpaper_store_rewrit
 run_test "theme switch notifies; install re-apply is quiet" test_theme_switch_notifies_but_install_reapply_is_quiet
 run_test "install Next steps is silent when nothing is pending" test_install_next_steps_silent_when_nothing_pending
 run_test "install Next steps names its reason" test_install_next_steps_explain_their_reason
-run_test "font pin is checksummed and wired" test_font_pin_is_checksummed_and_wired
-run_test "font install verifies checksum and is idempotent" test_font_install_verifies_checksum_and_is_idempotent
-run_test "font uninstall removes only the marked dir" test_font_uninstall_removes_only_marked_dir
+run_test "Ghostty font chain comes from the Brewfile" test_ghostty_font_chain_from_brewfile
+run_test "migration removes only a marked IoskeleyMono dir" test_migration_removes_only_marked_ioskeley_dir
 
 if [ "$FAILURES" -gt 0 ]; then
   printf '%s test(s) failed\n' "$FAILURES" >&2
