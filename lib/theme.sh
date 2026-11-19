@@ -204,22 +204,22 @@ truncate_to_repo = true
 
 [git_branch]
 symbol = ' '
-style = 'bold mauve inverted'
+style = 'bold mauve'
 
 [git_status]
-style = 'bold red inverted'
+style = 'bold red'
 
 [nodejs]
 symbol = ' '
-style = 'green inverted'
+style = 'green'
 
 [python]
 symbol = ' '
-style = 'yellow inverted'
+style = 'yellow'
 
 [character]
-success_symbol = '[$arrow](bold green inverted)'
-error_symbol = '[$arrow](bold red inverted)'
+success_symbol = '[$arrow](bold green)'
+error_symbol = '[$arrow](bold red)'
 EOF
 
   cat > "$tmp/btop" <<EOF

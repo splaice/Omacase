@@ -19,19 +19,19 @@ truncate_to_repo = true
 
 [git_branch]
 symbol = ' '
-style = 'bold mauve inverted'
+style = 'bold mauve'
 
 [git_status]
-style = 'bold red inverted'
+style = 'bold red'
 
 [nodejs]
 symbol = ' '
-style = 'green inverted'
+style = 'green'
 
 [python]
 symbol = ' '
-style = 'yellow inverted'
+style = 'yellow'
 
 [character]
-success_symbol = '[➜](bold mauve inverted)'
-error_symbol = '[➜](bold red inverted)'
+success_symbol = '[➜](bold mauve)'
+error_symbol = '[➜](bold red)'
