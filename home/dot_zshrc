@@ -54,9 +54,15 @@ alias hr='herdr --remote'
 # tracks the active theme like eza/ls does.
 alias glow='command glow -s "$HOME/.config/glow/omacase-glow.json"'
 
+# History: stock zsh, kept in ~/.zsh_history. macOS's /etc/zshrc keeps only
+# 1000 lines and rewrites the file on exit (the last shell to close wins), so
+# raise the limits and append instead. ↑ is stock recall; ⌃R is fzf (below).
+HISTSIZE=100000
+SAVEHIST=100000
+setopt APPEND_HISTORY
+
 # Tools that hook the shell.
 command -v starship >/dev/null && eval "$(starship init zsh)"
-command -v atuin    >/dev/null && eval "$(atuin init zsh)"
 [ -f /opt/homebrew/opt/fzf/shell/key-bindings.zsh ] && source /opt/homebrew/opt/fzf/shell/key-bindings.zsh
 [ -f /opt/homebrew/opt/fzf/shell/completion.zsh ]   && source /opt/homebrew/opt/fzf/shell/completion.zsh   # fuzzy paths anywhere: `vim **<Tab>`
 

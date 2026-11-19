@@ -25,7 +25,6 @@ brew "ripgrep"           # grep
 brew "fzf"               # fuzzy finder
 brew "btop"              # full terminal system monitor (OmniWM also has a compact native stats popup)
 brew "yazi"              # TUI file manager (`omacase files` opens it as an optional popup)
-brew "atuin"             # shell history
 brew "git-delta"         # git diffs
 brew "herdr"             # agent-aware multiplexer; sessions survive disconnect (`herdr --remote` for SSH)
 brew "zsh-completions"   # extra completion defs beyond zsh's bundled set (wired in dot_zshrc)
