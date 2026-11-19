@@ -198,28 +198,28 @@ mauve = '#${pal[5]}'
 yellow = '#${pal[3]}'
 
 [directory]
-style = 'bold blue'
+style = 'bold blue inverted'
 truncation_length = 3
 truncate_to_repo = true
 
 [git_branch]
 symbol = ' '
-style = 'bold mauve'
+style = 'bold mauve inverted'
 
 [git_status]
-style = 'bold red'
+style = 'bold red inverted'
 
 [nodejs]
 symbol = ' '
-style = 'green'
+style = 'green inverted'
 
 [python]
 symbol = ' '
-style = 'yellow'
+style = 'yellow inverted'
 
 [character]
-success_symbol = '[$arrow](bold green)'
-error_symbol = '[$arrow](bold red)'
+success_symbol = '[$arrow](bold green inverted)'
+error_symbol = '[$arrow](bold red inverted)'
 EOF
 
   cat > "$tmp/btop" <<EOF

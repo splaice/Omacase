@@ -14,25 +14,25 @@ yellow = '#a27612'
 orange = '#c3691e'
 
 [directory]
-style = 'bold orange'
+style = 'bold orange inverted'
 truncation_length = 3
 truncate_to_repo = true
 
 [git_branch]
 symbol = ' '
-style = 'bold mauve'
+style = 'bold mauve inverted'
 
 [git_status]
-style = 'bold red'
+style = 'bold red inverted'
 
 [nodejs]
 symbol = ' '
-style = 'green'
+style = 'green inverted'
 
 [python]
 symbol = ' '
-style = 'yellow'
+style = 'yellow inverted'
 
 [character]
-success_symbol = '[➜](bold mauve)'
-error_symbol = '[➜](bold red)'
+success_symbol = '[➜](bold mauve inverted)'
+error_symbol = '[➜](bold red inverted)'
