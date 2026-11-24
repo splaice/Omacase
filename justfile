@@ -20,7 +20,7 @@ lint:
     command -v shellcheck >/dev/null || { echo "shellcheck not found — brew install shellcheck" >&2; exit 1; }
     shopt -s nullglob   # migrations/ may be empty after a squash
     files=(bin/omacase lib/*.sh boot.sh site/install macos/defaults.sh
-           migrations/*.sh tests/run.sh assets/launcher/OmacaseLauncher.sh)
+           migrations/*.sh tests/run.sh)
     printf '%s\n' "${files[@]}" | xargs -n1 -P4 shellcheck --severity=warning
     zsh -n completions/_omacase
     echo "lint ok (${#files[@]} files shellchecked, completion parses)"

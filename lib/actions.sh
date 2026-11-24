@@ -29,12 +29,12 @@ omacase_webapp() {
     return 0
   fi
   local url; url="$(_webapp_url "$name")" || abort "Unknown web app '$name'. Try: $_webapp_names"
-  # Open in a dedicated browser (Brave, from the Brewfile) so the chromeless app
-  # window is its own process — ⌘Q on a web app won't quit your daily browser.
-  # Google Chrome is last: it's most often the default, so use it only as a last
-  # resort before plain `open`.
+  # Prefer a non-default Chromium browser if one is installed, so the chromeless
+  # app window is its own process and ⌘Q on a web app won't quit your daily
+  # browser. Google Chrome (from the Brewfile) is the usual engine; it is last
+  # only because it is most often the default. Plain `open` is the fallback.
   local b
-  for b in "Brave Browser" "Chromium" "Microsoft Edge" "Vivaldi" "Google Chrome"; do
+  for b in "Chromium" "Microsoft Edge" "Vivaldi" "Google Chrome"; do
     if [ -d "/Applications/$b.app" ]; then
       run open -na "$b" --args "--app=$url"; return 0
     fi

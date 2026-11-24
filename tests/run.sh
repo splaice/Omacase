@@ -244,7 +244,7 @@ test_dotfile_reinstall_preserves_unmanaged_siblings() {
     [ -L "$HOME/.config/ghostty/config" ]
 }
 
-test_backup_captures_live_omniwm_settings() {
+test_backup_skips_retired_omniwm_settings_but_restores_legacy() {
   local tmp id
   tmp="$(mktemp -d)"
   HOME="$tmp/home"
@@ -258,8 +258,16 @@ test_backup_captures_live_omniwm_settings() {
   source "$ROOT/lib/backup.sh"
   omacase_backup test >/dev/null
   id="$(cat "$OMACASE_STATE/last-backup")"
-  cmp -s "$HOME/.config/omniwm/settings.toml" \
-    "$OMACASE_STATE/backups/$id/files/.config/omniwm/settings.toml"
+  # New snapshots no longer capture OmniWM settings…
+  [ ! -e "$OMACASE_STATE/backups/$id/files/.config/omniwm/settings.toml" ] || return 1
+  # …but a snapshot from an OmniWM-era release still restores them.
+  id="20260101-000000"
+  mkdir -p "$OMACASE_STATE/backups/$id/files/.config/omniwm"
+  printf 'saved = true\n' > "$OMACASE_STATE/backups/$id/files/.config/omniwm/settings.toml"
+  printf 'label=test\n' > "$OMACASE_STATE/backups/$id/meta"
+  printf 'PRESENT .config/omniwm/settings.toml\n' > "$OMACASE_STATE/backups/$id/manifest"
+  _test_restore "$id"
+  grep -q 'saved = true' "$HOME/.config/omniwm/settings.toml"
 }
 
 # Restore without importing live defaults or restarting Dock/Finder.
@@ -433,10 +441,7 @@ _test_stub_convergence_externals() {
         return 0 ;;
       */theme.sh)
         omacase_theme() { return 0; }
-        can_set_appearance() { return 0; }
-        return 0 ;;
-      */wm.sh)
-        omacase_wm() { return 0; }
+        can_set_appearance() { return "${APPEARANCE_RC:-0}"; }
         return 0 ;;
       */migrate.sh)
         _migrations_baseline() { return 0; }
@@ -554,9 +559,6 @@ test_update_stops_on_non_ledgered_install_failure() {
         */theme.sh)
           omacase_theme() { return 0; }
           can_set_appearance() { return 0; }
-          return 0 ;;
-        */wm.sh)
-          omacase_wm() { return 0; }
           return 0 ;;
         */migrate.sh)
           _migrations_baseline() { return 0; }
@@ -825,11 +827,6 @@ test_backup_domains_cover_defaults_sh() {
   [ -z "$missing" ] || { printf 'not covered by OMACASE_DEFAULTS_DOMAINS:%s\n' "$missing" >&2; return 1; }
 }
 
-test_stage_manager_is_disabled_by_defaults() {
-  grep -qE 'defaults write com\.apple\.WindowManager GloballyEnabled -bool false' \
-    "$ROOT/macos/defaults.sh"
-}
-
 test_sol_replaces_spotlight_hotkey() {
   grep -qE '^cask "sol"' "$ROOT/Brewfile" &&
     grep -qE '_spotlight_hotkey_off 64 ' "$ROOT/macos/defaults.sh" &&
@@ -915,57 +912,6 @@ test_theme_manifest_lists_all_themes() {
     printf '%s\n' "$themes" | grep -qx techno-viking
 }
 
-test_omniwm_seed_is_valid_and_has_nine_workspaces() {
-  python3 - "$ROOT/config/omniwm/settings.toml" <<'PY'
-import sys
-import tomllib
-
-with open(sys.argv[1], "rb") as handle:
-    config = tomllib.load(handle)
-workspaces = config["workspaces"]
-assert config["general"]["ipcEnabled"] is True
-assert config["general"]["defaultLayoutType"] == "niri"
-assert "appRules" not in config
-assert [workspace["name"] for workspace in workspaces] == list("123456789")
-assert len({workspace["id"] for workspace in workspaces}) == 9
-PY
-}
-
-test_ghostty_windows_remain_manageable() {
-  local config="$ROOT/home/dot_config/ghostty/config"
-  grep -qE '^window-decoration[[:space:]]*=[[:space:]]*true$' "$config" &&
-    grep -qE '^macos-titlebar-style[[:space:]]*=[[:space:]]*transparent$' "$config"
-}
-
-test_omniwm_focused_mode_matches_pid() {
-  OMACASE_ROOT="$ROOT"
-  # shellcheck source=/dev/null
-  source "$ROOT/lib/common.sh"
-  # shellcheck source=/dev/null
-  source "$ROOT/lib/wm.sh"
-  omniwmctl() {
-    printf '%s\n' '{"result":{"payload":{"windows":[{"pid":42,"isFocused":true,"mode":"floating"}]}}}'
-  }
-  [ "$(_wm_focused_mode_for_pid 42)" = floating ] &&
-    [ -z "$(_wm_focused_mode_for_pid 7)" ]
-}
-
-test_wm_menu_and_palette_route_to_ipc() {
-  OMACASE_ROOT="$ROOT"
-  # shellcheck source=/dev/null
-  source "$ROOT/lib/common.sh"
-  # shellcheck source=/dev/null
-  source "$ROOT/lib/wm.sh"
-  local calls=""
-  ensure_brew_env() { :; }
-  _wm_ipc_ready() { return 0; }
-  omniwmctl() { calls="$calls $2"; }
-  omacase_wm menu &&
-    omacase_wm palette &&
-    [ "$calls" = " open-menu-anywhere open-command-palette" ] &&
-    ! ( omacase_wm bogus ) 2>/dev/null
-}
-
 test_cli_unknown_command_fails() {
   local out
   out="$(mktemp)"
@@ -989,85 +935,12 @@ test_extras_list_reports_sudo_touchid_state() {
   "$ROOT/bin/omacase" extras list | grep -qE 'sudo-touchid[[:space:]]+\((on|off|partial)\)'
 }
 
-test_launcher_build_produces_valid_bundle() {
-  local tmp
-  tmp="$(mktemp -d)"
-  (
-    HOME="$tmp"
-    OMACASE_ROOT="$ROOT"
-    # shellcheck source=/dev/null
-    source "$ROOT/lib/common.sh"
-    # shellcheck source=/dev/null
-    source "$ROOT/lib/launcher.sh"
-    _launcher_build
-  ) >/dev/null 2>&1 &&
-    [ -x "$tmp/Applications/OmacaseLauncher.app/Contents/MacOS/OmacaseLauncher" ] &&
-    plutil -lint -s "$tmp/Applications/OmacaseLauncher.app/Contents/Info.plist" &&
-    plutil -lint -s "$tmp/Library/LaunchAgents/org.omacase.launcher.plist" &&
-    grep -q "$tmp/Applications/OmacaseLauncher.app/Contents/MacOS/OmacaseLauncher" \
-      "$tmp/Library/LaunchAgents/org.omacase.launcher.plist"
-}
-
-test_launcher_reads_login_items_config() {
-  # The shipped seed must list OmniWM, and the launcher script must consult the
-  # user-owned copy (never a tracked home/ symlink).
-  grep -qx 'OmniWM' "$ROOT/config/omacase/login-items" &&
-    grep -q 'omacase/login-items' "$ROOT/assets/launcher/OmacaseLauncher.sh"
-}
-
 test_data_and_checkout_defaults_are_separate() {
   # The public clone path must not equal the runtime data root, or caches land
   # in the worktree (issue #7).
   grep -q 'OMACASE_PREFIX:-\$HOME/.local/share/omacase/repo' "$ROOT/boot.sh" &&
     grep -q 'OMACASE_PREFIX:-\$HOME/.local/share/omacase/repo' "$ROOT/site/install" &&
     grep -q 'OMACASE_DATA:-\$HOME/.local/share/omacase' "$ROOT/lib/common.sh"
-}
-
-test_login_items_is_seed_not_symlink() {
-  [ -f "$ROOT/config/omacase/login-items" ] &&
-    ! find "$ROOT/home" -name 'login-items' | grep -q . &&
-    grep -q '_launcher_seed_login_items' "$ROOT/lib/launcher.sh"
-}
-
-test_launcher_seed_replaces_managed_link_with_copy() {
-  local tmp cfg seed
-  tmp="$(mktemp -d)"
-  HOME="$tmp/home"
-  OMACASE_STATE="$tmp/state"
-  OMACASE_ROOT="$ROOT"
-  OMACASE_DATA="$tmp/data"
-  cfg="$HOME/.config/omacase/login-items"
-  seed="$ROOT/config/omacase/login-items"
-  mkdir -p "$(dirname "$cfg")"
-  ln -s "$seed" "$cfg"
-  # shellcheck source=/dev/null
-  source "$ROOT/lib/common.sh"
-  # shellcheck source=/dev/null
-  source "$ROOT/lib/launcher.sh"
-  _launcher_seed_login_items
-  [ -f "$cfg" ] && [ ! -L "$cfg" ] &&
-    cmp -s "$cfg" "$seed" &&
-    grep -qx 'OmniWM' "$seed"
-}
-
-# After login-items left home/, existing installs have a dangling symlink to
-# the old path. Seeding must not write an empty file.
-test_launcher_seed_dangling_old_link_uses_seed() {
-  local tmp cfg
-  tmp="$(mktemp -d)"
-  HOME="$tmp/home"
-  OMACASE_STATE="$tmp/state"
-  OMACASE_ROOT="$ROOT"
-  OMACASE_DATA="$tmp/data"
-  cfg="$HOME/.config/omacase/login-items"
-  mkdir -p "$(dirname "$cfg")"
-  ln -s "$OMACASE_ROOT/home/dot_config/omacase/login-items" "$cfg"
-  # shellcheck source=/dev/null
-  source "$ROOT/lib/common.sh"
-  # shellcheck source=/dev/null
-  source "$ROOT/lib/launcher.sh"
-  _launcher_seed_login_items
-  [ -f "$cfg" ] && [ ! -L "$cfg" ] && grep -qx 'OmniWM' "$cfg"
 }
 
 # Edits through the old symlink dirty the tracked file. Recovery must copy
@@ -1477,10 +1350,6 @@ test_menu_lists_primary_commands_and_routes_keybinds() {
     "Toggle Light / Dark" \
     "Open a web app" \
     "Apps and overlays" \
-    "Start / verify OmniWM" \
-    "OmniWM app menu" \
-    "OmniWM command palette" \
-    "OmniWM settings" \
     "View keybinds" \
     "Run doctor" \
     "Create a backup" \
@@ -1639,29 +1508,58 @@ test_migration_removes_only_marked_ioskeley_dir() {
   local rc=$?; rm -rf "$tmp"; return $rc
 }
 
+# OmniWM, Brave, and OmacaseLauncher are gone from every surface; the
+# OmniWM-era launcher is removed only when its bundle id / label prove it ours.
+test_omniwm_brave_launcher_retired() {
+  ! grep -qE '^cask "(omniwm|brave-browser)"' "$ROOT/Brewfile" &&
+    [ ! -e "$ROOT/lib/wm.sh" ] && [ ! -e "$ROOT/lib/launcher.sh" ] &&
+    [ ! -e "$ROOT/assets/launcher" ] && [ ! -e "$ROOT/config/omniwm" ] &&
+    ! grep -rqiE 'omniwmctl|omacase_wm|Brave Browser' "$ROOT/bin" "$ROOT/lib" "$ROOT/completions" &&
+    ! "$ROOT/bin/omacase" help | grep -qE '^[[:space:]]+wm[[:space:]]'
+}
+
+test_migration_removes_only_owned_launcher() {
+  local tmp; tmp="$(mktemp -d)"
+  (
+    export OMACASE_ROOT="$ROOT" HOME="$tmp/home" OMACASE_DATA="$tmp/data"
+    source "$ROOT/lib/common.sh"
+    launchctl() { return 0; }
+    app="$HOME/Applications/OmacaseLauncher.app"
+    agent="$HOME/Library/LaunchAgents/org.omacase.launcher.plist"
+    mkdir -p "$app/Contents" "$(dirname "$agent")"
+    plutil -create xml1 "$app/Contents/Info.plist"
+    plutil -insert CFBundleIdentifier -string com.example.other "$app/Contents/Info.plist"
+    plutil -create xml1 "$agent"
+    plutil -insert Label -string com.example.other "$agent"
+    source "$ROOT/migrations/20261123120000-drop-omniwm-brave-launcher.sh"
+    migrate >/dev/null 2>&1 && [ -d "$app" ] && [ -f "$agent" ] || exit 1   # not ours
+    plutil -replace CFBundleIdentifier -string org.omacase.launcher "$app/Contents/Info.plist"
+    plutil -replace Label -string org.omacase.launcher "$agent"
+    migrate >/dev/null 2>&1 && [ ! -e "$app" ] && [ ! -e "$agent" ] &&
+      migrate >/dev/null 2>&1                                               # idempotent
+  )
+  local rc=$?; rm -rf "$tmp"; return $rc
+}
+
 # The closing "Next steps" block is conditional: silent when nothing is
-# pending; when it speaks, it names the reason (e.g. OmniWM changed this run).
+# pending; when it speaks, it names the reason (e.g. Automation consent missing).
 _test_install_quiet_harness() {
-  # $1 tmp; $2 omniwm-version sequence for successive _omniwm_version calls
-  export HOME="$1/home" OMACASE_STATE="$1/state" OMACASE_DATA="$1/data" OMACASE_ROOT="$ROOT" OMNIWM_SEQ="$1/omniwm-seq"
+  # $1 tmp; $2 can_set_appearance exit status (0 = terminal has Automation)
+  export HOME="$1/home" OMACASE_STATE="$1/state" OMACASE_DATA="$1/data" OMACASE_ROOT="$ROOT" APPEARANCE_RC="$2"
   mkdir -p "$HOME" "$OMACASE_STATE"
-  printf '%s\n' $2 > "$OMNIWM_SEQ"
   # shellcheck source=/dev/null
   source "$ROOT/lib/common.sh"
   # shellcheck source=/dev/null
   source "$ROOT/lib/install.sh"
   _test_stub_convergence_externals
-  defaults() { echo 0; }                       # spaces + stage manager satisfied
-  can_set_appearance() { return 0; }
-  _omniwm_version() {                          # pops one version per call (file-backed: calls run in $(...))
-    head -1 "$OMNIWM_SEQ"; sed -i '' '1d' "$OMNIWM_SEQ"
-  }
+  defaults() { echo 0; }
+  can_set_appearance() { return "$APPEARANCE_RC"; }
 }
 
 test_install_next_steps_silent_when_nothing_pending() {
   local tmp; tmp="$(mktemp -d)"
   (
-    _test_install_quiet_harness "$tmp" "0.6.2 0.6.2"
+    _test_install_quiet_harness "$tmp" 0
     echo seeded > "$OMACASE_STATE/last-backup"   # no fresh snapshot this run
     omacase_install
   ) >"$tmp/out" 2>&1
@@ -1671,17 +1569,17 @@ test_install_next_steps_silent_when_nothing_pending() {
 test_install_next_steps_explain_their_reason() {
   local tmp; tmp="$(mktemp -d)"
   (
-    _test_install_quiet_harness "$tmp" "0.6.1 0.6.2"   # OmniWM upgraded during the run
+    _test_install_quiet_harness "$tmp" 1          # terminal lacks Automation consent
     echo seeded > "$OMACASE_STATE/last-backup"
     omacase_install
   ) >"$tmp/out" 2>&1
   grep -q 'Next steps' "$tmp/out" &&
-    grep -q 'OmniWM was upgraded (0.6.1 → 0.6.2)' "$tmp/out" &&
+    grep -q 'lacks Automation' "$tmp/out" &&
     grep -q 'omacase doctor' "$tmp/out" || return 1
   # A fresh snapshot (first ever run) earns the restore hint — and only that.
   local tmp2; tmp2="$(mktemp -d)"
   (
-    _test_install_quiet_harness "$tmp2" "0.6.2 0.6.2"
+    _test_install_quiet_harness "$tmp2" 0
     omacase_install
   ) >"$tmp2/out" 2>&1
   grep -q 'omacase restore' "$tmp2/out" && ! grep -q 'omacase doctor' "$tmp2/out"
@@ -1752,7 +1650,9 @@ run_test "restore accepts legacy Omacase targets" test_restore_accepts_legacy_om
 run_test "generated theme symlinks are owned" test_generated_theme_symlinks_are_owned
 run_test "auto-backup captures conflicting theme fragments" test_auto_backup_captures_conflicting_theme_fragment
 run_test "dotfile reinstall preserves unmanaged siblings" test_dotfile_reinstall_preserves_unmanaged_siblings
-run_test "manual backup captures live OmniWM settings" test_backup_captures_live_omniwm_settings
+run_test "backup skips retired OmniWM settings; legacy snapshots restore" test_backup_skips_retired_omniwm_settings_but_restores_legacy
+run_test "OmniWM, Brave, and OmacaseLauncher are retired" test_omniwm_brave_launcher_retired
+run_test "migration removes only an Omacase-owned launcher" test_migration_removes_only_owned_launcher
 run_test "restore preserves sibling after ABSENT backup" test_restore_preserves_sibling_after_absent_backup
 run_test "restore PRESENT leaf preserves sibling" test_restore_present_leaf_preserves_sibling
 run_test "restore legacy PRESENT dir does not follow current symlink" test_restore_legacy_present_dir_does_not_follow_current_symlink
@@ -1771,7 +1671,6 @@ run_test "update --rollback restores the recorded SHA" test_update_rollback_rest
 run_test "update dev attaches a detached stable tag to main" test_update_dev_attaches_from_stable_tag
 run_test "boot dev attaches a detached stable tag to main" test_boot_dev_attaches_from_stable_tag
 run_test "backup domains cover macos/defaults.sh" test_backup_domains_cover_defaults_sh
-run_test "defaults disable Stage Manager" test_stage_manager_is_disabled_by_defaults
 run_test "Sol replaces Spotlight on ⌘Space" test_sol_replaces_spotlight_hotkey
 run_test "Homebrew packages come only from official repos (no taps)" test_brew_official_sources_only
 run_test "Grok installer requires explicit opt-in" test_grok_installer_requires_opt_in
@@ -1784,10 +1683,6 @@ run_test "site/install matches boot.sh" test_bootstrap_copies_are_identical
 run_test "macos version gate accepts 26+ and rejects below" test_macos_version_gate_boundaries
 run_test "boot and runtime share the macos 26 minimum" test_boot_and_runtime_share_macos_minimum
 run_test "theme manifest lists all themes" test_theme_manifest_lists_all_themes
-run_test "OmniWM seed is valid with nine workspaces" test_omniwm_seed_is_valid_and_has_nine_workspaces
-run_test "Ghostty windows remain manageable by OmniWM" test_ghostty_windows_remain_manageable
-run_test "OmniWM focused mode is matched by pid" test_omniwm_focused_mode_matches_pid
-run_test "wm menu and palette route to omniwmctl" test_wm_menu_and_palette_route_to_ipc
 run_test "cli rejects unknown commands" test_cli_unknown_command_fails
 run_test "cli help and version work" test_cli_help_and_version
 run_test "extras wired into usage, completion, and menu" test_extras_in_usage_completion_and_menu
@@ -1808,12 +1703,7 @@ run_test "migrations never auto-uninstall Homebrew packages" test_migrations_nev
 run_test "usage command wired and python compiles" test_usage_wired_and_compiles
 run_test "usage renders fixture records" test_usage_renders_fixture_records
 run_test "usage concurrent writes are safe" test_usage_concurrent_writes_are_safe
-run_test "launcher build produces a valid bundle and agent" test_launcher_build_produces_valid_bundle
-run_test "launcher reads the login-items config" test_launcher_reads_login_items_config
 run_test "data and checkout defaults are separate" test_data_and_checkout_defaults_are_separate
-run_test "login-items is seed-once user config" test_login_items_is_seed_not_symlink
-run_test "launcher seed replaces managed link with a copy" test_launcher_seed_replaces_managed_link_with_copy
-run_test "launcher seed recovers a dangling pre-move login-items link" test_launcher_seed_dangling_old_link_uses_seed
 run_test "legacy login-items edits survive a destage pull" test_recover_legacy_login_items_allows_destage_pull
 run_test "legacy login-items recovery honors dry-run" test_recover_legacy_login_items_honors_dryrun
 run_test "legacy recovery preserves nonlegacy live config" test_recover_legacy_login_items_preserves_nonlegacy_live_paths

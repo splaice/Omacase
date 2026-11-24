@@ -8,13 +8,12 @@ omacase_install() {
   dryrun_banner
   source "$OMACASE_ROOT/lib/backup.sh"
   _preflight_command_links
-  # Remembered so the closing "Next steps" can say *why* it speaks (OmniWM
-  # changed this run? a fresh snapshot was taken?) — and stay silent otherwise.
-  local omniwm_before backup_before
-  omniwm_before="$(_omniwm_version)"
+  # Remembered so the closing "Next steps" can say *why* it speaks (a fresh
+  # snapshot was taken?) — and stay silent otherwise.
+  local backup_before
   backup_before="$(cat "$OMACASE_STATE/last-backup" 2>/dev/null || true)"
 
-  step "1/8  Packages, apps & fonts (brew bundle)"
+  step "1/7  Packages, apps & fonts (brew bundle)"
   # Same policy as `omacase update`: `brew bundle` upgrades casks via `brew
   # upgrade --cask`, so self-updating apps (WhatsApp, Chrome, …) are left to
   # update themselves here too — see the rationale in lib/update.sh.
@@ -22,23 +21,23 @@ omacase_install() {
   sudo_prime   # one admin prompt for every cask that needs it; no-op when none do
   require "brew bundle" brew bundle --file="$OMACASE_ROOT/Brewfile"
 
-  step "2/8  Link \`omacase\` onto PATH + shell completion"
+  step "2/7  Link \`omacase\` onto PATH + shell completion"
   _link_command
 
-  step "3/8  Safety backup (so this is reversible)"
+  step "3/7  Safety backup (so this is reversible)"
   _auto_backup
 
-  step "4/8  Dotfiles (symlinks)"
+  step "4/7  Dotfiles (symlinks)"
   _link_dotfiles
 
-  step "5/8  AI CLIs (optional grok) + herdr agent hooks"
+  step "5/7  AI CLIs (optional grok) + herdr agent hooks"
   _grok_install
   _herdr_integrations
 
-  step "6/8  macOS defaults"
+  step "6/7  macOS defaults"
   bash "$OMACASE_ROOT/macos/defaults.sh"   # honors OMACASE_DRYRUN itself
 
-  step "7/8  Theme"
+  step "7/7  Theme"
   source "$OMACASE_ROOT/lib/theme.sh"
   # ${:-} (not `|| echo`): an existing-but-empty state file would otherwise
   # yield "" and drop a non-interactive install into the theme picker.
@@ -49,17 +48,13 @@ omacase_install() {
   # the line above just prompted for on a fresh machine. If it is still blocked,
   # the closing "Next steps" says so.
 
-  step "8/8  Window manager"
-  source "$OMACASE_ROOT/lib/wm.sh"
-  omacase_wm
-
   # A fresh install is the declarative end-state — baseline the migration
   # marker so `omacase update` never replays history against this machine.
   source "$OMACASE_ROOT/lib/migrate.sh"
   _migrations_baseline
 
   step "Done"
-  _install_next_steps "$omniwm_before" "$backup_before"
+  _install_next_steps "$backup_before"
   # When update nests install, the outer converged reports. Returning here
   # keeps the function a simple command so set -e still applies inside
   # (a `fn || true` call would disable errexit for _auto_backup etc.).
@@ -69,44 +64,17 @@ omacase_install() {
   converged "omacase installed"
 }
 
-_omniwm_version() {
-  defaults read /Applications/OmniWM.app/Contents/Info.plist CFBundleShortVersionString 2>/dev/null || true
-}
-
 # Closing notes, printed ONLY when there is a concrete reason — each names the
 # reason and the fix. Nothing pending → nothing printed, so a routine
 # `omacase update` ends quietly instead of implying something is wrong.
-#   - OmniWM newly installed/upgraded this run → macOS may need Accessibility
-#     (re)granted (grants are tied to the app binary).
 #   - Terminal lacks Automation → System Events consent (theme Light/Dark sync).
-#   - "Displays have separate Spaces" set but not yet active (needs a logout).
-#   - Stage Manager on (hides OmniWM tiles).
 #   - A fresh pre-change snapshot was taken this run → how to roll it back.
 _install_next_steps() {
-  local omniwm_before="$1" backup_before="$2"
-  local notes count=0 doctor=0 v spans stage backup_now n
+  local backup_before="$1"
+  local notes count=0 doctor=0 backup_now n
   notes=()
-  v="$(_omniwm_version)"
-  if [ -n "$v" ] && [ "$v" != "$omniwm_before" ]; then
-    if [ -z "$omniwm_before" ]; then
-      notes[$count]="OmniWM $v was just installed — grant it Accessibility (System Settings → Privacy & Security) so it can manage windows."
-    else
-      notes[$count]="OmniWM was upgraded ($omniwm_before → $v) — macOS may require Accessibility to be re-granted."
-    fi
-    count=$((count + 1)); doctor=1
-  fi
   if ! is_dryrun && ! can_set_appearance; then
     notes[$count]="Your terminal lacks Automation → System Events consent, so theme switches can't flip macOS Light/Dark."
-    count=$((count + 1)); doctor=1
-  fi
-  spans="$(defaults read com.apple.spaces spans-displays 2>/dev/null || echo 1)"
-  if [ "$spans" != 0 ]; then
-    notes[$count]="\"Displays have separate Spaces\" was set for OmniWM but needs one logout to take effect."
-    count=$((count + 1)); doctor=1
-  fi
-  stage="$(defaults read com.apple.WindowManager GloballyEnabled 2>/dev/null || echo 0)"
-  if [ "$stage" != 0 ]; then
-    notes[$count]="Stage Manager is on and can hide OmniWM tiles — turn it off in Control Center."
     count=$((count + 1)); doctor=1
   fi
   backup_now="$(cat "$OMACASE_STATE/last-backup" 2>/dev/null || true)"
@@ -291,12 +259,35 @@ _link_dotfiles() {
   done < <(find "$src" -type f ! -name '.DS_Store' ! -name '*.pyc' ! -path '*/__pycache__/*')
 }
 
+# Remove the retired login launchers. OmacaseLauncher (a generated app bundle +
+# LaunchAgent, removed along with OmniWM) is deleted only when its bundle id /
+# agent label prove Omacase generated it; the older raw OmniWM agent only when
+# it is our symlink. Shared by `omacase uninstall` and the drop-OmniWM migration.
+_remove_legacy_launchers() {
+  local app="$HOME/Applications/OmacaseLauncher.app"
+  local agent="$HOME/Library/LaunchAgents/org.omacase.launcher.plist"
+  local raw="$HOME/Library/LaunchAgents/org.omacase.omniwm.plist"
+  if [ -f "$agent" ] &&
+    [ "$(plutil -extract Label raw -o - "$agent" 2>/dev/null)" = org.omacase.launcher ]; then
+    run launchctl bootout "gui/$(id -u)/org.omacase.launcher" 2>/dev/null || true
+    run rm -f "$agent"
+  fi
+  if [ -d "$app" ] &&
+    [ "$(plutil -extract CFBundleIdentifier raw -o - "$app/Contents/Info.plist" 2>/dev/null)" = org.omacase.launcher ]; then
+    run rm -rf "$app"
+  fi
+  if _is_omacase_link "$raw"; then
+    run launchctl bootout "gui/$(id -u)/org.omacase.omniwm" 2>/dev/null || true
+    run rm -f "$raw"
+  fi
+  return 0
+}
+
 omacase_uninstall() {
   source "$OMACASE_ROOT/lib/backup.sh"
   warn "This removes Omacase-managed symlinks & stops its services."
   warn "It does NOT uninstall your Homebrew apps."
   is_dryrun || confirm "Proceed?" || { info "Cancelled."; return; }
-  source "$OMACASE_ROOT/lib/wm.sh"; _wm_stop_all || true
 
   # Extras write root-owned /etc files; never silently sudo during uninstall —
   # point at the explicit revert instead.
@@ -330,14 +321,11 @@ omacase_uninstall() {
   # with `herdr integration uninstall <agent>`). Omacase cannot prove ownership
   # of ~/.agents/skills content, so it never deletes there (issue #3).
 
-  # The login launcher (current) plus the legacy raw OmniWM agent that
-  # pre-launcher installs linked directly.
-  source "$OMACASE_ROOT/lib/launcher.sh"; _launcher_uninstall
   run launchctl bootout "gui/$(id -u)/org.omacase.usage" 2>/dev/null || true
   run rm -f "$HOME/Library/LaunchAgents/org.omacase.usage.plist"
-  local agent="$HOME/Library/LaunchAgents/org.omacase.omniwm.plist"
-  run launchctl bootout "gui/$(id -u)/org.omacase.omniwm" 2>/dev/null || true
-  { _is_omacase_link "$agent" && run rm -f "$agent"; } || true
+  # Retired login launchers: OmacaseLauncher (generated bundle + agent) and the
+  # older raw OmniWM agent that pre-launcher installs linked directly.
+  _remove_legacy_launchers
 
   # Remove the `omacase` command + completion symlinks from Homebrew (only ours).
   local cmd

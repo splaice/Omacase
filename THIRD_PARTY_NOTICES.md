@@ -35,13 +35,6 @@ Credit: NASA's Goddard Space Flight Center/Jeremy Schnittman.
 
 https://svs.gsfc.nasa.gov/13326
 
-## OmniWM
-
-Omacase installs and seeds OmniWM as its window environment. OmniWM is an
-independent project distributed under the GNU General Public License v2.0.
-
-https://github.com/BarutSRB/OmniWM
-
 ## Runtime Dependencies
 
 Third-party applications, formulae, casks, taps, Neovim plugins, and npm-backed

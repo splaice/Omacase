@@ -1,7 +1,6 @@
 # shellcheck shell=bash
 # Backup & restore — Omacase snapshots any pre-existing state it is about to
-# overwrite (dotfiles + mutable OmniWM settings + macOS defaults) so a run is
-# always reversible.
+# overwrite (dotfiles + macOS defaults) so a run is always reversible.
 #
 #   omacase backup [label]     create a snapshot now
 #   omacase restore [id]       restore a snapshot (default: most recent)
@@ -21,8 +20,6 @@ OMACASE_DEFAULTS_DOMAINS=(
   com.apple.finder
   com.apple.desktopservices
   com.apple.dock
-  com.apple.spaces
-  com.apple.WindowManager
   com.apple.symbolichotkeys
   com.apple.screencapture
   com.apple.AppleMultitouchTrackpad
@@ -64,13 +61,10 @@ _managed_theme_targets() {
     "$HOME/.config/starship/theme.toml"
 }
 
-# Snapshot the exact leaf files Omacase links, plus generated theme fragments
-# and seeded-once user config (OmniWM settings, login-items).
+# Snapshot the exact leaf files Omacase links, plus generated theme fragments.
 _backup_targets() {
   _managed_file_targets
   _managed_theme_targets
-  echo "$HOME/.config/omniwm/settings.toml"
-  echo "$HOME/.config/omacase/login-items"
 }
 
 # Restore manifests created by earlier Omacase releases can contain top-level
@@ -82,6 +76,8 @@ _legacy_restore_targets() {
     "$HOME/.config/aerospace" \
     "$HOME/.config/borders" \
     "$HOME/.config/karabiner" \
+    "$HOME/.config/omacase/login-items" \
+    "$HOME/.config/omniwm/settings.toml" \
     "$HOME/.config/sketchybar"
 }
 

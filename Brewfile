@@ -3,16 +3,12 @@
 # omacase Brewfile — the opinionated package set. `brew bundle` is idempotent.
 # Edit, then `omacase update` (or `brew bundle`) to converge.
 
-# --- Window management & desktop -------------------------------------------
-cask "omniwm" # native Niri + Hyprland Dwindle WM, workspace bar, borders, quake terminal
-
 # --- The "make Mac behave" set ---------------------------------------------
 # Launcher is Sol (⌘Space) — a fast, free, open-source launcher / command
 # palette (app search, clipboard history, emoji, window snapping, scratchpad).
 # macos/defaults.sh releases ⌘Space from Spotlight so Sol can take it; pick
 # "⌘ Space" in Sol's onboarding. Spotlight indexing/search still works.
 cask "sol"               # launcher — replaces Spotlight on ⌘Space
-# OmniWM owns its keyboard shortcuts directly.
 # Menu bar is stock macOS — no third-party menu-bar manager.
 
 # --- Terminal & shell -------------------------------------------------------
@@ -23,7 +19,7 @@ brew "bat"               # cat
 brew "fd"                # find
 brew "ripgrep"           # grep
 brew "fzf"               # fuzzy finder
-brew "btop"              # full terminal system monitor (OmniWM also has a compact native stats popup)
+brew "btop"              # full terminal system monitor
 brew "yazi"              # TUI file manager (`omacase files` opens it as an optional popup)
 brew "git-delta"         # git diffs
 brew "herdr"             # agent-aware multiplexer; sessions survive disconnect (`herdr --remote` for SSH)
@@ -54,8 +50,7 @@ brew "opencode"          # opencode — terminal AI coding agent (homebrew-core)
 cask "tailscale-app"     # mesh VPN / private network
 
 # --- Opinionated applications -----------------------------------------------
-# Omacase installs these and offers optional CLI/menu launch helpers. OmniWM's
-# own shortcuts remain untouched; its app rules decide which windows float.
+# Omacase installs these and offers optional CLI/menu launch helpers.
 cask "spotify"           # music (Apple Music is stock)
 cask "obsidian"          # notes / knowledge base
 # Markdown Preview is the desktop *reader* for .md: native AppKit/WebKit, MIT,
@@ -88,11 +83,8 @@ cask "font-maple-mono-nf"    # Maple Mono NF — main terminal font + Nerd Font 
 cask "font-juliamono"        # JuliaMono — fills in symbols Maple lacks
 cask "font-noto-color-emoji" # Noto Color Emoji — emoji
 # --- Browsers ---------------------------------------------------------------
-# Brave is the dedicated `omacase webapp` browser (signed; opens chromeless
-# app windows) so ⌘Q on a web app never quits your daily/default browser.
-cask "brave-browser" # Chromium + PWAs; pairs with Safari "Add to Dock"
-# Chrome is the third role the line above implies: a daily/default browser and
-# the web-dev reference engine (and where Claude in Chrome runs). Safari stays
-# stock. Only the stable channel ships — a default set has no business
-# installing two channels of one browser.
-cask "google-chrome"    # Chrome — secondary browser (web apps)
+# Chrome is the daily/default browser, the web-dev reference engine (and where
+# Claude in Chrome runs), and the `omacase webapp` engine (chromeless --app
+# windows). Safari stays stock. Only the stable channel ships — a default set
+# has no business installing two channels of one browser.
+cask "google-chrome"    # Chrome — secondary browser + web apps

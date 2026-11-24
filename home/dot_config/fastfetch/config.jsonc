@@ -82,12 +82,6 @@
       "keyColor": "blue"
     },
     {
-      "type": "command",
-      "key": "│ ├",
-      "keyColor": "blue",
-      "text": "echo omniwm"
-    },
-    {
       "type": "terminal",
       "key": "│ ├",
       "keyColor": "blue"

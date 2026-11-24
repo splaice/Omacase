@@ -34,12 +34,6 @@ run defaults write com.apple.dock tilesize -int 32 # slider floor is 16; 24 felt
 run defaults write com.apple.dock magnification -bool false
 run defaults write com.apple.dock mru-spaces -bool false # don't auto-rearrange Spaces
 
-info "Spaces: give every display its own Spaces (required by OmniWM; logout required)"
-run defaults write com.apple.spaces spans-displays -bool false
-
-info "Window management: disable Stage Manager so all tiled windows remain visible"
-run defaults write com.apple.WindowManager GloballyEnabled -bool false
-
 info "Launcher: release ⌘Space / ⌥⌘Space from Spotlight so Sol can own ⌘Space"
 # Symbolic hotkeys 64 (Show Spotlight search, ⌘Space) and 65 (Finder search
 # window, ⌥⌘Space) are disabled; Spotlight itself (indexing, Finder search,

@@ -59,19 +59,6 @@ operate casually, but less convenient for a repeatable clone/delete loop.
 - Test on an Apple Silicon host. Omacase supports Apple Silicon macOS with
   Homebrew at `/opt/homebrew`.
 - macOS privacy permissions still need manual clicks inside the VM:
-  Accessibility and Automation. Input Monitoring is needed only when testing
-  OmniWM's optional single-key Hyper trigger.
+  Accessibility and Automation.
 - GitHub-hosted macOS runners are useful for shell/unit checks, but not enough
-  for Omacase's GUI, TCC, window-manager, and restore behavior.
-
-## Known first-boot issues (from cold-start testing)
-
-Observed on earlier fresh-VM installs — re-verify each on the next cold start
-and fix in `lib/install.sh` / `lib/doctor.sh` where possible:
-
-- Confirm OmniWM launches during install and presents its Accessibility
-  onboarding on a clean VM.
-- Confirm `com.apple.spaces spans-displays=false` takes effect after logout and
-  that OmniWM manages both displays afterward.
-- Confirm Stage Manager is disabled and two windows remain visible in a tiled
-  layout on each workspace.
+  for Omacase's GUI, TCC, and restore behavior.

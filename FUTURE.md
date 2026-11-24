@@ -122,10 +122,9 @@ opts into a LaunchDaemon. Shared helpers in `lib/common.sh`:
 - **Wallpaper cycling hotkey** — `omacase wallpaper [list|next|prev|<n>]` already
   works from cached Omarchy backgrounds or local custom-theme backgrounds, with
   the choice persisted in `$OMACASE_STATE/wallpaper` and mtime-staged `.live`
-  cache-busting. *Remaining:* a
-  optional OmniWM hotkey that calls `omacase wallpaper next`
+  cache-busting. *Remaining:* an
+  optional global hotkey that calls `omacase wallpaper next`
   (Omarchy's `omarchy-theme-bg-next`).
-  - Configure through OmniWM's user-owned settings.
 - **Theme install from URL** — `omacase theme install <git-url>` (import a
   community theme into the manifest + generated cache, like Omarchy's menu-paste
   install).
@@ -135,7 +134,7 @@ opts into a LaunchDaemon. Shared helpers in `lib/common.sh`:
 
 - **System-menu content** — extend the gum menu (`omacase menu`) with
   **Capture / Toggle / power** entries for fuller Omarchy parity. This is the
-  menu *content*; binding it to an OmniWM shortcut is a separate question.
+  menu *content*; binding it to a global shortcut is a separate question.
   - Files: `lib/menu.sh`.
 - **Own Omacase bundle ID + notification identity** — ship a minimal signed `.app`
   (e.g. `app.omacase` / `com.omacase.Omacase`) so notifications are attributed to

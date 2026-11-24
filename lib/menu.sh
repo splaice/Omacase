@@ -15,10 +15,6 @@ omacase_menu() {
     "Toggle Light / Dark" \
     "Open a web app" \
     "Apps and overlays" \
-    "Start / verify OmniWM" \
-    "OmniWM app menu" \
-    "OmniWM command palette" \
-    "OmniWM settings" \
     "Agent usage" \
     "View keybinds" \
     "Run doctor" \
@@ -41,10 +37,6 @@ omacase_menu() {
     "Toggle Light / Dark")   source "$OMACASE_ROOT/lib/actions.sh"; omacase_appearance toggle ;;
     "Open a web app")        _menu_webapp ;;
     "Apps and overlays")     _menu_apps ;;
-    "Start / verify OmniWM")  source "$OMACASE_ROOT/lib/wm.sh";    omacase_wm ;;
-    "OmniWM app menu")        source "$OMACASE_ROOT/lib/wm.sh";    omacase_wm menu ;;
-    "OmniWM command palette") source "$OMACASE_ROOT/lib/wm.sh";    omacase_wm palette ;;
-    "OmniWM settings")        source "$OMACASE_ROOT/lib/wm.sh";    omacase_wm settings ;;
     "Agent usage")           source "$OMACASE_ROOT/lib/usage.sh"; omacase_usage ;;
     "View keybinds")         source "$OMACASE_ROOT/lib/keybinds.sh"; omacase_keybinds ;;
     "Run doctor")            source "$OMACASE_ROOT/lib/doctor.sh"; omacase_doctor ;;
@@ -80,7 +72,7 @@ _menu_apps() {
     "Messages" \
     "Todoist" \
     "Back")" || return
-  source "$OMACASE_ROOT/lib/wm.sh"
+  source "$OMACASE_ROOT/lib/apps.sh"
   case "$choice" in
     "New terminal") omacase_terminal ;;
     "File manager") omacase_files ;;

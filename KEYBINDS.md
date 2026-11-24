@@ -1,36 +1,7 @@
 # Omacase key reference
 
-Omacase uses OmniWM's native Option-based shortcuts.
-
-## Window management
-
-| Keys | Action | Layout |
-|---|---|---|
-| `⌥ + Arrow` | Focus left/right/up/down | Shared |
-| `⌥⇧ + Arrow` | Move the focused window | Shared |
-| `⌥ + 1…9` | Switch to workspace | Shared |
-| `⌥⇧ + 1…9` | Move focused window to workspace | Shared |
-| `⌃⌥ + Tab` | Previous workspace, back and forth | Shared |
-| `⌥ + Return` | Toggle fullscreen | Shared |
-| `⌥ + .` / `⌥ + ,` | Cycle size forward/back | Shared |
-| `⌥⇧ + B` | Balance sizes | Shared |
-| `⌥⇧ + L` | Toggle Niri/Dwindle layout | Shared |
-| `⌃⌥⇧ + Left/Right` | Move the whole container | Shared |
-| `⌥ + T` | Toggle tabbed column | Niri |
-| `⌥⇧ + F` | Toggle full primary span | Niri |
-
-In Dwindle, `⌥⇧ + Arrow` is contextual: a singleton joins the neighboring tile;
-an active grouped tab is extracted in the requested direction. OmniWM's
-Settings → Hotkeys screen is authoritative and supports changing every binding.
-
-## OmniWM surfaces
-
-| Keys | Action |
-|---|---|
-| ``⌥ + ` `` | Toggle quake terminal |
-| `⌥⇧ + O` | Toggle overview |
-| `⌃⌥ + Space` | Toggle command palette |
-| `⌃⌥ + M` | Open the OmniWM menu anywhere |
+Omacase keeps macOS's own window management and adds no global window-manager
+shortcuts.
 
 ## macOS
 
@@ -43,11 +14,11 @@ Settings → Hotkeys screen is authoritative and supports changing every binding
 [Sol](https://sol.ospfranco.com/) is the launcher. Omacase turns off Spotlight's
 `⌘ Space` and `⌥⌘ Space` shortcuts, and you choose `⌘ Space` in Sol's onboarding
 (Sol starts on `⌥ Space`). Spotlight indexing and Finder search keep working.
-Run `omacase menu` for the Omacase TUI, or bind any `omacase` subcommand as an
-OmniWM shortcut.
+Sol also handles window snapping. Run `omacase menu` for the Omacase TUI, or
+bind any `omacase` subcommand to a shortcut in the tool of your choice.
 
 ## Terminal
 
-Ghostty, shell, and editor bindings remain independent of OmniWM. Use
+Ghostty, shell, and editor bindings are independent of Omacase. Use
 `omacase terminal` when a script needs a new Ghostty window and
 `omacase files` for the optional yazi popup.

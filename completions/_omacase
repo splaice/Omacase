@@ -29,7 +29,6 @@ _omacase() {
         'wp:pick the active theme background (list|next|prev|<n>)'
         'webapp:open an Omarchy web app (no name = list)'
         'appearance:toggle/set macOS Light/Dark'
-        'wm:start/verify OmniWM; menu|palette|settings open its app menu / command palette / settings window'
         'terminal:open a new Ghostty window in the running instance'
         'term:open a new Ghostty window in the running instance'
         'files:toggle a centered yazi file-manager popup'
@@ -44,7 +43,7 @@ _omacase() {
         'usage:agent usage dashboard — token burn + plan limits'
         'tools:list every tool Omacase installs, one line each'
         'list-tools:list every tool Omacase installs, one line each'
-        'keybinds:display the OmniWM and Omacase key reference'
+        'keybinds:display the Omacase key reference'
         'doctor:check permissions and missing grants'
         'backup:snapshot current dotfiles & macOS defaults'
         'restore:roll back to a snapshot (--list to see them)'
@@ -77,9 +76,6 @@ _omacase() {
           ;;
         music)
           _values 'music app' spotify apple && ret=0
-          ;;
-        wm)
-          _values 'wm action' 'menu[open the OmniWM app menu]' 'palette[open the OmniWM command palette]' 'settings[open the OmniWM settings window]' && ret=0
           ;;
         update)
           _values 'update flag' \

@@ -7,7 +7,7 @@ omacase_doctor() {
   local issues=0
 
   step "Tooling"
-  for c in brew gum omniwmctl; do
+  for c in brew gum; do
     if have "$c"; then success "$c installed"; else error "$c missing — run \`omacase install\`"; issues=$((issues + 1)); fi
   done
 
@@ -63,34 +63,6 @@ omacase_doctor() {
   if [ -n "$last" ]; then success "latest snapshot: $last  (omacase restore to roll back)"
   else info "no backups yet (created automatically on first install)"; fi
 
-  step "Window manager"
-  # shellcheck source=/dev/null
-  source "$OMACASE_ROOT/lib/wm.sh"
-  if ! pgrep -x OmniWM >/dev/null; then
-    warn "OmniWM not running — \`omacase wm\`"; issues=$((issues + 1))
-  elif _wm_ipc_ready; then
-    success "OmniWM running and IPC healthy"
-  else
-    warn "OmniWM is running but IPC is unavailable — enable IPC in OmniWM settings."
-    issues=$((issues + 1))
-  fi
-  step "macOS window management"
-  local spans stage_manager
-  spans="$(defaults read com.apple.spaces spans-displays 2>/dev/null || echo 1)"
-  if [ "$spans" = 0 ]; then
-    success "Displays have separate Spaces (OmniWM requirement)"
-  else
-    warn "Displays have separate Spaces is not active. Omacase set it, but you must log out once."
-    issues=$((issues + 1))
-  fi
-  stage_manager="$(defaults read com.apple.WindowManager GloballyEnabled 2>/dev/null || echo 0)"
-  if [ "$stage_manager" = 0 ]; then
-    success "Stage Manager is disabled (all tiles can remain visible)"
-  else
-    warn "Stage Manager is active and can hide OmniWM tiles. Re-run \`omacase install\` or disable it in Control Center."
-    issues=$((issues + 1))
-  fi
-
   step "Appearance sync (theme ⇄ macOS Light/Dark)"
   if can_set_appearance; then
     success "Terminal can drive macOS appearance — theme switches will flip Light/Dark."
@@ -105,8 +77,7 @@ omacase_doctor() {
   These need a manual toggle in System Settings → Privacy & Security.
   No script can grant them — that's the OS security model, by design.
 
-    Accessibility      : OmniWM, Sol
-    Input Monitoring   : only if you enable OmniWM's optional system Hyper key
+    Accessibility      : Sol; terminal (overlay helpers center windows)
     Automation         : terminal → System Events (theme Light/Dark sync)
     Full Disk Access   : (optional) terminal, for some defaults writes
 EOF

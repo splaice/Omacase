@@ -14,7 +14,6 @@ font-thicken = true
 
 window-padding-x = 10
 window-padding-y = 10
-# OmniWM requires standard macOS window controls to classify and tile Ghostty.
 window-decoration = true
 macos-titlebar-style = transparent
 background-opacity = 0.97
