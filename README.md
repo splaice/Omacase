@@ -38,13 +38,11 @@ omacase keybinds            display the complete key reference
 omacase theme [name]        apply a coordinated theme
 omacase palette [name]      edit a theme's terminal ANSI palette
 omacase wallpaper [...]     list or change the active theme wallpaper
-omacase webapp [name]       open a named web app
 omacase backup [label]      snapshot managed config and macOS defaults
 omacase restore [id]        restore a snapshot
 omacase migrate             run one-time changeovers
-omacase usage [update]      agent usage dashboard — token burn + plan limits (Claude, Codex, Grok)
 omacase tools               list every tool Omacase installs, one line each
-omacase extras [name]       optional opt-in tweaks: sudo-touchid, mole, usage-tracker (never run by install)
+omacase extras [name]       optional opt-in tweaks: sudo-touchid, mole (never run by install)
 omacase uninstall           remove Omacase-managed config; keep applications
 ```
 

@@ -321,6 +321,7 @@ omacase_uninstall() {
   # with `herdr integration uninstall <agent>`). Omacase cannot prove ownership
   # of ~/.agents/skills content, so it never deletes there (issue #3).
 
+  # Retired usage-tracker LaunchAgent (removed by migration; kept for stragglers).
   run launchctl bootout "gui/$(id -u)/org.omacase.usage" 2>/dev/null || true
   run rm -f "$HOME/Library/LaunchAgents/org.omacase.usage.plist"
   # Retired login launchers: OmacaseLauncher (generated bundle + agent) and the

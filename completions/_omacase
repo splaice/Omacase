@@ -2,7 +2,7 @@
 # Tab completion for `omacase`. `omacase install` links this file into
 # Homebrew's share/zsh/site-functions (already on fpath via `brew shellenv`,
 # wired live by compinit in the managed ~/.zshrc); `omacase doctor` repairs the
-# link. Dynamic values — themes, web apps, snapshots — are read from the repo
+# link. Dynamic values — themes, snapshots — are read from the repo
 # and state dirs at completion time, so they never drift from the CLI.
 
 _omacase() {
@@ -27,7 +27,6 @@ _omacase() {
         'palette:edit a theme Ghostty ANSI palette in a TUI with a live eza preview'
         'wallpaper:pick the active theme background (list|next|prev|<n>)'
         'wp:pick the active theme background (list|next|prev|<n>)'
-        'webapp:open an Omarchy web app (no name = list)'
         'appearance:toggle/set macOS Light/Dark'
         'terminal:open a new Ghostty window in the running instance'
         'term:open a new Ghostty window in the running instance'
@@ -40,7 +39,6 @@ _omacase() {
         'message:toggle a centered iMessage overlay'
         'messages:toggle a centered iMessage overlay'
         'todoist:toggle a centered Todoist overlay'
-        'usage:agent usage dashboard — token burn + plan limits'
         'tools:list every tool Omacase installs, one line each'
         'list-tools:list every tool Omacase installs, one line each'
         'keybinds:display the Omacase key reference'
@@ -63,11 +61,6 @@ _omacase() {
           local -a themes=( ${(f)"$(awk -F'|' '$0 !~ /^#/ && NF >= 5 { print $1 }' $root/themes/manifest 2>/dev/null)"} )
           _describe -t themes 'theme' themes && ret=0
           ;;
-        webapp)
-          # Source of truth: the _webapp_names list in lib/actions.sh.
-          local -a apps=( ${(z)"$(sed -n 's/^_webapp_names="\(.*\)"/\1/p' $root/lib/actions.sh 2>/dev/null)"} list )
-          _describe -t webapps 'web app' apps && ret=0
-          ;;
         appearance)
           _values 'appearance' toggle dark light && ret=0
           ;;
@@ -87,15 +80,11 @@ _omacase() {
           local -a snapshots=( $backups/*(N/:t) ) flags=( '--list:list snapshots' )
           _describe -t snapshots 'snapshot' snapshots -- flags && ret=0
           ;;
-        usage)
-          _values 'usage action' 'update[refresh state records]' 'json[raw records for scripts]' && ret=0
-          ;;
         extras)
           if (( CURRENT == 2 )); then
             _values 'extra' 'list[list extras and their state]' \
               'sudo-touchid[Touch ID for sudo + longer shared credential cache]' \
-              'mole[system toolbox: clean, uninstall, optimize, analyze (mo)]' \
-              'usage-tracker[background refresh for the agent usage dashboard]' && ret=0
+              'mole[system toolbox: clean, uninstall, optimize, analyze (mo)]' && ret=0
           elif [ "$line[2]" = mole ]; then
             _values 'mo command' 'clean[free up disk space]' 'uninstall[remove apps completely]' \
               'optimize[refresh caches and services]' 'analyze[explore disk usage]' \

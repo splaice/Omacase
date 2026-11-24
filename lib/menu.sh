@@ -13,9 +13,7 @@ omacase_menu() {
     "Edit theme palette" \
     "Switch wallpaper" \
     "Toggle Light / Dark" \
-    "Open a web app" \
     "Apps and overlays" \
-    "Agent usage" \
     "View keybinds" \
     "Run doctor" \
     "Create a backup" \
@@ -35,9 +33,7 @@ omacase_menu() {
     "Edit theme palette")    source "$OMACASE_ROOT/lib/palette.sh"; omacase_palette ;;
     "Switch wallpaper")      source "$OMACASE_ROOT/lib/theme.sh";  omacase_wallpaper pick ;;
     "Toggle Light / Dark")   source "$OMACASE_ROOT/lib/actions.sh"; omacase_appearance toggle ;;
-    "Open a web app")        _menu_webapp ;;
     "Apps and overlays")     _menu_apps ;;
-    "Agent usage")           source "$OMACASE_ROOT/lib/usage.sh"; omacase_usage ;;
     "View keybinds")         source "$OMACASE_ROOT/lib/keybinds.sh"; omacase_keybinds ;;
     "Run doctor")            source "$OMACASE_ROOT/lib/doctor.sh"; omacase_doctor ;;
     "Create a backup")       source "$OMACASE_ROOT/lib/backup.sh"; omacase_backup ;;
@@ -50,15 +46,6 @@ omacase_menu() {
   esac
 }
 
-_menu_webapp() {
-  source "$OMACASE_ROOT/lib/actions.sh"
-  local choice
-  local -a apps
-  # shellcheck disable=SC2154 # set by lib/actions.sh, sourced just above
-  read -r -a apps <<< "$_webapp_names"
-  choice="$(gum_choose "Web app" "${apps[@]}" "Back")" || return
-  [ "$choice" = "Back" ] || omacase_webapp "$choice"
-}
 _menu_apps() {
   local choice
   choice="$(gum_choose "Apps and overlays" \

@@ -62,9 +62,8 @@ cask "markdown-preview"  # Markdown viewer + Quick Look extension + `mdp` CLI (n
 cask "1password"         # password manager
 cask "todoist-app"       # tasks
 
-# Messaging. Native apps rather than `omacase webapp` shells: these want
-# background notifications, and the desktop clients carry features the web
-# versions do not.
+# Messaging. Native apps rather than browser tabs: these want background
+# notifications, and the desktop clients carry features the web versions do not.
 cask "discord"          # Discord — community & voice chat
 cask "signal"           # Signal — private messaging
 cask "telegram"         # Telegram — messaging
@@ -84,7 +83,6 @@ cask "font-juliamono"        # JuliaMono — fills in symbols Maple lacks
 cask "font-noto-color-emoji" # Noto Color Emoji — emoji
 # --- Browsers ---------------------------------------------------------------
 # Chrome is the daily/default browser, the web-dev reference engine (and where
-# Claude in Chrome runs), and the `omacase webapp` engine (chromeless --app
-# windows). Safari stays stock. Only the stable channel ships — a default set
-# has no business installing two channels of one browser.
-cask "google-chrome"    # Chrome — secondary browser + web apps
+# Claude in Chrome runs). Safari stays stock. Only the stable channel ships —
+# a default set has no business installing two channels of one browser.
+cask "google-chrome"    # Chrome — daily browser

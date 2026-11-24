@@ -1,46 +1,8 @@
 # shellcheck shell=bash
 # Small, scriptable actions — the macOS analog of Omarchy's launcher/menu
-# helpers (omarchy-launch-webapp, the toggle scripts). Each is a clean one-liner,
+# helpers (the toggle scripts). Each is a clean one-liner,
 # reachable from `omacase menu` or callable directly, so it also drops into a
 # macOS Shortcut's "Run Shell Script" step if you want to bind one yourself.
-
-# Web-app set (name -> URL). Originally mirrored Omarchy's
-# config/hypr/bindings.conf web apps; trimmed to the ones that earn a chromeless
-# window. Mail, calendar, messaging, photos, and video are better served by
-# native apps (several now ship in the Brewfile) or a normal browser tab.
-_webapp_url() {
-  case "$1" in
-    grok)     echo "https://grok.com" ;;
-    x)        echo "https://x.com/" ;;
-    x-post)   echo "https://x.com/compose/post" ;;
-    *)        return 1 ;;
-  esac
-}
-_webapp_names="grok x x-post"
-
-# omacase webapp [name] — open a named web app. With no name (or `list`), print
-# the set. Opens as a chromeless "app" window when a Chromium browser is present
-# (Omarchy's PWA feel), otherwise in the default browser.
-omacase_webapp() {
-  local name="${1:-}"
-  if [ -z "$name" ] || [ "$name" = list ]; then
-    info "Web apps — \`omacase webapp <name>\`:"
-    local n; for n in $_webapp_names; do printf '  %-9s %s\n' "$n" "$(_webapp_url "$n")"; done
-    return 0
-  fi
-  local url; url="$(_webapp_url "$name")" || abort "Unknown web app '$name'. Try: $_webapp_names"
-  # Prefer a non-default Chromium browser if one is installed, so the chromeless
-  # app window is its own process and ⌘Q on a web app won't quit your daily
-  # browser. Google Chrome (from the Brewfile) is the usual engine; it is last
-  # only because it is most often the default. Plain `open` is the fallback.
-  local b
-  for b in "Chromium" "Microsoft Edge" "Vivaldi" "Google Chrome"; do
-    if [ -d "/Applications/$b.app" ]; then
-      run open -na "$b" --args "--app=$url"; return 0
-    fi
-  done
-  run open "$url"   # default browser fallback
-}
 
 # omacase appearance [toggle|dark|light] — flip or set macOS system Light/Dark.
 # The analog of Omarchy's nightlight toggle. This changes only the system

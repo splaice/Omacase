@@ -1253,55 +1253,6 @@ test_migrations_never_auto_uninstall_homebrew_packages() {
     grep -En 'brew[[:space:]]+(uninstall|remove|rm)|brew[[:space:]]+bundle[[:space:]]+cleanup' {} + | grep -q .
 }
 
-test_usage_wired_and_compiles() {
-  "$ROOT/bin/omacase" help | grep -qE '^[[:space:]]+usage[[:space:]]' &&
-    grep -q "'usage:" "$ROOT/completions/_omacase" &&
-    grep -q "'usage-tracker\[" "$ROOT/completions/_omacase" &&
-    "$ROOT/bin/omacase" extras list | grep -qE '^[[:space:]]+usage-tracker[[:space:]]+\((on|off)\)' &&
-    python3 -m py_compile "$ROOT/lib/usage.py"
-}
-
-test_usage_renders_fixture_records() {
-  local tmp out
-  tmp="$(mktemp -d)"
-  mkdir -p "$tmp/usage"
-  local today; today="$(date +%Y-%m-%d)"
-  local agent
-  for agent in claude codex grok; do
-    printf '{"agent":"%s","name":"%s","days":{"%s":{"total":123456,"models":{"m1":123456}}},"limits":[{"label":"weekly","used_percent":42.0}],"collected_at":"now"}\n' \
-      "$agent" "$agent" "$today" > "$tmp/usage/$agent.json"
-  done
-  out="$(OMACASE_STATE="$tmp" "$ROOT/bin/omacase" usage)" &&
-    printf '%s' "$out" | grep -q '123.5K' &&
-    printf '%s' "$out" | grep -q '42.0%' &&
-    printf '%s' "$out" | grep -q '└'
-}
-
-# Issue #5: concurrent refreshes share the state dir; writes must never fail or
-# publish partial JSON. The old fixed-tmp-name code fails this at Path.replace.
-test_usage_concurrent_writes_are_safe() {
-  local tmp
-  tmp="$(mktemp -d)"
-  OMACASE_STATE="$tmp" python3 - "$ROOT/lib/usage.py" <<'PY' || return 1
-import importlib.util, json, multiprocessing, sys
-spec = importlib.util.spec_from_file_location("usage", sys.argv[1])
-usage = importlib.util.module_from_spec(spec); spec.loader.exec_module(usage)
-usage.STATE_DIR.mkdir(parents=True, exist_ok=True)
-def worker(n):
-    for i in range(25):
-        for agent in ("claude", "codex", "grok"):
-            usage._write_record(agent, {"agent": agent, "worker": n, "i": i})
-# stdin scripts cannot be re-exec'd under spawn (macOS default).
-ctx = multiprocessing.get_context("fork")
-procs = [ctx.Process(target=worker, args=(n,)) for n in range(4)]
-[p.start() for p in procs]; [p.join() for p in procs]
-assert all(p.exitcode == 0 for p in procs), "a concurrent writer crashed"
-for agent in ("claude", "codex", "grok"):
-    json.loads((usage.STATE_DIR / f"{agent}.json").read_text())  # complete JSON
-assert not list(usage.STATE_DIR.glob(".*.tmp")), "tmp orphans left behind"
-PY
-}
-
 test_extras_mole_is_declared_everywhere() {
   "$ROOT/bin/omacase" extras list | grep -qE '^[[:space:]]+mole[[:space:]]' &&
     grep -qE '^brew "mole"' "$ROOT/Brewfile" &&
@@ -1348,7 +1299,6 @@ test_menu_lists_primary_commands_and_routes_keybinds() {
     "Edit theme palette" \
     "Switch wallpaper" \
     "Toggle Light / Dark" \
-    "Open a web app" \
     "Apps and overlays" \
     "View keybinds" \
     "Run doctor" \
@@ -1700,9 +1650,6 @@ run_test "empty migration history uses squash baseline" test_migrate_empty_histo
 run_test "install baseline allows a newer migration" test_migrate_baseline_allows_newer_migration
 run_test "migration dry run uses in-memory baseline" test_migrate_dryrun_uses_in_memory_baseline
 run_test "migrations never auto-uninstall Homebrew packages" test_migrations_never_auto_uninstall_homebrew_packages
-run_test "usage command wired and python compiles" test_usage_wired_and_compiles
-run_test "usage renders fixture records" test_usage_renders_fixture_records
-run_test "usage concurrent writes are safe" test_usage_concurrent_writes_are_safe
 run_test "data and checkout defaults are separate" test_data_and_checkout_defaults_are_separate
 run_test "legacy login-items edits survive a destage pull" test_recover_legacy_login_items_allows_destage_pull
 run_test "legacy login-items recovery honors dry-run" test_recover_legacy_login_items_honors_dryrun
