@@ -9,6 +9,7 @@
 # macos/defaults.sh releases ⌘Space from Spotlight so Sol can take it; pick
 # "⌘ Space" in Sol's onboarding. Spotlight indexing/search still works.
 cask "sol"               # launcher — replaces Spotlight on ⌘Space
+cask "keepingyouawake"   # keep-awake toggle in the menu bar (wraps caffeinate)
 # Menu bar is stock macOS — no third-party menu-bar manager.
 
 # --- Terminal & shell -------------------------------------------------------
