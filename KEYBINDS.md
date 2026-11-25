@@ -19,6 +19,12 @@ bind any `omacase` subcommand to a shortcut in the tool of your choice.
 
 ## Terminal
 
-Ghostty, shell, and editor bindings are independent of Omacase. Use
+| Keys | Action |
+|---|---|
+| `⌃ Esc` | Ghostty quick terminal (drop-down from the top, from any app) |
+
+The quick terminal works while Ghostty is running and needs Ghostty in
+Accessibility. Other Ghostty, shell, and editor bindings are independent of
+Omacase. Use
 `omacase terminal` when a script needs a new Ghostty window and
 `omacase files` for the optional yazi popup.

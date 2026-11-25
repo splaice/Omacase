@@ -77,7 +77,7 @@ omacase_doctor() {
   These need a manual toggle in System Settings → Privacy & Security.
   No script can grant them — that's the OS security model, by design.
 
-    Accessibility      : Sol; terminal (overlay helpers center windows)
+    Accessibility      : Sol; Ghostty (⌃Esc quick terminal, overlay helpers)
     Automation         : terminal → System Events (theme Light/Dark sync)
     Full Disk Access   : (optional) terminal, for some defaults writes
 EOF

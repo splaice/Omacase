@@ -20,6 +20,14 @@ background-opacity = 0.97
 mouse-hide-while-typing = true
 copy-on-select = clipboard
 
+# Quick terminal: a drop-down from the top of the screen, toggled from any app.
+# `global:` keybinds need Ghostty running and in System Settings → Privacy &
+# Security → Accessibility.
+keybind = global:ctrl+escape=toggle_quick_terminal
+quick-terminal-position = top
+quick-terminal-size = 65%,45%
+quick-terminal-animation-duration = 0.1
+
 # Theme is managed by omacase (symlink → ~/.config/ghostty/theme).
 # Must be absolute: `config` is symlinked into the repo, so a relative
 # path would resolve against the repo dir, not ~/.config/ghostty.
